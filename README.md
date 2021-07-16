@@ -69,11 +69,11 @@ Kato has completed two-way authentication with localized computing bases represe
 | Kubernetes multi-cloud management | multi-cluster access; cluster monitoring view; automated scheduling | cluster automated access; public cloud Kubernetes service access; automated resource generation and maintenance. |
 | Domestic and easy-to-use cloud native PaaS | Support common domestic CPUs and operating systems, and support Windows operating systems to transition to domestic operating systems. | Heterogeneous resource scheduling; heterogeneous operating system application orchestration. |
 
-[Kato feature description](https://gridworkz.github.io/docs/quick-start/edition/)
+[Kato Feature Description](https://gridworkz.github.io/docs/quick-start/edition/)
 
 [Kato Development Plan](https://gridworkz.github.io/docs/quick-start/roadmap/)
 
-#### With Kato You Can:
+#### With Kato You Can
 
 - Achieve Enterprise cloud native DevOps.
 - Set up B2B software delivery system.
