@@ -20,7 +20,7 @@ Application-oriented cloud-native DevOps, integration of development, testing, p
 
 #### Build B2B Software Delivery System
 
-#### Build an online multi-client continuous delivery system
+#### Build an Online Multi-client Continuous Delivery System
 
 Traditional B2B delivery often invests a lot of manpower and time costs. Many customers, many customizations, and product version upgrades will bring challenges.
 
@@ -102,7 +102,7 @@ Kato has completed two-way authentication with localized computing bases represe
 
 We very much welcome you to participate in the contribution and sharing of the Kato community on platform experience, standardized applications, plug-in sharing and other fields.
 
-If you are a user who is using Kato, and you have a deep understanding of Kato and the recognition of the technical route, you have greater needs within your company, we welcome you [Participate in Kato project development contribution](https://www .kato.com/docs/contribution/)
+If you are a user who is using Kato, and you have a deep understanding of Kato and the recognition of the technical route, you have greater needs within your company, we welcome you [Participate in Kato project development contribution](https://https://gridworkz.github.io/docs/community/contribution/contribution/)
 
 ## Related Repositories
 
@@ -112,7 +112,7 @@ The current warehouse is the core service implementation code of Kato data cente
 - [Kato-Console-UI](https://github.com/gridworkz/kato-ui) Kato console front-end project
 - [Kato-Operator](https://github.com/gridworkz/kato-operator) Kato installation, operation and maintenance project
 - [Kato-Builder](https://github.com/gridworkz/kato-builder) Kato source code build tool set
-- [Kato-Docs](https://github.com/gridworkz/kato-docs) Kato documentation
+- [Kato-Docs](https://gridworkz.github.io) Kato documentation
 
 ## License
 
