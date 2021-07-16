@@ -1,0 +1,6 @@
+region_api:
+    endpoints:
+      - https://region.gridworkz:8443
+    client-ca-file: /opt/kato/etc/rbd-api/region.gridworkz/ssl/ca.pem
+    tls-cert-file:  /opt/kato/etc/rbd-api/region.gridworkz/ssl/client.pem
+    tls-private-key-file:  /opt/kato/etc/rbd-api/region.gridworkz/ssl/client.key.pem

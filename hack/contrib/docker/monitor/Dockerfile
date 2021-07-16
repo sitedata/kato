@@ -1,0 +1,12 @@
+FROM kato/prometheus:v2.20.0
+ARG RELEASE_DESC
+USER root
+VOLUME ["/prometheusdata"]
+
+ENV RELEASE_DESC=${RELEASE_DESC}
+
+COPY kato-monitor /run/kato-monitor
+
+ADD entrypoint.sh /run/entrypoint.sh
+
+ENTRYPOINT ["/run/entrypoint.sh"]

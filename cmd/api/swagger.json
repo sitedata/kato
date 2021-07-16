@@ -1,0 +1,5426 @@
+{
+  "swagger": "2.0",
+  "paths": {
+    "/license": {
+      "post": {
+        "description": "post license \u0026 get token",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "license"
+        ],
+        "summary": "Submit license",
+        "operationId": "SendLicense",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "license",
+            "name": "license",
+            "in": "form",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"bean\":\"{\\\"token\\\": \\\"Q3E5OXdoZDZDX3drN0QtV2gtVmpRaGtlcHJQYmFK\\\"}\"}"
+          }
+        }
+      }
+    },
+    "/v2/apps/{app_name}/discover": {
+      "get": {
+        "description": "get endpoints of app_name",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get specified service endpoints",
+        "operationId": "GetServiceEndPoints",
+        "responses": {
+          "200": {
+            "description": "{\"list\":[{\"name\":\"d275f5b34faf\",\"url\":\"10.0.55.72:6363\",\"weight\":0}]}"
+          }
+        }
+      }
+    },
+    "/v2/job": {
+      "get": {
+        "description": "get job list",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get job list",
+        "operationId": "JobList",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "node name",
+            "name": "node",
+            "in": "form"
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "group name",
+            "name": "group",
+            "in": "form"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"ok\":true}"
+          }
+        }
+      },
+      "put": {
+        "description": "add or update job",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add or update job",
+        "operationId": "UpdateJob",
+        "parameters": [
+          {
+            "type": "json",
+            "format": "string",
+            "description": "{\"id\":\"\",\"kind\":0,\"name\":\"aac\",\"oldGroup\":\"\",\"group\":\"default\",\"user\":\"\",\"cmd\":\"echo \\\"hello \\\"\u003e/tmp/aac.txt\",\"pause\":true,\"parallels\":0,\"timeout\":0,\"interval\":0,\"retry\":0,\"rules\":[{\"id\":\"NEW0.5930536330436825\",\"nids\":[\"172.16.0.118\"],\"timer\":\"* 5 * * * *\",\"exclude_nids\":[\"172.16.0.131\"]}],\"fail_notify\":false,\"to\":[]}",
+            "name": "job",
+            "in": "body",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"ok\":true}"
+          }
+        }
+      }
+    },
+    "/v2/job/group": {
+      "get": {
+        "description": "get all groups",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get the group of all jobs",
+        "operationId": "GetAllGroup",
+        "responses": {
+          "200": {
+            "description": "[\"group1\",...]"
+          }
+        }
+      }
+    },
+    "/v2/job/{id}/group/{group}": {
+      "get": {
+        "description": "get job by group and id",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get job",
+        "operationId": "GetJob",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "group name",
+            "name": "group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "job id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"id\":\"\",\"kind\":0,\"name\":\"aac\",\"group\":\"default\",\"user\":\"\",\"cmd\":\"echo \\\"hello \\\"\u003e/tmp/aac.txt\",\"pause\":true,\"parallels\":0,\"timeout\":0,\"interval\":0,\"retry\":0,\"rules\":[{\"id\":\"NEW0.5930536330436825\",\"nids\":[\"172.16.0.118\"],\"timer\":\"* 5 * * * *\",\"exclude_nids\":[\"172.16.0.131\"]}],\"fail_notify\":false,\"to\":[]}"
+          }
+        }
+      },
+      "post": {
+        "description": "change job status",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Change job status",
+        "operationId": "ChangeJobStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "group name",
+            "name": "group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "job id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "{\"id\":\"\",\"kind\":0,\"name\":\"aac\",\"group\":\"default\",\"user\":\"\",\"cmd\":\"echo \\\"hello \\\"\u003e/tmp/aac.txt\",\"pause\":true,\"parallels\":0,\"timeout\":0,\"interval\":0,\"retry\":0,\"rules\":[{\"id\":\"NEW0.5930536330436825\",\"nids\":[\"172.16.0.118\"],\"timer\":\"* 5 * * * *\",\"exclude_nids\":[\"172.16.0.131\"]}],\"fail_notify\":false,\"to\":[]}",
+            "in": "body",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"id\":\"\",\"kind\":0,\"name\":\"aac\",\"group\":\"default\",\"user\":\"\",\"cmd\":\"echo \\\"hello \\\"\u003e/tmp/aac.txt\",\"pause\":true,\"parallels\":0,\"timeout\":0,\"interval\":0,\"retry\":0,\"rules\":[{\"id\":\"NEW0.5930536330436825\",\"nids\":[\"172.16.0.118\"],\"timer\":\"* 5 * * * *\",\"exclude_nids\":[\"172.16.0.131\"]}],\"fail_notify\":false,\"to\":[]}"
+          }
+        }
+      },
+      "delete": {
+        "description": "delete job by group and id",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete job",
+        "operationId": "DeleteJob",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "group name",
+            "name": "group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "job id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"ok\":true}"
+          }
+        }
+      }
+    },
+    "/v2/job/{id}/group/{group}/node/{name}": {
+      "put": {
+        "description": "execute job",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Execute a job with the specified group/id on node immediately",
+        "operationId": "JobExecute",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "group name",
+            "name": "group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "job id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "node name",
+            "name": "name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"ok\":true}"
+          }
+        }
+      }
+    },
+    "/v2/job/{id}/groups/{group}/nodes": {
+      "get": {
+        "description": "get job runnable nodes",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get the executable node of the job",
+        "operationId": "GetJobNodes",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "group name",
+            "name": "group",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "job id",
+            "name": "id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "[\"10.1.1.2\",...]"
+          }
+        }
+      }
+    },
+    "/v2/nodes": {
+      "get": {
+        "description": "get node list info from etcd",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get simple node list information from etcd",
+        "operationId": "GetNodeList",
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":{\"list\":[{\"uuid\":\"915f2c95-b723-4c88-9860-dbe33f4f51ac\",\"host_name\":\"10.0.55.73\",\"internal_ip\":\"10.0.55.73\",\"external_ip\":\"10.0.55.73\",\"available_memory\":16267956,\"available_cpu\":4,\"role\":\"compute\",\"status\":\"create\",\"labels\":{\"key1\":\"value1\"},\"unschedulable\":false},{\"uuid\":\"1234c95-b723-4c88-9860-dbe33f4f51ac\",\"host_name\":\"10.0.55.73\",\"internal_ip\":\"10.0.55.73\",\"external_ip\":\"10.0.55.73\",\"available_memory\":16267956,\"available_cpu\":4,\"role\":\"\",\"status\":\"running\",\"labels\":{\"key1\":\"value4\"},\"unschedulable\":false}]}}"
+          }
+        }
+      },
+      "post": {
+        "description": "add new node info to etcd",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add new node to etcd",
+        "operationId": "New",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "json",
+            "description": "{\"uuid\":\"757755e4-99e4-11e7-bab9-00163e020ab5\",\"host_name\":\"10.0.55.73\",\"internal_ip\":\"10.0.55.73\",\"external_ip\":\"10.0.55.73\",\"available_memory\":16,\"available_cpu\":4,\"role\":\"\",\"status\":\"offline\",\"labels\":{\"key1\":\"value1\"},\"unschedulable\":false}",
+            "in": "body",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      }
+    },
+    "/v2/nodes//{node}/basic": {
+      "get": {
+        "description": "get node basic info from etcd",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get basic node information from the server",
+        "operationId": "GetNodeBasic",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":{\"list\":null,\"bean\":{{\"uuid\":\"757755e4-99e4-11e7-bab9-00163e020ab5\",\"host_name\":\"10.0.55.73\",\"internal_ip\":\"10.0.55.73\",\"external_ip\":\"10.0.55.73\",\"available_memory\":16,\"available_cpu\":4,\"role\":\"\",\"status\":\"offline\",\"labels\":{\"key1\":\"value1\"},\"unschedulable\":false}}}}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/login": {
+      "put": {
+        "description": "try to connect to ssh",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Try to connect to the remote server via SSH",
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "hostport",
+                "type",
+                "hosttype"
+              ],
+              "properties": {
+                "hostport": {
+                  "description": "ip: port\nin: body",
+                  "type": "string",
+                  "x-go-name": "HostPort"
+                },
+                "hosttype": {
+                  "description": "Node type\nin: body",
+                  "type": "string",
+                  "x-go-name": "HostType"
+                },
+                "pwd": {
+                  "description": "Root password\nin: body",
+                  "type": "string",
+                  "x-go-name": "RootPwd"
+                },
+                "type": {
+                  "description": "Login type\nin: body",
+                  "type": "boolean",
+                  "x-go-name": "LoginType"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"bean\":{\"hostport\":\"10.0.55.73:22\",\"type\":true,\"result\":\"success\"}}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{ip}/init": {
+      "put": {
+        "description": "try to basicly init",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Complete basic initialization",
+        "operationId": "init",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "10.0.55.73",
+            "name": "ip",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"bean\":{\"List\":[{\"JobSEQ\":\"asdfsa-sdfasdf-asdf\",\"JobId\":\"online_init\",\"JobName\":\"init\",\"JobResult\":0}],\"Result\":false}}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{ip}/install": {
+      "get": {
+        "description": "start build-in jobs",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Start executing built-in tasks",
+        "operationId": "StartBuildInJobs",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "10.0.55.73",
+            "name": "ip",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"bean\":{\"List\":[{\"JobSEQ\":\"asdfsa-sdfasdf-asdf\",\"JobId\":\"online_init\",\"JobName\":\"init\",\"JobResult\":3}],\"Result\":false}}"
+          }
+        }
+      },
+      "put": {
+        "description": "check job status",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Start installation",
+        "operationId": "StartBuildInJobs",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "10.0.55.73",
+            "name": "ip",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"bean\":{\"List\":[{\"JobSEQ\":\"asdfsa-sdfasdf-asdf\",\"JobId\":\"online_init\",\"JobName\":\"init\",\"JobResult\":3}],\"Result\":false}}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{ip}/install/status": {
+      "get": {
+        "description": "check job status",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Check job status",
+        "operationId": "CheckJobGetStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "10.0.55.73",
+            "name": "ip",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"bean\":{\"List\":[{\"JobSEQ\":\"asdfsa-sdfasdf-asdf\",\"JobId\":\"online_init\",\"JobName\":\"init\",\"JobResult\":0}],\"Result\":false}}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{node}": {
+      "put": {
+        "description": "add node",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Relaunch the compute node",
+        "operationId": "AddNode",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      },
+      "post": {
+        "description": "update",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Update node",
+        "operationId": "UpdateNode",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "format": "string",
+            "description": "{\"uuid\": \"ccc\", \"Status\":\"create\",\"host_name\": \"10.0.55.73\", \"internal_ip\": \"10.0.55.73\", \"external_ip\": \"10.0.55.73\", \"available_memory\": 16267956, \"available_cpu\": 4, \"role\": \"\", \"labels\": {\"key1\": \"value1\"}, \"unschedulable\": false}",
+            "in": "body",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":{\"list\":[{\"uuid\":\"1234c95-b723-4c88-9860-dbe33f4f51ac\",\"host_name\":\"10.0.55.73\",\"internal_ip\":\"10.0.55.73\",\"external_ip\":\"10.0.55.73\",\"available_memory\":16267956,\"available_cpu\":4,\"role\":\"\",\"status\":\"running\",\"labels\":{\"key1\":\"value4\"},\"unschedulable\":false}]}}"
+          }
+        }
+      },
+      "delete": {
+        "description": "delete node from etcd",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Remove compute node from etcd",
+        "operationId": "DeleteFromDB",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{node}/details": {
+      "get": {
+        "description": "get node details info from k8s",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get node details from the server",
+        "operationId": "GetNodeDetails",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":{\"list\":null,\"bean\":{\"name\":\"10.0.55.73\",\"role\":\"\",\"labels\":{\"key1\":\"value1\"},\"annotations\":{\"node.alpha.kubernetes.io/ttl\":\"0\",\"volumes.kubernetes.io/controller-managed-attach-detach\":\"true\"},\"creationtimestamp\":\"2017-09-19 11:23:09 +0800 CST\",\"conditions\":[{\"type\":\"OutOfDisk\",\"status\":\"False\",\"lastHeartbeatTime\":\"2017-09-20T01:37:25Z\",\"lastTransitionTime\":\"2017-09-19T03:23:18Z\",\"reason\":\"KubeletHasSufficientDisk\",\"message\":\"kubelet has sufficient disk space available\"},{\"type\":\"MemoryPressure\",\"status\":\"False\",\"lastHeartbeatTime\":\"2017-09-20T01:37:25Z\",\"lastTransitionTime\":\"2017-09-19T03:23:18Z\",\"reason\":\"KubeletHasSufficientMemory\",\"message\":\"kubelet has sufficient memory available\"},{\"type\":\"DiskPressure\",\"status\":\"False\",\"lastHeartbeatTime\":\"2017-09-20T01:37:25Z\",\"lastTransitionTime\":\"2017-09-19T03:23:18Z\",\"reason\":\"KubeletHasNoDiskPressure\",\"message\":\"kubelet has no disk pressure\"},{\"type\":\"Ready\",\"status\":\"True\",\"lastHeartbeatTime\":\"2017-09-20T01:37:25Z\",\"lastTransitionTime\":\"2017-09-19T10:59:55Z\",\"reason\":\"KubeletReady\",\"message\":\"kubelet is posting ready status\"}],\"addresses\":{\"Hostname\":\"10.0.55.73\",\"InternalIP\":\"10.0.55.73\",\"LegacyHostIP\":\"10.0.55.73\"},\"capacity\":{\"cpu\":\"4\",\"memory\":\"15886\",\"pods\":\"10k\"},\"allocatable\":{\"cpu\":\"4\",\"memory\":\"15786\",\"pods\":\"10k\"},\"systeminfo\":{\"machineID\":\"df39b3efbcee4d5c84b2feab34009235\",\"systemUUID\":\"08A7D00A-C4B6-4AB7-8D8D-DA14C104A4DC\",\"bootID\":\"b4cd3c6c-e18d-43ae-9f11-3125110e9179\",\"kernelVersion\":\"3.10.0-514.21.2.el7.x86_64\",\"osImage\":\"CentOS Linux 7 (Core)\",\"containerRuntimeVersion\":\"docker://1.12.6\",\"kubeletVersion\":\"v1.6.4-66+4fd15729100998-dirty\",\"kubeProxyVersion\":\"v1.6.4-66+4fd15729100998-dirty\",\"operatingSystem\":\"linux\",\"architecture\":\"amd64\"},\"externalid\":\"10.0.55.73\",\"nonterminatedpods\":[{\"namespace\":\"1b56aa1ed27b4289b6f108e551545f29\",\"id\":\"gr04bff0\",\"name\":\"c0dd44112bd39ff7dda3ac3a47e619ea-3m1m8\",\"cpurequest\":\"80m\",\"cpurequestr\":\"2\",\"cpulimits\":\"120m\",\"cpulimitsr\":\"3\",\"memoryrequests\":\"268435456\",\"memoryrequestsr\":\"0\",\"memorylimits\":\"268435456\",\"memorylimitsr\":\"0\"},{\"namespace\":\"1b56aa1ed27b4289b6f108e551545f29\",\"id\":\"gr04bff0\",\"name\":\"c0dd44112bd39ff7dda3ac3a47e619ea-bxfmc\",\"cpurequest\":\"80m\",\"cpurequestr\":\"2\",\"cpulimits\":\"120m\",\"cpulimitsr\":\"3\",\"memoryrequests\":\"268435456\",\"memoryrequestsr\":\"0\",\"memorylimits\":\"268435456\",\"memorylimitsr\":\"0\"},{\"namespace\":\"1b56aa1ed27b4289b6f108e551545f29\",\"id\":\"\",\"name\":\"web-0\",\"cpurequest\":\"0\",\"cpurequestr\":\"0\",\"cpulimits\":\"0\",\"cpulimitsr\":\"0\",\"memoryrequests\":\"0\",\"memoryrequestsr\":\"0\",\"memorylimits\":\"0\",\"memorylimitsr\":\"0\"},{\"namespace\":\"1b56aa1ed27b4289b6f108e551545f29\",\"id\":\"\",\"name\":\"web-1\",\"cpurequest\":\"0\",\"cpurequestr\":\"0\",\"cpulimits\":\"0\",\"cpulimitsr\":\"0\",\"memoryrequests\":\"0\",\"memoryrequestsr\":\"0\",\"memorylimits\":\"0\",\"memorylimitsr\":\"0\"},{\"namespace\":\"232bd923d3794b979974bb21b863608b\",\"id\":\"gr184a0b\",\"name\":\"bc74e3d2cc734ce1a81f0a1903286e35-g4p31\",\"cpurequest\":\"480m\",\"cpurequestr\":\"12\",\"cpulimits\":\"1780m\",\"cpulimitsr\":\"44\",\"memoryrequests\":\"2Gi\",\"memoryrequestsr\":\"12\",\"memorylimits\":\"2Gi\",\"memorylimitsr\":\"12\"},{\"namespace\":\"232bd923d3794b979974bb21b863608b\",\"id\":\"gr868196\",\"name\":\"d2fa251096c9452ba25d081d861265d9-mdqln\",\"cpurequest\":\"120m\",\"cpurequestr\":\"3\",\"cpulimits\":\"640m\",\"cpulimitsr\":\"16\",\"memoryrequests\":\"512Mi\",\"memoryrequestsr\":\"3\",\"memorylimits\":\"512Mi\",\"memorylimitsr\":\"3\"}],\"allocatedresources\":{\"CPULimits\":\"2660\",\"CPULimitsR\":\"66\",\"CPURequests\":\"760\",\"CPURequestsR\":\"19\",\"MemoryLimits\":\"3072\",\"MemoryLimitsR\":\"15\",\"MemoryRequests\":\"3072\",\"MemoryRequestsR\":\"15\"},\"events\":null}}}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{node}/down": {
+      "post": {
+        "description": "offline node",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "offline computing node",
+        "operationId": "DeleteNode",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{node}/label": {
+      "post": {
+        "description": "add label to node",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add label to node",
+        "operationId": "labels",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "NodeID",
+            "name": "node",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "labels"
+              ],
+              "properties": {
+                "labels": {
+                  "description": "label value list\nin: body",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-go-name": "Labels"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{node}/reschedulable": {
+      "put": {
+        "description": "make node schedulable",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Make the node schedulable",
+        "operationId": "UnCordon",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      }
+    },
+    "/v2/nodes/{node}/unschedulable": {
+      "put": {
+        "description": "make node unschedulable",
+        "produces": [
+          "application/json"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Make the node unschedulable",
+        "operationId": "Cordon",
+        "parameters": [
+          {
+            "type": "string",
+            "format": "string",
+            "description": "nodeuid",
+            "name": "node",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"code\":200,\"msg\":\"success\",\"msgcn\":\"success\",\"body\":nil}"
+          }
+        }
+      }
+    },
+    "/v2/opentsdb/query": {
+      "post": {
+        "description": "query opentsdb",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Monitoring data query",
+        "operationId": "oentsdbquery",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "start",
+                "queries"
+              ],
+              "properties": {
+                "queries": {
+                  "description": "in: body",
+                  "type": "string",
+                  "x-go-name": "Queries"
+                },
+                "start": {
+                  "description": "in: body",
+                  "type": "string",
+                  "x-go-name": "Start"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/resources/tenants": {
+      "post": {
+        "description": "get tenant resources",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Tenant resource usage",
+        "operationId": "tenantResources",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "tenant_name"
+              ],
+              "properties": {
+                "tenant_name": {
+                  "description": "in: body",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-go-name": "TenantName"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/resources/tenants/sum": {
+      "get": {
+        "description": "get tenant resources",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get the number of tenants",
+        "operationId": "sumTenants",
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/show": {
+      "get": {
+        "description": "show api version",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Display the current api version information",
+        "operationId": "getApiVersion",
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants": {
+      "post": {
+        "description": "add tenant",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add tenant information",
+        "operationId": "addTenant",
+        "parameters": [
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "eid": {
+                  "description": "the eid\nin : body",
+                  "type": "string",
+                  "x-go-name": "Eid"
+                },
+                "tenant_id": {
+                  "description": "the tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "TenantID"
+                },
+                "tenant_name": {
+                  "description": "the tenant name\nin: body",
+                  "type": "string",
+                  "x-go-name": "TenantName"
+                },
+                "token": {
+                  "type": "string",
+                  "x-go-name": "Token"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/cloud-share": {
+      "post": {
+        "description": "share cloud    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Cloud City Sharing",
+        "operationId": "sharecloud",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "Image": {
+                  "$ref": "#/definitions/ImageShare"
+                },
+                "Slug": {
+                  "$ref": "#/definitions/SlugShare"
+                },
+                "kind": {
+                  "description": "Share type, app_slug／app_image\nin: body",
+                  "type": "string",
+                  "x-go-name": "Kind"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/code-check": {
+      "post": {
+        "description": "check  code    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "App code inspection",
+        "operationId": "checkCode",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "git_url",
+                "url_repos",
+                "check_type",
+                "code_version",
+                "git_project_id",
+                "code_from",
+                "service_id"
+              ],
+              "properties": {
+                "action": {
+                  "type": "string",
+                  "x-go-name": "Action"
+                },
+                "check_type": {
+                  "description": "Detection type, \"first_check\"\nin: body",
+                  "type": "string",
+                  "x-go-name": "CheckType"
+                },
+                "code_from": {
+                  "description": "Git source, \"gitlab_manual\"\nin: body",
+                  "type": "string",
+                  "x-go-name": "CodeFrom"
+                },
+                "code_version": {
+                  "description": "Code branch\nin: body",
+                  "type": "string",
+                  "x-go-name": "CodeVersion"
+                },
+                "git_project_id": {
+                  "description": "git project id, 0\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "GitProjectID"
+                },
+                "git_url": {
+                  "description": "Git branch details\nin: body",
+                  "type": "string",
+                  "x-go-name": "GitURL"
+                },
+                "service_id": {
+                  "description": "Application id\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceID"
+                },
+                "tenant_id": {
+                  "description": "Tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "TenantID"
+                },
+                "url_repos": {
+                  "description": "Git address\nin: body",
+                  "type": "string",
+                  "x-go-name": "URLRepos"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin": {
+      "post": {
+        "description": "create plugin",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Create plugin",
+        "operationId": "createPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "plugin_id",
+                "plugin_name"
+              ],
+              "properties": {
+                "build_model": {
+                  "description": "Build Mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "BuildModel"
+                },
+                "env_info": {
+                  "description": "in: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PluginDefaultENV"
+                  },
+                  "x-go-name": "EVNInfo"
+                },
+                "git_url": {
+                  "description": "Git address\nin: body",
+                  "type": "string",
+                  "x-go-name": "GitURL"
+                },
+                "image_local": {
+                  "description": "plugin gridworkz address\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageLocal"
+                },
+                "image_url": {
+                  "description": "Plugin docker address\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageURL"
+                },
+                "plugin_cmd": {
+                  "description": "Plugin startup command\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginCMD"
+                },
+                "plugin_id": {
+                  "description": "in: body",
+                  "type": "string",
+                  "x-go-name": "PluginID"
+                },
+                "plugin_info": {
+                  "description": "Plugin usage description\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginInfo"
+                },
+                "plugin_model": {
+                  "description": "Plugin Mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginModel"
+                },
+                "plugin_name": {
+                  "description": "in: body",
+                  "type": "string",
+                  "x-go-name": "PluginName"
+                },
+                "repo": {
+                  "description": "Git address with branch information\nin: body",
+                  "type": "string",
+                  "x-go-name": "Repo"
+                },
+                "tenant_id": {
+                  "description": "in: body",
+                  "type": "string",
+                  "x-go-name": "TenantID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin/{plugin_id}": {
+      "put": {
+        "description": "update plugin",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "The plugin is updated in full, but the pluginID and the tenant do not provide modification",
+        "operationId": "updatePlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "build_model": {
+                  "description": "Build Mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "BuildModel"
+                },
+                "git_url": {
+                  "description": "Git address\nin: body",
+                  "type": "string",
+                  "x-go-name": "GitURL"
+                },
+                "image_local": {
+                  "description": "Plugin gridworkz address\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageLocal"
+                },
+                "image_url": {
+                  "description": "Plugin docker address\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageURL"
+                },
+                "plugin_cmd": {
+                  "description": "Plugin startup command\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginCMD"
+                },
+                "plugin_info": {
+                  "description": "Plugin usage description\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginInfo"
+                },
+                "plugin_model": {
+                  "description": "Plugin Mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginModel"
+                },
+                "plugin_name": {
+                  "description": "Plugin name\nin: body",
+                  "type": "string",
+                  "x-go-name": "PluginName"
+                },
+                "repo": {
+                  "description": "Git address with branch information\nin: body",
+                  "type": "string",
+                  "x-go-name": "Repo"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete plugin",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Plugin delete",
+        "operationId": "deletePlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/build": {
+      "post": {
+        "description": "build plugin",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Build plugin",
+        "operationId": "buildPlugin",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "kind",
+                "deploy_version",
+                "info"
+              ],
+              "properties": {
+                "deploy_version": {
+                  "description": "Deployed version number\nin: body",
+                  "type": "string",
+                  "x-go-name": "DeployVersion"
+                },
+                "event_id": {
+                  "description": "the event id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "git_url": {
+                  "description": "Git address\nin: body",
+                  "type": "string",
+                  "x-go-name": "GitURL"
+                },
+                "image_url": {
+                  "description": "Mirror address\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageURL"
+                },
+                "info": {
+                  "description": "Version information, help select plug-in version\nin:body",
+                  "type": "string",
+                  "x-go-name": "Info"
+                },
+                "kind": {
+                  "description": "Plugin build type, image/dockerfile\nin: body",
+                  "type": "string",
+                  "x-go-name": "Kind"
+                },
+                "operator": {
+                  "description": "Operator\nin: body",
+                  "type": "string",
+                  "x-go-name": "Operator"
+                },
+                "repo_url": {
+                  "description": "Git address with version\nin: body",
+                  "type": "string",
+                  "x-go-name": "RepoURL"
+                },
+                "tenant_id": {
+                  "description": "Tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "TenantID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version": {
+      "get": {
+        "description": "all plugin versions",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get all build version information",
+        "operationId": "allPluginVersions",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version/{version_id}": {
+      "get": {
+        "description": "plugin version",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get information about a build version",
+        "operationId": "pluginVersion",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "VersionID",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete plugin version",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete a build version information",
+        "operationId": "deletePluginVersion",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "VersionID",
+            "name": "version_id",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/default-env": {
+      "put": {
+        "description": "update default env",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Update plugin default variables, support batch",
+        "operationId": "updatedefaultenv",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "EVNInfo"
+              ],
+              "properties": {
+                "EVNInfo": {
+                  "description": "in: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PluginDefaultENV"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "add default env",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add plugin default variables",
+        "operationId": "adddefaultenv",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "EVNInfo"
+              ],
+              "properties": {
+                "EVNInfo": {
+                  "description": "in: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PluginDefaultENV"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/plugin/{plugin_id}/default-env/{env_name}": {
+      "delete": {
+        "description": "delete default env",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete plugin default variables",
+        "operationId": "deletedefaultenv",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "PluginID",
+            "name": "plugin_id",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ENVName",
+            "description": "Configuration Item Name",
+            "name": "env_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/resources": {
+      "get": {
+        "description": "get tenant resources",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Specified tenant resource usage",
+        "operationId": "singletenantResources",
+        "parameters": [
+          {
+            "type": "string",
+            "description": "tenant name",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services": {
+      "get": {
+        "description": "get services info in tenant    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get all application information of the tenant",
+        "operationId": "getServiceInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "create service     ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Create Application",
+        "operationId": "createService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "service_alias"
+              ],
+              "properties": {
+                "category": {
+                  "description": "Service category: application,cache,store\nin: body",
+                  "type": "string",
+                  "x-go-name": "Category"
+                },
+                "code_from": {
+                  "description": "Code source: gitlab,github\nin: body",
+                  "type": "string",
+                  "x-go-name": "CodeFrom"
+                },
+                "comment": {
+                  "description": "Service description\nin: body",
+                  "type": "string",
+                  "x-go-name": "Comment"
+                },
+                "container_cmd": {
+                  "description": "Container start command\nin: body",
+                  "type": "string",
+                  "x-go-name": "ContainerCMD"
+                },
+                "container_cpu": {
+                  "description": "Container CPU weight\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerCPU"
+                },
+                "container_env": {
+                  "description": "Container environment variables\nin: body",
+                  "type": "string",
+                  "x-go-name": "ContainerEnv"
+                },
+                "container_memory": {
+                  "description": "Maximum memory of the container\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerMemory"
+                },
+                "depend_ids": {
+                  "description": "Dependency id, format: []struct TenantServiceRelation\nin: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TenantServiceRelation"
+                  },
+                  "x-go-name": "DependIDs"
+                },
+                "deploy_version": {
+                  "description": "Deployment version\nin: body",
+                  "type": "string",
+                  "x-go-name": "DeployVersion"
+                },
+                "envs_info": {
+                  "description": "Environmental variable information, format: []struct TenantServiceEnvVar\nin: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TenantServiceEnvVar"
+                  },
+                  "x-go-name": "EnvsInfo"
+                },
+                "event_id": {
+                  "description": "Latest operation ID\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "extend_method": {
+                  "description": "Expansion method; 0: stateless; 1: stateful; 2: partition\nin: body",
+                  "type": "string",
+                  "x-go-name": "ExtendMethod"
+                },
+                "host_path": {
+                  "description": "Host Directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "HostPath"
+                },
+                "image_name": {
+                  "description": "Mirror name\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageName"
+                },
+                "namespace": {
+                  "description": "Mirror source\nin: body",
+                  "type": "string",
+                  "x-go-name": "Namespace"
+                },
+                "node_label": {
+                  "description": "Node label, format: v1,v2\nin: body",
+                  "type": "string",
+                  "x-go-name": "NodeLabel"
+                },
+                "operator": {
+                  "description": "Operator\nin: body",
+                  "type": "string",
+                  "x-go-name": "Operator"
+                },
+                "port_type": {
+                  "description": "Port type，one_outer;dif_protocol;multi_outer\nin: body",
+                  "type": "string",
+                  "x-go-name": "PortType"
+                },
+                "ports_info": {
+                  "description": "Port information, format: []struct TenantServicesPort\nin: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TenantServicesPort"
+                  },
+                  "x-go-name": "PortsInfo"
+                },
+                "replicas": {
+                  "description": "Number of nodes\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Replicas"
+                },
+                "service_alias": {
+                  "description": "Service alias\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceAlias"
+                },
+                "service_id": {
+                  "description": "Application id\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceID"
+                },
+                "service_key": {
+                  "description": "Service key\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceKey"
+                },
+                "service_label": {
+                  "description": "Apply label, value\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceLabel"
+                },
+                "service_origin": {
+                  "description": "Service creation type cloud cloud city service, assistant cloud help service\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceOrigin"
+                },
+                "service_type": {
+                  "description": "Service Type\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceType"
+                },
+                "service_version": {
+                  "description": "Service version\nin: body",
+                  "type": "string",
+                  "x-go-name": "ServiceVersion"
+                },
+                "tenant_id": {
+                  "description": "Tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "TenantID"
+                },
+                "update_time": {
+                  "description": "Update time\nin: body",
+                  "x-go-name": "UpdateTime"
+                },
+                "volume_mount_path": {
+                  "description": "Container mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumeMountPath"
+                },
+                "volume_path": {
+                  "description": "Volume name\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumePath"
+                },
+                "volume_type": {
+                  "description": "Shared type shared, exclusive\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumeType"
+                },
+                "volumes_info": {
+                  "description": "Persistent directory information, format: []struct TenantServiceVolume\nin: body",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TenantServiceVolume"
+                  },
+                  "x-go-name": "VolumesInfo"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}": {
+      "get": {
+        "description": "get service info    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get application information",
+        "operationId": "getService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "put": {
+        "description": "update service     ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "App Update",
+        "operationId": "updateService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "container_cmd": {
+                  "description": "Container start command\nin: body",
+                  "type": "string",
+                  "x-go-name": "ContainerCMD"
+                },
+                "container_memory": {
+                  "description": "Maximum memory of the container\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerMemory"
+                },
+                "image_name": {
+                  "description": "Mirror name\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageName"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete service",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete App",
+        "operationId": "deleteService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/build": {
+      "post": {
+        "description": "service build    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Application Build",
+        "operationId": "serviceBuild",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "kind",
+                "deploy_version"
+              ],
+              "properties": {
+                "action": {
+                  "description": "Follow-up action, one-click deployment based on this value, if no value is passed, only construction will be performed by default\nin: body",
+                  "type": "string",
+                  "x-go-name": "Action"
+                },
+                "deploy_version": {
+                  "description": "Deployed version number\nin: body",
+                  "type": "string",
+                  "x-go-name": "DeployVersion"
+                },
+                "envs": {
+                  "description": "Variable\nin: body",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "x-go-name": "ENVS"
+                },
+                "event_id": {
+                  "description": "the event id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "image_url": {
+                  "description": "Mirror address\nin: body",
+                  "type": "string",
+                  "x-go-name": "ImageURL"
+                },
+                "kind": {
+                  "description": "Application Build Type\nin: body",
+                  "type": "string",
+                  "x-go-name": "Kind"
+                },
+                "operator": {
+                  "description": "Operator\nin: body",
+                  "type": "string",
+                  "x-go-name": "Operator"
+                },
+                "repo_url": {
+                  "description": "Git address\nin: body",
+                  "type": "string",
+                  "x-go-name": "RepoURL"
+                },
+                "service_alias": {
+                  "type": "string",
+                  "x-go-name": "ServiceAlias"
+                },
+                "tenant_name": {
+                  "type": "string",
+                  "x-go-name": "TenantName"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/dependency": {
+      "post": {
+        "description": "add dependency    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Increase application dependencies",
+        "operationId": "addDependency",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "dep_service_id"
+              ],
+              "properties": {
+                "dep_order": {
+                  "description": "Unknown, default to 1, but not necessary \nin: body",
+                  "type": "string",
+                  "x-go-name": "DepOrder"
+                },
+                "dep_service_id": {
+                  "description": "Dependent application id\nin: body",
+                  "type": "string",
+                  "x-go-name": "DepServiceID"
+                },
+                "dep_service_type": {
+                  "description": "The type of application to be relied on. You need to pass a value when you add it, and you don't need to pass a value when you delete \nin: body",
+                  "type": "string",
+                  "x-go-name": "DepServiceType"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete dependency    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete application dependencies",
+        "operationId": "deleteDependency",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "dep_service_id"
+              ],
+              "properties": {
+                "dep_order": {
+                  "description": "Unknown, default to 1, but not necessary \nin: body",
+                  "type": "string",
+                  "x-go-name": "DepOrder"
+                },
+                "dep_service_id": {
+                  "description": "Dependent application id\nin: body",
+                  "type": "string",
+                  "x-go-name": "DepServiceID"
+                },
+                "dep_service_type": {
+                  "description": "The type of application to be relied on. You need to pass a value when you add it, and you don't need to pass a value when you delete \nin: body",
+                  "type": "string",
+                  "x-go-name": "DepServiceType"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/depvolumes": {
+      "get": {
+        "description": "get depvolumes",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get the storage that the application depends on (V2.1 supports multiple types of storage)",
+        "operationId": "getDepVolumes",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "add volume dependency      ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Increase application persistence dependency (V2.1 supports multiple types of storage)",
+        "operationId": "addDepVolume",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "depend_service_id",
+                "volume_path",
+                "volume_name"
+              ],
+              "properties": {
+                "depend_service_id": {
+                  "description": "Dependent service id\nin: body",
+                  "type": "string",
+                  "x-go-name": "DependServiceID"
+                },
+                "volume_name": {
+                  "description": "Dependent storage name\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumeName"
+                },
+                "volume_path": {
+                  "description": "Container mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumePath"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete volume dependency    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete application persistent dependencies (V2.1 supports multiple types of storage)",
+        "operationId": "delDepVolume",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "depend_service_id",
+                "volume_name"
+              ],
+              "properties": {
+                "depend_service_id": {
+                  "description": "Dependent service id\nin: body",
+                  "type": "string",
+                  "x-go-name": "DependServiceID"
+                },
+                "volume_name": {
+                  "description": "Dependent storage name\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumeName"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/env": {
+      "post": {
+        "description": "add env var    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Increase environment variables",
+        "operationId": "addEnv",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "env_name"
+              ],
+              "properties": {
+                "container_port": {
+                  "description": "Port\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerPort"
+                },
+                "env_name": {
+                  "description": "Variable name\nin: body",
+                  "type": "string",
+                  "x-go-name": "AttrName"
+                },
+                "env_value": {
+                  "description": "Variable value, you need to pass the value when you add it, you don't need to pass it when you delete \nin: body",
+                  "type": "string",
+                  "x-go-name": "AttrValue"
+                },
+                "is_change": {
+                  "description": "Can you modify \nin: body",
+                  "type": "boolean",
+                  "x-go-name": "IsChange"
+                },
+                "name": {
+                  "description": "name\nin: body",
+                  "type": "string",
+                  "x-go-name": "Name"
+                },
+                "scope": {
+                  "description": "Scope of application: inner or outer or both\nin: body",
+                  "type": "string",
+                  "x-go-name": "Scope"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete env var    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete environment variables",
+        "operationId": "deleteEnv",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "env_name"
+              ],
+              "properties": {
+                "container_port": {
+                  "description": "Port\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerPort"
+                },
+                "env_name": {
+                  "description": "Variable name\nin: body",
+                  "type": "string",
+                  "x-go-name": "AttrName"
+                },
+                "env_value": {
+                  "description": "Variable value, you need to pass the value when you add it, you don't need to pass it when you delete \nin: body",
+                  "type": "string",
+                  "x-go-name": "AttrValue"
+                },
+                "is_change": {
+                  "description": "Can you modify \nin: body",
+                  "type": "boolean",
+                  "x-go-name": "IsChange"
+                },
+                "name": {
+                  "description": "name\nin: body",
+                  "type": "string",
+                  "x-go-name": "Name"
+                },
+                "scope": {
+                  "description": "Scope of application: inner or outer or both\nin: body",
+                  "type": "string",
+                  "x-go-name": "Scope"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/event-log": {
+      "post": {
+        "description": "get log by level",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get the operation log of the specified operation",
+        "operationId": "logByAction",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "level",
+                "event_id"
+              ],
+              "properties": {
+                "event_id": {
+                  "description": "eventID\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "level": {
+                  "description": "Log level info/debug/error\nin: body",
+                  "type": "string",
+                  "x-go-name": "Level"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/horizontal": {
+      "put": {
+        "description": "service horizontal    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Apply horizontal scaling",
+        "operationId": "horizontalService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id"
+              ],
+              "properties": {
+                "event_id": {
+                  "description": "the event id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "node_num": {
+                  "description": "Expansion amount\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "NodeNUM"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/language": {
+      "post": {
+        "description": "set language    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Set application language",
+        "operationId": "setLanguage",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "language"
+              ],
+              "properties": {
+                "event_id": {
+                  "description": "the tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "language": {
+                  "description": "the language\nin: body",
+                  "type": "string",
+                  "x-go-name": "Language"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/log": {
+      "post": {
+        "description": "get last x lines logs",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get the latest specified number of logs",
+        "operationId": "lastLinesLogs",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "lines"
+              ],
+              "properties": {
+                "lines": {
+                  "description": "Rows\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Lines"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/log-file": {
+      "get": {
+        "description": "get log list",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get application log list",
+        "operationId": "logList",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/log-file/{file_name}": {
+      "get": {
+        "description": "get log file",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Download application specific log",
+        "operationId": "logFile",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "FileName",
+            "name": "file_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/log-instance": {
+      "get": {
+        "description": "get log socket",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get application log web-socket instance",
+        "operationId": "logSocket",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/node-label": {
+      "post": {
+        "description": "add node label    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add node label",
+        "operationId": "addNodeLabel",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "label_values"
+              ],
+              "properties": {
+                "label_values": {
+                  "description": "Label value, the format is \"[v1, v2, v3]\"\nin: body",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-go-name": "LabelValues"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete node label    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete node label",
+        "operationId": "deleteNodeLabel",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "label_values"
+              ],
+              "properties": {
+                "label_values": {
+                  "description": "Label value, the format is \"[v1, v2, v3]\"\nin: body",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-go-name": "LabelValues"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/plugin": {
+      "put": {
+        "description": "update plugin setting",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Update plugin settings",
+        "operationId": "updatePluginSet",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "description": "tenant name",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "get plugin setting",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get plug-in settings",
+        "operationId": "getPluginSet",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "description": "tenant name",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/plugin/{plugin_id}": {
+      "post": {
+        "description": "delete plugin relation",
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Remove plugin dependencies",
+        "operationId": "deletePluginRelation",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "description": "tenant name",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/pods": {
+      "get": {
+        "description": "get pods info      ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get pods information",
+        "operationId": "getPodsInfo",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/ports": {
+      "put": {
+        "description": "update port    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Update application port information",
+        "operationId": "updatePort",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Port": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TenantServicesPort"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "add port    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add an application port, the internal and external options are disabled by default, and the corresponding interface needs to be enabled",
+        "operationId": "addPort",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "Port": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/TenantServicesPort"
+                  }
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}": {
+      "delete": {
+        "description": "delete port    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete port variables",
+        "operationId": "deletePort",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Port",
+            "description": "Container Port",
+            "name": "port",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/inner": {
+      "put": {
+        "description": "add port    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Switch internal services, the application does not need to restart, it will take effect automatically",
+        "operationId": "PortInnerController",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Port",
+            "name": "port",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "operation"
+              ],
+              "properties": {
+                "operation": {
+                  "description": "Operation value `close` or `open`\nin: body",
+                  "type": "string",
+                  "x-go-name": "Operation"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/outer": {
+      "put": {
+        "description": "add port    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Switch ports to external services, the application will take effect automatically without restarting",
+        "operationId": "PortOuterController",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Port",
+            "name": "port",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "operation"
+              ],
+              "properties": {
+                "operation": {
+                  "description": "Operation value `close` or `open`\nin: body",
+                  "type": "string",
+                  "x-go-name": "Operation"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/probe": {
+      "put": {
+        "description": "update probe    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Update application probe information, *note that this is a full update",
+        "operationId": "updateProbe",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "probe_id"
+              ],
+              "properties": {
+                "cmd": {
+                  "description": "Run command\nin: body",
+                  "type": "string",
+                  "x-go-name": "Cmd"
+                },
+                "failure_threshold": {
+                  "description": "Marked as the number of failed tests\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "FailureThreshold"
+                },
+                "http_header": {
+                  "description": "http request header,key=value,key2=value2\nin: body",
+                  "type": "string",
+                  "x-go-name": "HTTPHeader"
+                },
+                "initial_delay_second": {
+                  "description": "Initialization waiting time, default is 1\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "InitialDelaySecond"
+                },
+                "is_used": {
+                  "description": "Whether to enable \nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "IsUsed"
+                },
+                "mode": {
+                  "description": "mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "Mode"
+                },
+                "path": {
+                  "description": "path\nin: body",
+                  "type": "string",
+                  "x-go-name": "Path"
+                },
+                "period_second": {
+                  "description": "Check interval time, default is 3\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "PeriodSecond"
+                },
+                "port": {
+                  "description": "Port, default is 80\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Port"
+                },
+                "probe_id": {
+                  "description": "Probe id\nin: body",
+                  "type": "string",
+                  "x-go-name": "ProbeID"
+                },
+                "scheme": {
+                  "description": "mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "Scheme"
+                },
+                "success_threshold": {
+                  "description": "Marked as the number of successful detections\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "SuccessThreshold"
+                },
+                "timeout_second": {
+                  "description": "Detection timeout, default is 30\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "TimeoutSecond"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "add probe    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add Application Probe",
+        "operationId": "addProbe",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "probe_id"
+              ],
+              "properties": {
+                "cmd": {
+                  "description": "Run command\nin: body",
+                  "type": "string",
+                  "x-go-name": "Cmd"
+                },
+                "failure_threshold": {
+                  "description": "Marked as the number of failed tests\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "FailureThreshold"
+                },
+                "http_header": {
+                  "description": "http request header,key=value,key2=value2\nin: body",
+                  "type": "string",
+                  "x-go-name": "HTTPHeader"
+                },
+                "initial_delay_second": {
+                  "description": "Initialization waiting time, default is 1\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "InitialDelaySecond"
+                },
+                "is_used": {
+                  "description": "Whether to enable \nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "IsUsed"
+                },
+                "mode": {
+                  "description": "mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "Mode"
+                },
+                "path": {
+                  "description": "path\nin: body",
+                  "type": "string",
+                  "x-go-name": "Path"
+                },
+                "period_second": {
+                  "description": "Check interval time, default is 3\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "PeriodSecond"
+                },
+                "port": {
+                  "description": "Port, default is 80\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Port"
+                },
+                "probe_id": {
+                  "description": "Probe id\nin: body",
+                  "type": "string",
+                  "x-go-name": "ProbeID"
+                },
+                "scheme": {
+                  "description": "mode\nin: body",
+                  "type": "string",
+                  "x-go-name": "Scheme"
+                },
+                "success_threshold": {
+                  "description": "Marked as the number of successful detections\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "SuccessThreshold"
+                },
+                "timeout_second": {
+                  "description": "Detection timeout, default is 30\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "TimeoutSecond"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete probe    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete Application Probe",
+        "operationId": "deleteProbe",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "probe_id"
+              ],
+              "properties": {
+                "probe_id": {
+                  "description": "Probe id\nin: body",
+                  "type": "string",
+                  "x-go-name": "ProbeID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/restart": {
+      "post": {
+        "description": "restart service    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Restart application",
+        "operationId": "restartService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id"
+              ],
+              "properties": {
+                "event_id": {
+                  "description": "the tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/rollback": {
+      "post": {
+        "description": "service rollback    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "App version rollback",
+        "operationId": "rollback",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "deploy_version"
+              ],
+              "properties": {
+                "deploy_version": {
+                  "description": "The version number to roll back to\nin: body",
+                  "type": "string",
+                  "x-go-name": "DeployVersion"
+                },
+                "event_id": {
+                  "description": "event_id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "operator": {
+                  "description": "Operator\nin: body",
+                  "type": "string",
+                  "x-go-name": "Operator"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/service-label": {
+      "put": {
+        "description": "delete service label    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Update application tags",
+        "operationId": "updateServiceLabel",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "label_values"
+              ],
+              "properties": {
+                "label_values": {
+                  "description": "Tag value, in the format \"v1\"\nin: bod",
+                  "type": "string",
+                  "x-go-name": "LabelValues"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "add service label    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add application tag",
+        "operationId": "addServiceLabel",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "label_values"
+              ],
+              "properties": {
+                "label_values": {
+                  "description": "Tag value, in the format \"v1\"\nin: bod",
+                  "type": "string",
+                  "x-go-name": "LabelValues"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/start": {
+      "post": {
+        "description": "start service    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Start application",
+        "operationId": "startService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id"
+              ],
+              "properties": {
+                "event_id": {
+                  "description": "the tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/status": {
+      "get": {
+        "description": "get service status",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get application status",
+        "operationId": "serviceStatus",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/stop": {
+      "post": {
+        "description": "stop service    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Close application",
+        "operationId": "stopService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id"
+              ],
+              "properties": {
+                "event_id": {
+                  "description": "the tenant id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/upgrade": {
+      "post": {
+        "description": "upgrade service    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Upgrade Application",
+        "operationId": "upgradeService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id",
+                "deploy_version"
+              ],
+              "properties": {
+                "deploy_version": {
+                  "description": "Version number\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "DeployVersion"
+                },
+                "event_id": {
+                  "description": "the event id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                },
+                "operator": {
+                  "description": "Operator\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "Operator"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/vertical": {
+      "put": {
+        "description": "service vertical    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Apply vertical scaling",
+        "operationId": "verticalService",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "event_id"
+              ],
+              "properties": {
+                "container_cpu": {
+                  "description": "Number of cpus\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerCPU"
+                },
+                "container_memory": {
+                  "description": "Memory size\nin: body",
+                  "type": "integer",
+                  "format": "int64",
+                  "x-go-name": "ContainerMemory"
+                },
+                "event_id": {
+                  "description": "the event id\nin: body",
+                  "type": "string",
+                  "x-go-name": "EventID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/volume": {
+      "post": {
+        "description": "add volume    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Increase application persistent information",
+        "operationId": "addVolume",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "category",
+                "volume_path",
+                "host_path"
+              ],
+              "properties": {
+                "category": {
+                  "description": "Types of \"application;app_publish\"\nin: body",
+                  "type": "string",
+                  "x-go-name": "Category"
+                },
+                "host_path": {
+                  "description": "Host mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "HostPath"
+                },
+                "volume_path": {
+                  "description": "Container mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumePath"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete volume    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete application persistent information",
+        "operationId": "deleteVolume",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "category",
+                "volume_path"
+              ],
+              "properties": {
+                "category": {
+                  "description": "Types \"application;app_publish\"\nin: body",
+                  "type": "string",
+                  "x-go-name": "Category"
+                },
+                "volume_path": {
+                  "description": "Container mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumePath"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/volume-dependency": {
+      "post": {
+        "description": "add volume dependency      ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Increase application persistence dependency",
+        "operationId": "addVolumeDependency",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "depend_service_id",
+                "mnt_dir",
+                "mnt_name"
+              ],
+              "properties": {
+                "depend_service_id": {
+                  "description": "Dependent service id\nin: body",
+                  "type": "string",
+                  "x-go-name": "DependServiceID"
+                },
+                "mnt_dir": {
+                  "description": "Mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "MntDir"
+                },
+                "mnt_name": {
+                  "description": "The name of the directory in the mount container\nin: body",
+                  "type": "string",
+                  "x-go-name": "MntName"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "delete": {
+        "description": "delete volume dependency    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete application persistent dependencies",
+        "operationId": "deleteVolumeDependency",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "depend_service_id"
+              ],
+              "properties": {
+                "depend_service_id": {
+                  "description": "Dependent service id\nin: body",
+                  "type": "string",
+                  "x-go-name": "DependServiceID"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/volumes": {
+      "get": {
+        "description": "get volumes",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get all application storage, including dependent storage (V2.1 supports multiple types of storage)",
+        "operationId": "getVolumes",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      },
+      "post": {
+        "description": "add volume    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Add application persistent information (V2.1 supports multiple types of storage)",
+        "operationId": "addVolumes",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "schema": {
+              "type": "object",
+              "required": [
+                "category",
+                "volume_path",
+                "volume_type",
+                "volume_name"
+              ],
+              "properties": {
+                "category": {
+                  "description": "Types \"application;app_publish\"\nin: body",
+                  "type": "string",
+                  "x-go-name": "Category"
+                },
+                "volume_name": {
+                  "description": "Storage name (unique to the same application)\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumeName"
+                },
+                "volume_path": {
+                  "description": "Container mount directory\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumePath"
+                },
+                "volume_type": {
+                  "description": "Storage type (share, local, tmpfs)\nin: body",
+                  "type": "string",
+                  "x-go-name": "VolumeType"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services/{service_alias}/volumes/{volume_name}": {
+      "delete": {
+        "description": "delete volume    ",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Delete application persistent information (V2.1 supports multiple types of storage)",
+        "operationId": "deleteVolumes",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "ServiceAlias",
+            "name": "service_alias",
+            "in": "path",
+            "required": true
+          },
+          {
+            "type": "string",
+            "x-go-name": "VolumeName",
+            "description": "Storage Name",
+            "name": "volume_name",
+            "in": "path",
+            "required": true
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    },
+    "/v2/tenants/{tenant_name}/services_status": {
+      "post": {
+        "description": "get service statuslist",
+        "consumes": [
+          "application/json",
+          "application/x-protobuf"
+        ],
+        "produces": [
+          "application/json",
+          "application/xml"
+        ],
+        "tags": [
+          "v2"
+        ],
+        "summary": "Get application status",
+        "operationId": "serviceStatuslist",
+        "parameters": [
+          {
+            "type": "string",
+            "x-go-name": "TenantName",
+            "name": "tenant_name",
+            "in": "path",
+            "required": true
+          },
+          {
+            "name": "Body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "required": [
+                "service_ids"
+              ],
+              "properties": {
+                "service_ids": {
+                  "description": "A list of service IDs that need to get the status. If not specified, return the status of all applications in the tenant\nin: body",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "x-go-name": "ServiceIDs"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "default": {
+            "description": "Uniform return format",
+            "schema": {
+              "$ref": "#/responses/commandResponse"
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "ImageShare": {
+      "description": "ImageShare image types",
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "x-go-name": "Action"
+        },
+        "app_version": {
+          "type": "string",
+          "x-go-name": "APPVersion"
+        },
+        "dest": {
+          "type": "string",
+          "x-go-name": "Dest"
+        },
+        "event_id": {
+          "type": "string",
+          "x-go-name": "EventID"
+        },
+        "image": {
+          "type": "string",
+          "x-go-name": "Image"
+        },
+        "is_outer": {
+          "type": "boolean",
+          "x-go-name": "IsOuter"
+        },
+        "service_key": {
+          "type": "string",
+          "x-go-name": "ServiceKey"
+        },
+        "share_id": {
+          "type": "string",
+          "x-go-name": "ShareID"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/api/model"
+    },
+    "PluginDefaultENV": {
+      "description": "PluginDefaultENV plugin default environment variable",
+      "type": "object",
+      "required": [
+        "env_name",
+        "env_value"
+      ],
+      "properties": {
+        "env_name": {
+          "description": "Configuration item name\nin: path",
+          "type": "string",
+          "x-go-name": "ENVName"
+        },
+        "env_value": {
+          "description": "Configuration item value\nin: path",
+          "type": "string",
+          "x-go-name": "ENVValue"
+        },
+        "plugin_id": {
+          "description": "Corresponding plugin id\nin: path",
+          "type": "string",
+          "x-go-name": "PluginID"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/api/model"
+    },
+    "SlugShare": {
+      "description": "SlugShare Slug Types",
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "x-go-name": "Action"
+        },
+        "app_version": {
+          "type": "string",
+          "x-go-name": "APPVersion"
+        },
+        "deploy_version": {
+          "type": "string",
+          "x-go-name": "DeployVersion"
+        },
+        "dest": {
+          "type": "string",
+          "x-go-name": "Dest"
+        },
+        "event_id": {
+          "type": "string",
+          "x-go-name": "EventID"
+        },
+        "is_outer": {
+          "type": "boolean",
+          "x-go-name": "IsOuter"
+        },
+        "service_id": {
+          "type": "string",
+          "x-go-name": "ServiceID"
+        },
+        "service_key": {
+          "type": "string",
+          "x-go-name": "ServiceKey"
+        },
+        "share_id": {
+          "type": "string",
+          "x-go-name": "ShareID"
+        },
+        "tenant_id": {
+          "type": "string",
+          "x-go-name": "TenantID"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/api/model"
+    },
+    "TenantServiceEnvVar": {
+      "description": "TenantServiceEnvVar application environment variable",
+      "type": "object",
+      "properties": {
+        "CreatedAt": {},
+        "ID": {
+          "type": "integer",
+          "format": "uint64"
+        },
+        "attr_name": {
+          "type": "string",
+          "x-go-name": "AttrName"
+        },
+        "attr_value": {
+          "type": "string",
+          "x-go-name": "AttrValue"
+        },
+        "container_port": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ContainerPort"
+        },
+        "is_change": {
+          "type": "boolean",
+          "x-go-name": "IsChange"
+        },
+        "name": {
+          "type": "string",
+          "x-go-name": "Name"
+        },
+        "scope": {
+          "type": "string",
+          "x-go-name": "Scope"
+        },
+        "service_id": {
+          "type": "string",
+          "x-go-name": "ServiceID"
+        },
+        "tenant_id": {
+          "type": "string",
+          "x-go-name": "TenantID"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/db/model"
+    },
+    "TenantServiceRelation": {
+      "description": "TenantServiceRelation application dependency",
+      "type": "object",
+      "properties": {
+        "CreatedAt": {},
+        "ID": {
+          "type": "integer",
+          "format": "uint64"
+        },
+        "dep_order": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "DependOrder"
+        },
+        "dep_service_type": {
+          "type": "string",
+          "x-go-name": "DependServiceType"
+        },
+        "depend_service_id": {
+          "type": "string",
+          "x-go-name": "DependServiceID"
+        },
+        "service_id": {
+          "type": "string",
+          "x-go-name": "ServiceID"
+        },
+        "tenant_id": {
+          "type": "string",
+          "x-go-name": "TenantID"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/db/model"
+    },
+    "TenantServiceVolume": {
+      "description": "TenantServiceVolume application persistent record",
+      "type": "object",
+      "properties": {
+        "CreatedAt": {},
+        "ID": {
+          "type": "integer",
+          "format": "uint64"
+        },
+        "category": {
+          "description": "Service Type",
+          "type": "string",
+          "x-go-name": "Category"
+        },
+        "host_path": {
+          "description": "Host Address",
+          "type": "string",
+          "x-go-name": "HostPath"
+        },
+        "is_read_only": {
+          "description": "Is it read-only",
+          "type": "boolean",
+          "x-go-name": "IsReadOnly"
+        },
+        "service_id": {
+          "type": "string",
+          "x-go-name": "ServiceID"
+        },
+        "volume_name": {
+          "description": "Storage Name",
+          "type": "string",
+          "x-go-name": "VolumeName"
+        },
+        "volume_path": {
+          "description": "Mount Address",
+          "type": "string",
+          "x-go-name": "VolumePath"
+        },
+        "volume_type": {
+          "description": "Storage type (share, local, tmpfs)",
+          "type": "string",
+          "x-go-name": "VolumeType"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/db/model"
+    },
+    "TenantServicesPort": {
+      "description": "TenantServicesPort application port information",
+      "type": "object",
+      "properties": {
+        "ID": {
+          "type": "integer",
+          "format": "uint64"
+        },
+        "container_port": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "ContainerPort"
+        },
+        "is_inner_service": {
+          "type": "boolean",
+          "x-go-name": "IsInnerService"
+        },
+        "is_outer_service": {
+          "type": "boolean",
+          "x-go-name": "IsOuterService"
+        },
+        "mapping_port": {
+          "type": "integer",
+          "format": "int64",
+          "x-go-name": "MappingPort"
+        },
+        "port_alias": {
+          "type": "string",
+          "x-go-name": "PortAlias"
+        },
+        "protocol": {
+          "type": "string",
+          "x-go-name": "Protocol"
+        },
+        "service_id": {
+          "type": "string",
+          "x-go-name": "ServiceID"
+        },
+        "tenant_id": {
+          "type": "string",
+          "x-go-name": "TenantID"
+        }
+      },
+      "x-go-package": "github.com/gridworkz/kato/pkg/api/model"
+    },
+    "Values": {
+      "description": "It is typically used for query parameters and form values.\nUnlike in the http.Header map, the keys in a Values map\nare case-sensitive.",
+      "type": "object",
+      "title": "Values maps a string key to a list of values.",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      },
+      "x-go-package": "net/url"
+    }
+  },
+  "responses": {
+    "commandResponse": {
+      "description": "CommandResponse api unified return structure",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "bean": {
+            "description": "Single Resource Entity",
+            "type": "object",
+            "x-go-name": "Bean"
+          },
+          "list": {
+            "description": "Resource List",
+            "type": "object",
+            "x-go-name": "List"
+          },
+          "msg": {
+            "description": "API error message",
+            "type": "string",
+            "x-go-name": "Msg"
+          },
+          "number": {
+            "description": "Total number of data sets",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "ListAllNumber"
+          },
+          "page": {
+            "description": "Current page number",
+            "type": "integer",
+            "format": "int64",
+            "x-go-name": "Page"
+          },
+          "validation_error": {
+            "$ref": "#/definitions/Values"
+          }
+        }
+      }
+    }
+  }
+}

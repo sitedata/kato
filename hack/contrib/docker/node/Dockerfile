@@ -1,0 +1,6 @@
+FROM gridworkzapps/alpine:3.4
+ARG RELEASE_DESC
+ADD . /run
+ENV RELEASE_DESC=${RELEASE_DESC}
+EXPOSE 6100 6101 9125
+ENTRYPOINT ["/run/entrypoint.sh"]

@@ -1,0 +1,61 @@
+// KATO, Application Management Platform
+// Copyright (C) 2021 Gridworkz Co., Ltd.
+
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this 
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons 
+// to whom the Software is furnished to do so, subject to the following conditions:
+
+// The above copyright notice and this permission notice shall be included in all copies or 
+// substantial portions of the Software.
+
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, 
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+// ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+package region
+
+import (
+	"github.com/gridworkz/kato/api/util"
+	"github.com/gridworkz/kato/node/api/model"
+	utilhttp "github.com/gridworkz/kato/util/http"
+)
+
+//ClusterInterface cluster api
+type ClusterInterface interface {
+	GetClusterInfo() (*model.ClusterResource, *util.APIHandleError)
+	GetClusterHealth() (*utilhttp.ResponseBody, *util.APIHandleError)
+}
+
+func (r *regionImpl) Cluster() ClusterInterface {
+	return &cluster{prefix: "/v2/cluster", regionImpl: *r}
+}
+
+type cluster struct {
+	regionImpl
+	prefix string
+}
+
+func (c *cluster) GetClusterInfo() (*model.ClusterResource, *util.APIHandleError) {
+	var cr model.ClusterResource
+	var decode utilhttp.ResponseBody
+	decode.Bean = &cr
+	code, err := c.DoRequest(c.prefix, "GET", nil, &decode)
+	if err != nil {
+		return nil, handleErrAndCode(err, code)
+	}
+	return &cr, nil
+}
+
+func (c *cluster) GetClusterHealth() (*utilhttp.ResponseBody, *util.APIHandleError) {
+
+	var decode utilhttp.ResponseBody
+	code, err := c.DoRequest(c.prefix, "GET", nil, &decode)
+	if err != nil {
+		return nil, handleErrAndCode(err, code)
+	}
+	return &decode, nil
+}
