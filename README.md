@@ -9,11 +9,11 @@
 
 Kato is a cloud-native and easy-to-use cloud-native application management platform, the best practice of cloud-native application delivery, easy to use. Focus on application-centric concepts. Enabling enterprises to build cloud-native development clouds and cloud-native delivery clouds.
 
-<b>For enterprises:</b> Kato is an out-of-the-box cloud-native platform. With Kato, you can quickly complete the cloud-native transformation of enterprise R&D and delivery systems.
+<b>For enterprises</b> Kato is an out-of-the-box cloud-native platform. With Kato, you can quickly complete the cloud-native transformation of enterprise R&D and delivery systems.
 
-<b>For developers:</b> Based on Kato to develop, test, and operate and maintain enterprise business applications, get a full range of cloud native technical capabilities out of the box. Including but not limited to continuous integration, service governance, architecture support, multi-dimensional application observation, and traffic management.
+<b>For developers</b> Based on Kato to develop, test, and operate and maintain enterprise business applications, get a full range of cloud native technical capabilities out of the box. Including but not limited to continuous integration, service governance, architecture support, multi-dimensional application observation, and traffic management.
 
-<b>For delivery personnel:</b> Build a product version management system based on Kato and build a standardized customer delivery environment, so that the traditional delivery process can be automated, simplified and manageable.
+<b>For delivery personnel</b> Build a product version management system based on Kato and build a standardized customer delivery environment, so that the traditional delivery process can be automated, simplified and manageable.
 
 ## Value Proposition
 
@@ -43,7 +43,7 @@ Delivering services means continuous income. Business vendors need two capabilit
 
 In addition, with the help of [KatoStore](https://gridworkz.github.io/docs/enterprise-manager/enterprise/appcenter/add-app/)'s product (solution) display, online transaction, product management, online automated delivery, batch upgrade and other capabilities to help companies quickly realize transformation.
 
-#### Industry Integrators Integrate Industry Application Delivery
+#### Integrators Integrate Industry Application Delivery
 
 Industry integrators have to face both customers and suppliers. Kato gives industry integrators the ability to establish application delivery standards. Provide suppliers with Kato standard application access platform, and release the products to the component library. Industry integrators can select the appropriate product composition solution from the component library and deliver it to the customer environment with one click.
 
