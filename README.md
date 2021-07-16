@@ -1,15 +1,4 @@
-<img src="https://mew-bug-png">
-
-[![GitHub stars](https://img.shields.io/github/stars/gridworkz/kato.svg?style=flat-square)](https://github.com/gridworkz/kato/stargazers)
-![Kato version](https://img.shields.io/badge/version-v5.3-brightgreen.svg)
-[![GoDoc](https://godoc.org/github.com/gridworkz/kato?status.svg)](https://godoc.org/github.com/gridworkz/kato)
-
-[Project official website](http://www.gridworkz.com/kato) • [Document](https://www.gridworkz.com/kato/docs/)
-
-| ![notification](./docs/bell-outline-badge.svg) What is NEW!                                                                           |
-| ------------------------------------------------------------------------------------------------------------------------------------- |
-| July 05, 2021 ,Kato 5.3.1 version is officially released [View Release](https://mp.weixin.qq.com/s/KJRyEC6EFQIRy7nueSTVaA)        |
-| February 21, 2021 ,Kato 5.3.0 version is officially released [View Release](https://www.rainbond.com/docs/upgrade/5.3.0-upgrade/) |
+https://gridworkz.github.io/new-bug.png
 
 ## Kato First Time
 
@@ -23,58 +12,56 @@ Kato is a cloud-native and easy-to-use cloud-native application management platf
 
 <b>For delivery personnel:</b> Build a product version management system based on Kato and build a standardized customer delivery environment, so that the traditional delivery process can be automated, simplified and manageable.
 
-[I want to try](https://cloud.gridworkz.com/enterprise-server/trial)
+## Value Proposition
 
-### Value Proposition
-
-#### <b>Enterprise Cloud Native DevOps</b>
+### Enterprise Cloud Native DevOps
 
 Application-oriented cloud-native DevOps, integration of development, testing, production, operation and maintenance, does not require developers to have complex capabilities such as containers, Kubernetes, and is developer-friendly; provides the ability to continuously build cloud-native applications from source code or simple images, No intrusion, business continues to be published to the cloud; efficient automated operation and maintenance helps developers to efficiently manage highly available, secure and decentralized business systems.
 
-#### <b>Build B2B Software Delivery System </b>
+#### Build B2B Software Delivery System
 
--<b>Build an online multi-client continuous delivery system</b>
+#### Build an online multi-client continuous delivery system
 
 Traditional B2B delivery often invests a lot of manpower and time costs. Many customers, many customizations, and product version upgrades will bring challenges.
 
-(1). Kato builds an efficient development platform and produces standardized delivery products.
+1) Kato builds an efficient development platform and produces standardized delivery products.
 
-(2). Kato, as the basic platform of the customer environment, can complete the installation and continuous upgrade of the delivered products online.
+2) Kato, as the basic platform of the customer environment, can complete the installation and continuous upgrade of the delivered products online.
 
-(3). Connect all Kato terminals to [Gridstore](https://store.gridworkz.com). Manage customers online, manage customer delivery applications, and continuously upgrade in batches online.
+3) Connect all Kato terminals to [Gridstore](https://store.gridworkz.com). Manage customers online, manage customer delivery applications, and continuously upgrade in batches online.
 
--<b>Build an offline efficient delivery system</b>
+#### Build an offline efficient delivery system
 
 The uncertainty of the offline environment often means the continuous investment of manpower and the increase of communication costs, and it is more necessary to standardize the delivered products and continuous upgrade capabilities. The Kato development platform produces offline installation packages for standardized applications, which are manually imported into the offline Kato environment to be continuously upgraded.
 
-#### <b>Enterprises Transform from Software Delivery to Service Delivery</b>
+#### Enterprises Transform from Software Delivery to Service Delivery
 
 Delivering services means continuous income. Business vendors need two capabilities to provide continuous business services: obtaining strong operation and maintenance capabilities and continuous iterative capabilities to deliver services to customers. Kato enables business vendors to efficiently deliver multiple business systems, continuous development and integration of business systems for each customer, and automated operation and maintenance to ensure the availability of all businesses.
 
 In addition, with the help of [Gridstore](https://store.gridworkz.com)'s product (solution) display, online transaction, product management, online automated delivery, batch upgrade and other capabilities to help companies quickly realize transformation.
 
-#### <b>Industry Integrators Integrate Industry Application Delivery</b>
+#### Industry Integrators Integrate Industry Application Delivery
 
 Industry integrators have to face both customers and suppliers. Kato gives industry integrators the ability to establish application delivery standards. Provide suppliers with Kato standard application access platform, and release the products to the component library. Industry integrators can select the appropriate product composition solution from the component library and deliver it to the customer environment with one click.
 
 In addition, with the help of the product (solution) display and assembly capabilities of [Gridstore](https://store.gridworkz.com), the establishment of industry cloud application stores and the integration of industry IT solutions.
 
-#### <b>Enterprise Technology Center Construction</b>
+#### Enterprise Technology Center Construction
 
 Enterprise technology middle office includes technology middleware management and basic business modularization. Kato combines scalable component controllers to expand the unified management of cloud database, big data middleware, artificial intelligence middleware and other technical middleware infrastructure. Provide business middleware for continuous publishing and sharing, and accumulate business common modules. Basic capabilities serve enterprise business scenarios.
 
-#### <b>Kubernetes Multi-cloud Management</b>
+#### Kubernetes Multi-cloud Management
 
 Kubernetes technology is complex and difficult to get started; a large number of deployment, Statefulset, or Operator resource management are complex problems that directly use Kubernetes clusters. Kato's application-centric resource management model shields the complexity of Kubernetes, and all Kubernetes resources are handed over to Kato for orchestration and management.
 
-#### <b>Domestic and Easy-to-use Cloud Native PaaS</b>
+#### Domestic and Easy-to-use Cloud Native PaaS
 
 Kato has completed two-way authentication with localized computing bases represented by Loongson, Feiteng, and Kirin operating systems, enabling Kato to shield the differences in the underlying CPU architecture and operating system, and provide users with a unified localized business application management platform.
 
 ### Core Competence and Technology
 
 | Scenario | Main functions and capabilities | Core technology |
-| ---------------------------- | -------------------- -------------------------------------------------- ---------------------- | --------------------------- -------------------------------------------------- ------------------------------------------ |
+|----------------------------|--------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------|
 | Enterprise Cloud Native DevOps | Continuous Integration; Continuous Delivery; Built-in Microservice Architecture; Traffic Management; Application Full-Dimensional Monitoring; Unified Management of Heterogeneous Services; | Cloud Native CI/CD; Code To Image (No Dockerfile Required); Application-centric Abstract; ServiceMesh; application gateway; application monitoring; business general service governance framework. |
 | Build B2B software delivery system | Application model management; offline export of application models; synchronization of application models to the cloud; continuous application upgrades | cloud native application model abstraction (similar to [OAM](https://oam.dev/)); Multi-terminal delivery model conversion; application upgrade control; cross-cloud interconnection |
 | Enterprise transformation from software delivery to service delivery | Automated operation and maintenance; application one-click installation; application upgrade; traffic management | business self-recovery control; application model conversion; resource automation on-demand scheduling |
@@ -82,8 +69,8 @@ Kato has completed two-way authentication with localized computing bases represe
 | Kubernetes multi-cloud management | multi-cluster access; cluster monitoring view; automated scheduling | cluster automated access; public cloud Kubernetes service access; automated resource generation and maintenance. |
 | Domestic and easy-to-use cloud native PaaS | Support common domestic CPUs and operating systems, and support Windows operating systems to transition to domestic operating systems. | Heterogeneous resource scheduling; heterogeneous operating system application orchestration. |
 
-[Kato feature description](/docs/quick-start/edition/)
-[Kato Development Plan](/docs/quick-start/roadmap/)
+[Kato feature description](https://gridworkz.github.io/docs/quick-start/edition/)
+[Kato Development Plan](https://gridworkz.github.io/docs/quick-start/roadmap/)
 
 #### With Kato You Can:
 
@@ -96,13 +83,13 @@ Kato has completed two-way authentication with localized computing bases represe
 - Start Enterprise Technology Center Construction.
 - Enable Kubernetes multi-cloud management.
 
-[Read the Kato Detailed Introduction](/docs/quick-start/kato_overview/)
+[Read the Kato Detailed Introduction](https://gridworkz.github.io/docs/quick-start/kato_overview/)
 
 ## Quick Start
 
-1. [Quick installation of Kato cluster](/docs/quick-start/kato_install/)
-2. [Create the first application (component)](/docs/user-manual/app-creation/)
-3. [Build ServiceMesh microservice architecture](/docs/advanced-scenarios/micro/)
+1. [Quick installation of Kato cluster](https://gridworkz.github.io/docs/quick-start/kato_install/)
+2. [Create the first application (component)](https://gridworkz.github.io/docs/user-manual/app-creation/)
+3. [Build ServiceMesh microservice architecture](https://gridworkz.github.io/docs/advanced-scenarios/micro/)
 
 ## Participate in the Community
 
