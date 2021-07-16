@@ -30,7 +30,7 @@ Traditional B2B delivery often invests a lot of manpower and time costs. Many cu
 
 3) Connect all Kato terminals to [Gridstore](https://store.gridworkz.com). Manage customers online, manage customer delivery applications, and continuously upgrade in batches online.
 
-#### Build an offline efficient delivery system
+#### Build an Offline Efficient Delivery System
 
 The uncertainty of the offline environment often means the continuous investment of manpower and the increase of communication costs, and it is more necessary to standardize the delivered products and continuous upgrade capabilities. The Kato development platform produces offline installation packages for standardized applications, which are manually imported into the offline Kato environment to be continuously upgraded.
 
