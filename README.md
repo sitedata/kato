@@ -1,4 +1,7 @@
-![](https://gridworkz.github.io/new-bug.png)
+
+<p align="center">
+  ![](https://gridworkz.github.io/new-bug.png)
+</p>
 
 ## Kato First Time
 
