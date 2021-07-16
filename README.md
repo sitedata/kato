@@ -28,7 +28,7 @@ Traditional B2B delivery often invests a lot of manpower and time costs. Many cu
 
 2) Kato, as the basic platform of the customer environment, can complete the installation and continuous upgrade of the delivered products online.
 
-3) Connect all Kato terminals to [Gridstore](https://store.gridworkz.com). Manage customers online, manage customer delivery applications, and continuously upgrade in batches online.
+3) Connect all Kato terminals to [KatoStore](https://gridworkz.github.io/docs/enterprise-manager/enterprise/appcenter/add-app/). Manage customers online, manage customer delivery applications, and continuously upgrade in batches online.
 
 #### Build an Offline Efficient Delivery System
 
@@ -38,13 +38,13 @@ The uncertainty of the offline environment often means the continuous investment
 
 Delivering services means continuous income. Business vendors need two capabilities to provide continuous business services: obtaining strong operation and maintenance capabilities and continuous iterative capabilities to deliver services to customers. Kato enables business vendors to efficiently deliver multiple business systems, continuous development and integration of business systems for each customer, and automated operation and maintenance to ensure the availability of all businesses.
 
-In addition, with the help of [Gridstore](https://store.gridworkz.com)'s product (solution) display, online transaction, product management, online automated delivery, batch upgrade and other capabilities to help companies quickly realize transformation.
+In addition, with the help of [KatoStore](https://gridworkz.github.io/docs/enterprise-manager/enterprise/appcenter/add-app/)'s product (solution) display, online transaction, product management, online automated delivery, batch upgrade and other capabilities to help companies quickly realize transformation.
 
 #### Industry Integrators Integrate Industry Application Delivery
 
 Industry integrators have to face both customers and suppliers. Kato gives industry integrators the ability to establish application delivery standards. Provide suppliers with Kato standard application access platform, and release the products to the component library. Industry integrators can select the appropriate product composition solution from the component library and deliver it to the customer environment with one click.
 
-In addition, with the help of the product (solution) display and assembly capabilities of [Gridstore](https://store.gridworkz.com), the establishment of industry cloud application stores and the integration of industry IT solutions.
+In addition, with the help of the product (solution) display and assembly capabilities of [KatoStore](https://gridworkz.github.io/docs/enterprise-manager/enterprise/appcenter/add-app/), the establishment of industry cloud application stores and the integration of industry IT solutions.
 
 #### Enterprise Technology Center Construction
 
@@ -53,10 +53,6 @@ Enterprise technology middle office includes technology middleware management an
 #### Kubernetes Multi-cloud Management
 
 Kubernetes technology is complex and difficult to get started; a large number of deployment, Statefulset, or Operator resource management are complex problems that directly use Kubernetes clusters. Kato's application-centric resource management model shields the complexity of Kubernetes, and all Kubernetes resources are handed over to Kato for orchestration and management.
-
-#### Domestic and Easy-to-use Cloud Native PaaS
-
-Kato has completed two-way authentication with localized computing bases represented by Loongson, Feiteng, and Kirin operating systems, enabling Kato to shield the differences in the underlying CPU architecture and operating system, and provide users with a unified localized business application management platform.
 
 ### Core Competence and Technology
 
