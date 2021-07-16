@@ -1,4 +1,4 @@
-https://gridworkz.github.io/new-bug.png
+![](https://gridworkz.github.io/new-bug.png)
 
 ## Kato First Time
 
@@ -70,6 +70,7 @@ Kato has completed two-way authentication with localized computing bases represe
 | Domestic and easy-to-use cloud native PaaS | Support common domestic CPUs and operating systems, and support Windows operating systems to transition to domestic operating systems. | Heterogeneous resource scheduling; heterogeneous operating system application orchestration. |
 
 [Kato feature description](https://gridworkz.github.io/docs/quick-start/edition/)
+
 [Kato Development Plan](https://gridworkz.github.io/docs/quick-start/roadmap/)
 
 #### With Kato You Can:
@@ -107,12 +108,12 @@ If you are a user who is using Kato, and you have a deep understanding of Kato a
 
 The current warehouse is the core service implementation code of Kato data center. The project also includes the following sub-projects:
 
--[Kato-Console](https://github.com/gridworkz/kato-console) Kato console server project
--[Kato-Console-UI](https://github.com/gridworkz/kato-ui) Kato console front-end project
--[Kato-Operator](https://github.com/gridworkz/kato-operator) Kato installation, operation and maintenance project
--[Kato-Builder](https://github.com/gridworkz/kato-builder) Kato source code build tool set
--[Kato-Docs](https://github.com/gridworkz/kato-docs) Kato documentation
+- [Kato-Console](https://github.com/gridworkz/kato-console) Kato console server project
+- [Kato-Console-UI](https://github.com/gridworkz/kato-ui) Kato console front-end project
+- [Kato-Operator](https://github.com/gridworkz/kato-operator) Kato installation, operation and maintenance project
+- [Kato-Builder](https://github.com/gridworkz/kato-builder) Kato source code build tool set
+- [Kato-Docs](https://github.com/gridworkz/kato-docs) Kato documentation
 
 ## License
 
-Kato follows MIT license，Details see[LICENSE](https://github.com/gridworkz/kato/blob/master/LICENSE) and [Licensing](https://github.com/gridworkz/kato/blob/master/Licensing.md)
+Kato follows MIT license
