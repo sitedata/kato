@@ -105,7 +105,7 @@ If you are a user who is using Kato, and you have a deep understanding of Kato a
 
 ## Related Repositories
 
-The current warehouse is the core service implementation code of Kato data center. The project also includes the following sub-projects:
+The current Kato repository is the core service implementation code of the Kato data center. The project also includes the following sub-projects:
 
 - [Kato-Console](https://github.com/gridworkz/kato-console) Kato console server project
 - [Kato-Console-UI](https://github.com/gridworkz/kato-ui) Kato console front-end project
