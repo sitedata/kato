@@ -19,6 +19,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -53,10 +54,10 @@ func NewCmdService() cli.Command {
 						Name:     "tenantAlias,t",
 						Value:    "",
 						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						FilePath: GetTenantNamePath (),
 					},
 				},
-				Usage: "list show application services runtime detail info。For example <grctl service list -t gridworkz>",
+				Usage: "list show application services runtime detail info. For example <grctl service list -t gridworkz>",
 				Action: func(c *cli.Context) error {
 					//logrus.Warn(conf.TenantNamePath)
 					Common(c)
@@ -70,7 +71,7 @@ func NewCmdService() cli.Command {
 						Name:     "tenantAlias,t",
 						Value:    "",
 						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						FilePath: GetTenantNamePath (),
 					},
 				},
 				Usage: "Get application service runtime detail info。For example <grctl service get <service_alias> -t gridworkz>",
@@ -91,7 +92,7 @@ func NewCmdService() cli.Command {
 						Name:     "tenantAlias,t",
 						Value:    "",
 						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						FilePath: GetTenantNamePath (),
 					},
 					cli.StringFlag{
 						Name:  "event_log_server",
@@ -115,7 +116,7 @@ func NewCmdService() cli.Command {
 						Name:     "tenantAlias,t",
 						Value:    "",
 						Usage:    "Specify the tenant alias",
-						FilePath: GetTenantNamePath(),
+						FilePath: GetTenantNamePath (),
 					},
 					cli.StringFlag{
 						Name:  "event_log_server",
@@ -138,7 +139,7 @@ func NewCmdService() cli.Command {
 						Name:     "tenantAlias,t",
 						Value:    "",
 						Usage:    "Specify the tenant short id",
-						FilePath: GetTenantNamePath(),
+						FilePath: GetTenantNamePath (),
 					},
 					cli.StringFlag{
 						Name:  "event_log_server",
@@ -251,7 +252,7 @@ func stopTenantService(c *cli.Context) error {
 				return GetEventLogf(eventID, server)
 			}
 			if err != nil {
-				logrus.Error("Failed to stop application:" + err.Error())
+				logrus.Error("Failed to stop the application:" + err.Error())
 				return err
 			}
 		}
@@ -264,7 +265,7 @@ func startService(c *cli.Context) error {
 	//GET /v2/tenants/{tenant_name}/services/{service_alias}
 	//POST /v2/tenants/{tenant_name}/services/{service_alias}/stop
 
-	// gridworkz/gra564a1
+	// gridworkz / gra564a1
 	serviceAlias := c.Args().First()
 	tenantName := c.String("tenantAlias")
 	info := strings.Split(serviceAlias, "/")
@@ -295,7 +296,7 @@ func startService(c *cli.Context) error {
 	}
 	//err = region.StopService(service["service_id"].(string), service["deploy_version"].(string))
 	if err != nil {
-		logrus.Error("Failed to start application:" + err.Error())
+		logrus.Error("Failed to start the application:" + err.Error())
 		return err
 	}
 	fmt.Println("EventID:", eventID)
@@ -320,7 +321,7 @@ func stopService(c *cli.Context) error {
 	service, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Get()
 	handleErr(err)
 	if service == nil {
-		return errors.New("Service not exist:" + serviceAlias)
+		return errors.New("Service doesn't exist:" + serviceAlias)
 	}
 	_, err = clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Stop(eventID)
 	handleErr(err)
@@ -351,7 +352,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	service, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).Get()
 	handleErr(err)
 	if service == nil {
-		return errors.New("Service not exist:" + serviceAlias)
+		return errors.New("Service doesn't exist:" + serviceAlias)
 	}
 	deployInfo, err := clients.RegionClient.Tenants(tenantName).Services(serviceAlias).GetDeployInfo()
 	handleErr(err)
@@ -376,7 +377,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	serviceTable.AddHeaders("Name", "IP", "Port")
 	for serviceID := range deployInfo.Services {
 		if clients.K8SClient != nil {
-			service, _ := clients.K8SClient.CoreV1().Services(tenantID).Get(serviceID, metav1.GetOptions{})
+			service, _ := clients.K8SClient.CoreV1().Services(tenantID).Get(context.Background(), serviceID, metav1.GetOptions{})
 			if service != nil {
 				var ports string
 				if service.Spec.Ports != nil && len(service.Spec.Ports) > 0 {
@@ -398,7 +399,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 		epTable.AddHeaders("Name", "IP", "Port", "Protocol")
 		for epname := range deployInfo.Endpoints {
 			if clients.K8SClient != nil {
-				ep, _ := clients.K8SClient.CoreV1().Endpoints(tenantID).Get(epname, metav1.GetOptions{})
+				ep, _ := clients.K8SClient.CoreV1().Endpoints(tenantID).Get(context.Background(), epname, metav1.GetOptions{})
 				if ep != nil {
 					for i := range ep.Subsets {
 						ss := &ep.Subsets[i]
@@ -427,14 +428,14 @@ func showServiceDeployInfo(c *cli.Context) error {
 	ingressTable.AddHeaders("Name", "Host")
 	for ingressID := range deployInfo.Ingresses {
 		if clients.K8SClient != nil {
-			ingress, _ := clients.K8SClient.ExtensionsV1beta1().Ingresses(tenantID).Get(ingressID, metav1.GetOptions{})
+			ingress, _ := clients.K8SClient.ExtensionsV1beta1().Ingresses(tenantID).Get(context.Background(), ingressID, metav1.GetOptions{})
 			if ingress != nil {
 				for _, rule := range ingress.Spec.Rules {
 					ingressTable.AddRow(ingress.Name, rule.Host)
 				}
 			}
 		} else {
-			ingressTable.AddRow(ingressID, "-")
+			ingressTable.AddRow (ingressID, "-")
 		}
 	}
 	fmt.Println("------------Ingress------------")
@@ -444,7 +445,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 	for podID := range deployInfo.Pods {
 		i++
 		if clients.K8SClient != nil {
-			pod, err := clients.K8SClient.CoreV1().Pods(tenantID).Get(podID, metav1.GetOptions{})
+			pod, err := clients.K8SClient.CoreV1().Pods(tenantID).Get(context.Background(), podID, metav1.GetOptions{})
 			if err != nil {
 				return err
 			}
@@ -484,11 +485,11 @@ func showServiceDeployInfo(c *cli.Context) error {
 				}
 
 				claimName := vol.PersistentVolumeClaim.ClaimName
-				pvc, _ := clients.K8SClient.CoreV1().PersistentVolumeClaims(tenantID).Get(claimName, metav1.GetOptions{})
+				pvc, _ := clients.K8SClient.CoreV1().PersistentVolumeClaims(tenantID).Get(context.Background(), claimName, metav1.GetOptions{})
 				if pvc != nil {
 					pvn := pvc.Spec.VolumeName
 					volumeMount := name2Path[vol.Name]
-					pv, _ := clients.K8SClient.CoreV1().PersistentVolumes().Get(pvn, metav1.GetOptions{})
+					pv, _ := clients.K8SClient.CoreV1().PersistentVolumes().Get(context.Background(), pvn, metav1.GetOptions{})
 					if pv != nil {
 						switch {
 						case pv.Spec.HostPath != nil:
@@ -497,7 +498,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 							volumeTable.AddRow(volumeMount, "nfs", "server: "+pv.Spec.NFS.Server)
 							volumeTable.AddRow("", "", "path: "+pv.Spec.NFS.Path)
 						case pv.Spec.Glusterfs != nil:
-							volumeTable.AddRow(volumeMount, "nfs", "endpoints: "+pv.Spec.Glusterfs.EndpointsName)
+							volumeTable.AddRow(volumeMount, "glusterfs", "endpoints: "+pv.Spec.Glusterfs.EndpointsName)
 							volumeTable.AddRow("", "", "path: "+pv.Spec.Glusterfs.Path)
 							if pv.Spec.Glusterfs.EndpointsNamespace != nil {
 								volumeTable.AddRow("", "", "endpointsNamespace: "+*pv.Spec.Glusterfs.EndpointsNamespace)
@@ -528,7 +529,7 @@ func showServiceDeployInfo(c *cli.Context) error {
 			fmt.Println(containerTable.Render())
 		} else {
 			fmt.Printf("-------------------Pod_%d-----------------------\n", i)
-			tablepod := uitable.New()
+			tablepod: = uitable.New ()
 			tablepod.AddRow("PodName:", podID)
 			fmt.Println(tablepod)
 		}
@@ -565,8 +566,8 @@ func showTenantServices(ctx *cli.Context) error {
 	if services != nil {
 		runtable := termtables.CreateTable()
 		closedtable := termtables.CreateTable()
-		runtable.AddHeaders("Service alias", "Application status", "Deploy version", "Number of instances", "Memory footprint")
-		closedtable.AddHeaders("Service ID", "Service alias", "Application status", "Deploy version")
+		runtable.AddHeaders("service alias", "application status", "Deploy version", "number of instances", "memory usage")
+		closedtable.AddHeaders("service ID", "service alias", "application status", "Deploy version")
 		for _, service := range services {
 			if service.CurStatus != "closed" && service.CurStatus != "closing" && service.CurStatus != "undeploy" && service.CurStatus != "deploying" {
 				runtable.AddRow(service.ServiceAlias, service.CurStatus, service.DeployVersion, service.Replicas, fmt.Sprintf("%d Mb", service.ContainerMemory*service.Replicas))
@@ -574,9 +575,9 @@ func showTenantServices(ctx *cli.Context) error {
 				closedtable.AddRow(service.ServiceID, service.ServiceAlias, service.CurStatus, service.DeployVersion)
 			}
 		}
-		fmt.Println("Running application:")
+		fmt.Println("The running application:")
 		fmt.Println(runtable.Render())
-		fmt.Println("Apps that are not running:")
+		fmt.Println("Application not running:")
 		fmt.Println(closedtable.Render())
 	}
 	return nil
