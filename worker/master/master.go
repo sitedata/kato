@@ -27,8 +27,13 @@ import (
 	"github.com/gridworkz/kato/cmd/worker/option"
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/db/model"
+	"github.com/gridworkz/kato/pkg/common"
+	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
 	"github.com/gridworkz/kato/util/leader"
 	"github.com/gridworkz/kato/worker/appm/store"
+	mcontroller "github.com/gridworkz/kato/worker/master/controller"
+	"github.com/gridworkz/kato/worker/master/controller/helmapp"
+	"github.com/gridworkz/kato/worker/master/controller/thirdcomponent"
 	"github.com/gridworkz/kato/worker/master/podevent"
 	"github.com/gridworkz/kato/worker/master/volumes/provider"
 	"github.com/gridworkz/kato/worker/master/volumes/provider/lib/controller"
@@ -39,6 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 //Controller app runtime master controller
@@ -57,6 +63,8 @@ type Controller struct {
 	namespaceCPURequest *prometheus.GaugeVec
 	namespaceCPULimit   *prometheus.GaugeVec
 	pc                  *controller.ProvisionController
+	helmAppController   * helmapp.Controller
+	controllers         []mcontroller.Controller
 	isLeader            bool
 
 	kubeClient kubernetes.Interface
@@ -68,16 +76,11 @@ type Controller struct {
 	version      *version.Info
 	katosssc controller.Provisions
 	katosslc controller.Provisions
+	mgr          ctrl.Manager
 }
 
 //NewMasterController new master controller
-func NewMasterController(conf option.Config, kubecfg *rest.Config, store store.Storer) (*Controller, error) {
-	// kubecfg.RateLimiter = nil
-	kubeClient, err := kubernetes.NewForConfig(kubecfg)
-	if err != nil {
-		return nil, err
-	}
-
+func NewMasterController(conf option.Config, store store.Storer, kubeClient kubernetes.Interface, katoClient versioned.Interface, restConfig *rest.Config) (*Controller, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// The controller needs to know what the server version is because out-of-tree
@@ -103,14 +106,35 @@ func NewMasterController(conf option.Config, kubecfg *rest.Config, store store.S
 	}, serverVersion.GitVersion)
 	stopCh := make(chan struct{})
 
+	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
+		Scheme:           common.Scheme,
+		LeaderElection:   false,
+		LeaderElectionID: "controllers.kato.io",
+	})
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+	thirdcomponentController, err := thirdcomponent.Setup(ctx, mgr)
+	if err != nil {
+		cancel()
+		return nil, err
+	}
+
+	helmAppController := helmapp.NewController(ctx, stopCh, kubeClient, katoClient,
+		store.Informer().HelmApp, store.Lister().HelmApp, conf.Helm.RepoFile, conf.Helm.RepoCache, conf.Helm.RepoCache)
+
 	return &Controller{
 		conf: conf,
-		pc:        pc,
+		pc:                pc,
+		helmAppController: helmAppController,
+		controllers:       []mcontroller.Controller{thirdcomponentController},
 		store: store,
-		stopCh:    stopCh,
-		cancel:    cancel,
-		ctx:       ctx,
-		dbmanager: db.GetManager(),
+		stopCh:            stopCh,
+		cancel:            cancel,
+		ctx:               ctx,
+		dbmanager:         db.GetManager(),
+		MSc: MSc,
 		memoryUse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "app_resource",
 			Name:      "appmemory",
@@ -184,10 +208,20 @@ func (m *Controller) Start() error {
 		defer m.store.UnRegisterVolumeTypeListener("volumeTypeEvent")
 		go m.volumeTypeEvent.Handle()
 
+		// helmet app controller
+		go m.helmAppController.Start()
+		defer m.helmAppController.Stop()
+		// start controller
+		stopchan := make(chan struct{})
+		go m.mgr.Start(stopchan)
+
+		defer func() { stopchan <- struct{}{} }()
+
 		select {
 		case <-ctx.Done():
 		case <-m.ctx.Done():
 		}
+
 	}
 	// Leader election was requested.
 	if m.conf.LeaderElectionNamespace == "" {
@@ -270,5 +304,12 @@ func (m *Controller) Scrape(ch chan<- prometheus.Metric, scrapeDurationDesc *pro
 	m.namespaceCPULimit.Collect(ch)
 	m.namespaceMemRequest.Collect(ch)
 	m.namespaceCPURequest.Collect(ch)
+	for _, contro := range m.controllers {
+		vs. Collect (ch)
+	}
 	logrus.Infof("success collect worker master metric")
+}
+
+func (m *Controller) GetStore() store.Storer {
+	return m.store
 }

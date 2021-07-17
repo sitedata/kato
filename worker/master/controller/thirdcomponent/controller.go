@@ -25,6 +25,7 @@ import (
 
 	"github.com/gridworkz/kato/pkg/apis/kato/v1alpha1"
 	"github.com/oam-dev/kubevela/pkg/utils/apply"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -44,12 +45,13 @@ import (
 const reconcileTimeOut = 60 * time.Second
 
 type Reconciler struct {
-	Client               client.Client
+	Client client.Client
 	restConfig           *rest.Config
 	Scheme               *runtime.Scheme
 	concurrentReconciles int
 	applyer              apply.Applicator
 	discoverPool         *DiscoverPool
+	discoverNum          prometheus.Gauge
 }
 
 // Reconcile is the main logic of appDeployment controller
@@ -70,6 +72,7 @@ func (r *Reconciler) Reconcile(req ctrl.Request) (res reconcile.Result, retErr e
 	if err := r.Client.Get(ctx, req.NamespacedName, component); err != nil {
 		if apierrors.IsNotFound(err) {
 			log.Warningf("thirdcomponent %s does not exist", req)
+			r.discoverPool.RemoveDiscoverByName(req.NamespacedName)
 		}
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
@@ -178,7 +181,7 @@ func createEndpoint(component *v1alpha1.ThirdComponent, service *corev1.Service,
 		}
 	}
 	endpoints := corev1.Endpoints{
-		TypeMeta: metav1.TypeMeta{
+		TypeMeta: metav1.TypeMeta {
 			Kind:       "Endpoints",
 			APIVersion: "v1",
 		},
@@ -274,16 +277,25 @@ func (r *Reconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *Reconciler) Collect(ch chan<- prometheus.Metric) {
+	ch <- prometheus.MustNewConstMetric(r.discoverNum.Desc(), prometheus.GaugeValue, r.discoverPool.GetSize())
+}
+
 // Setup adds a controller that reconciles AppDeployment.
-func Setup(ctx context.Context, mgr ctrl.Manager) error {
+func Setup(ctx context.Context, mgr ctrl.Manager) (*Reconciler, error) {
 	applyer := apply.NewAPIApplicator(mgr.GetClient())
 	r := &Reconciler{
-		Client:     mgr.GetClient(),
+		Client: mgr.GetClient (),
 		restConfig: mgr.GetConfig(),
 		Scheme:     mgr.GetScheme(),
 		applyer:    applyer,
+		discoverNum: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: "controller",
+			Name:      "third_component_discover_number",
+			Help:      "Number of running endpoint discover worker of third component.",
+		}),
 	}
 	dp := NewDiscoverPool(ctx, r)
 	r.discoverPool = dp
-	return r.SetupWithManager(mgr)
+	return r, r.SetupWithManager(mgr)
 }

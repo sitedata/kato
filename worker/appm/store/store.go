@@ -138,7 +138,7 @@ type appRuntimeStore struct {
 	kubeconfig             *rest.Config
 	clientset              kubernetes.Interface
 	crdClient              *internalclientset.Clientset
-	katoClient         katoversioned.Interface
+	katoClient             katoversioned.Interface
 	crClients              map[string]interface{}
 	ctx                    context.Context
 	cancel                 context.CancelFunc
@@ -171,7 +171,7 @@ func NewStore(
 	store := &appRuntimeStore{
 		kubeconfig:          kubeconfig,
 		clientset:           clientset,
-		katoClient:      katoClient,
+		katoClient:          katoClient,
 		ctx:                 ctx,
 		cancel:              cancel,
 		informers:           &Informer{CRS: make(map[string]cache.SharedIndexInformer)},
@@ -378,7 +378,7 @@ func listProbeInfos(ep *corev1.Endpoints, sid string) []*ProbeInfo {
 		for _, port := range subset.Ports {
 			if ep.Annotations != nil {
 				if domain, ok := ep.Annotations["domain"]; ok && domain != "" {
-					logrus.Debugf("thirdparty service[sid: %s] add domain endpoint[domain: %s] probe", sid, domain)
+					logrus.Debugf("thirdpart service[sid: %s] add domain endpoint[domain: %s] probe", sid, domain)
 					probeInfos = []*ProbeInfo{{
 						Sid:  sid,
 						UUID: fmt.Sprintf("%s_%d", domain, port.Port),
@@ -456,6 +456,10 @@ func (a *appRuntimeStore) initThirdPartyService() error {
 		return err
 	}
 	for _, svc := range svcs {
+		disCfg, _ := a.dbmanager.ThirdPartySvcDiscoveryCfgDao().GetByServiceID(svc.ServiceID)
+		if disCfg != nil && disCfg.Type == "kubernetes" {
+			continue
+		}
 		if err = a.InitOneThirdPartService(svc); err != nil {
 			logrus.Errorf("init thridpart service error: %v", err)
 			return err
@@ -481,6 +485,9 @@ func (a *appRuntimeStore) InitOneThirdPartService(service *model.TenantServices)
 	if err != nil {
 		logrus.Errorf("error initializing cache app service: %v", err)
 		return err
+	}
+	if appService.IsCustomComponent() {
+		return nil
 	}
 	a.RegistAppService(appService)
 	err = f.ApplyOne(context.Background(), nil, a.clientset, appService)
@@ -737,10 +744,9 @@ func (a *appRuntimeStore) OnDeletes(objs ...interface{}) {
 		obj := objs[i]
 		if thirdComponent, ok := obj.(*v1alpha1.ThirdComponent); ok {
 			serviceID := thirdComponent.Labels["service_id"]
-			version := thirdComponent.Labels["version"]
 			createrID := thirdComponent.Labels["creater_id"]
-			if serviceID != "" && version != "" && createrID != "" {
-				appservice, _ := a.getAppService(serviceID, version, createrID, true)
+			if serviceID != "" && createrID != "" {
+				appservice, _ := a.getAppService(serviceID, "", createrID, true)
 				if appservice != nil {
 					appservice.DeleteWorkload(thirdComponent)
 					if appservice.IsClosed() {

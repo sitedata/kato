@@ -27,19 +27,20 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//Exporter
+//Exporter collector
 type Exporter struct {
-	dsn               string
-	error             prometheus.Gauge
-	totalScrapes      prometheus.Counter
-	scrapeErrors      *prometheus.CounterVec
-	workerUp          prometheus.Gauge
-	dbmanager         db.Manager
-	masterController  *master.Controller
-	controllermanager *controller.Manager
-	taskNum           prometheus.Counter
-	taskUpNum         prometheus.Gauge
-	taskError         prometheus.Counter
+	error                     prometheus.Gauge
+	totalScrapes              prometheus.Counter
+	scrapeErrors              *prometheus.CounterVec
+	workerUp                  prometheus.Gauge
+	dbmanager                 db.Manager
+	masterController          *master.Controller
+	controllermanager         *controller.Manager
+	taskNum                   prometheus.Counter
+	taskUpNum                 prometheus.Gauge
+	taskError prometheus.Counter
+	storeComponentNum         prometheus.Gauge
+	thirdComponentDiscoverNum prometheus.Gauge
 }
 
 var scrapeDurationDesc = prometheus.NewDesc(
@@ -54,7 +55,7 @@ var healthDesc = prometheus.NewDesc(
 	[]string{"service_name"}, nil,
 )
 
-//Describe
+//Describe Describe
 func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 	metricCh := make(chan prometheus.Metric)
 	doneCh := make(chan struct{})
@@ -73,7 +74,7 @@ func (e *Exporter) Describe(ch chan<- *prometheus.Desc) {
 
 // Collect implements prometheus.Collector.
 func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
-	e.scrape(ch)
+	e.scrape (ch)
 	ch <- e.totalScrapes
 	ch <- e.error
 	e.scrapeErrors.Collect(ch)
@@ -97,11 +98,12 @@ func (e *Exporter) scrape(ch chan<- prometheus.Metric) {
 		float64(e.controllermanager.GetControllerSize()))
 	ch <- prometheus.MustNewConstMetric(e.taskNum.Desc(), prometheus.CounterValue, discover.TaskNum)
 	ch <- prometheus.MustNewConstMetric(e.taskError.Desc(), prometheus.CounterValue, discover.TaskError)
+	ch <- prometheus.MustNewConstMetric(e.storeComponentNum.Desc(), prometheus.GaugeValue, float64(len(e.masterController.GetStore().GetAllAppServices())))
 }
 
 var namespace = "worker"
 
-//New - create a collector
+//New Create a collector
 func New(masterController *master.Controller, controllermanager *controller.Manager) *Exporter {
 	return &Exporter{
 		totalScrapes: prometheus.NewCounter(prometheus.CounterOpts{
@@ -143,6 +145,11 @@ func New(masterController *master.Controller, controllermanager *controller.Mana
 			Subsystem: "exporter",
 			Name:      "worker_task_error",
 			Help:      "worker number of task errors.",
+		}),
+		storeComponentNum: prometheus.NewGauge(prometheus.GaugeOpts{
+			Namespace: namespace,
+			Name:      "store_component_number",
+			Help:      "Number of components in the store cache.",
 		}),
 		dbmanager:         db.GetManager(),
 		masterController:  masterController,
