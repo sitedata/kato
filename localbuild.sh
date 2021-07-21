@@ -24,7 +24,7 @@ function localbuild() {
 		do
     		echo "build local ${item}"
     		go build -ldflags "-X github.com/gridworkz/kato/cmd.version=${release_desc}"  -o _output/${GOOS}/${VERSION}/kato-$item ./cmd/$item
-		done	
+		done
 	else
 		echo "build local $1 ${VERSION}"
 
@@ -47,7 +47,7 @@ case $1 in
 			for item in "${build_items[@]}"
 			do
 			  localbuild $item
-			done	
+			done
 	    fi
 		localbuild $1
 	;;
