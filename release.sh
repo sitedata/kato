@@ -54,8 +54,8 @@ build::binary() {
 	fi
 	CGO_ENABLED=1
 	if [ "$1" = "eventlog" ]; then
-		docker build -t goodraim.me/event-build:v1 "${DOCKER_PATH}/build"
-		build_image="goodraim.me/event-build:v1"
+		docker build -t gridworkz.me/event-build:v1 "${DOCKER_PATH}/build"
+		build_image="gridworkz.me/event-build:v1"
 	elif [ "$1" = "chaos" ]; then
 		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then
