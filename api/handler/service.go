@@ -1,5 +1,5 @@
-// KATO, Application Management Platform
 // Copyright (C) 2021 Gridworkz Co., Ltd.
+// KATO, Application Management Platform
 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this 
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -36,6 +36,7 @@ import (
 	"github.com/gridworkz/kato/cmd/api/option"
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/event"
+	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
 	"github.com/gridworkz/kato/worker/client"
 	"github.com/gridworkz/kato/worker/discover/model"
 	"github.com/gridworkz/kato/worker/server"
@@ -45,6 +46,8 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/twinj/uuid"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	api_model "github.com/gridworkz/kato/api/model"
 	dberr "github.com/gridworkz/kato/db/errors"
@@ -64,8 +67,9 @@ type ServiceAction struct {
 	MQClient gclient.MQClient
 	EtcdCli * clientv3.Client
 	statusCli * client.AppRuntimeSyncClient
-	prometheusCli prometheus.Interface
-	conf          option.Config
+	prometheusCli  prometheus.Interface
+	conf           option.Config
+	katoClient versioned.Interface
 }
 
 type dCfg struct {
@@ -77,14 +81,19 @@ type dCfg struct {
 }
 
 //CreateManager create Manger
-func CreateManager(conf option.Config, mqClient gclient.MQClient,
-	etcdCli * clientv3.Client, statusCli * client.AppRuntimeSyncClient, prometheusCli prometheus.Interface) * ServiceAction {
+func CreateManager(conf option.Config,
+	mqClient gclient.MQClient,
+	etcdCli * clientv3.Client,
+	statusCli * client.AppRuntimeSyncClient,
+	prometheusCli prometheus.Interface,
+	katoClient versioned.Interface) *ServiceAction {
 	return &ServiceAction{
 		MQClient: mqClient,
-		EtcdCli:       etcdCli,
-		statusCli:     statusCli,
+		EtcdCli:        etcdCli,
+		statusCli:      statusCli,
 		conf: conf,
 		prometheusCli: prometheusCli,
+		katoClient: katoClient,
 	}
 }
 
@@ -612,7 +621,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				VolumePath:     volumn.VolumePath,
 				IsReadOnly:     volumn.IsReadOnly,
 				VolumeCapacity: volumn.VolumeCapacity,
-				// AccessMode 读写模式（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
+				// AccessMode Read and write mode（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
 				AccessMode: volumn.AccessMode,
 				// SharePolicy sharing mode
 				SharePolicy: volumn.SharePolicy,
@@ -719,20 +728,12 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 			tx.Rollback()
 			return fmt.Errorf("endpoints can not be empty for third-party service")
 		}
-		if config := strings.Replace(sc.Endpoints.Discovery, " ", "", -1); config != "" {
-			var cfg dCfg
-			err := json.Unmarshal([]byte(config), &cfg)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
+		if sc.Endpoints.Kubernetes != nil {
 			c := &dbmodel.ThirdPartySvcDiscoveryCfg{
-				ServiceID: sc.ServiceID,
-				Type:      cfg.Type,
-				Servers:   strings.Join(cfg.Servers, ","),
-				Key:       cfg.Key,
-				Username:  cfg.Username,
-				Password:  cfg.Password,
+				ServiceID:   sc.ServiceID,
+				Type:        string(dbmodel.DiscorveryTypeKubernetes),
+				Namespace:   sc.Endpoints.Kubernetes.Namespace,
+				ServiceName: sc.Endpoints.Kubernetes.ServiceName,
 			}
 			if err := db.GetManager().ThirdPartySvcDiscoveryCfgDaoTransactions(tx).
 				AddModel(c); err != nil {
@@ -740,15 +741,10 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				tx.Rollback()
 				return err
 			}
-		} else if static := strings.Replace(sc.Endpoints.Static, " ", "", -1); static != "" {
-			var obj [] string
-			err := json.Unmarshal([]byte(static), &obj)
-			if err != nil {
-				tx.Rollback()
-				return err
-			}
+		}
+		if sc.Endpoints.Static != nil {
 			trueValue := true
-			for _, o := range obj {
+			for _, o := range sc.Endpoints.Static {
 				ep := &dbmodel.Endpoint{
 					ServiceID: sc.ServiceID,
 					UUID:      core_util.NewUUID(),
@@ -852,6 +848,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 		return err
 	}
 	logrus.Debugf("create a new app %s success", ts.ServiceAlias)
+
 	return nil
 }
 
@@ -1426,7 +1423,7 @@ func (s *ServiceAction) PortOuter(tenantName, serviceID string, containerPort in
 					return nil, "", fmt.Errorf("outer, get plugin mapping port error:(%s)", err)
 				}
 				if *p.IsInnerService {
-					//If the intranet is not closed, do not delete the mapping
+					//If the intranet is not closed, the mapping will not be deleted
 					logrus.Debugf("outer, close outer, but plugin inner port (%d) is exist, do not need delete", containerPort)
 					goto OUTERCLOSEPASS
 				}
@@ -1981,7 +1978,7 @@ func (s *ServiceAction) GetEnterpriseRunningServices(enterpriseID string) ([]str
 		logrus.Errorf("list tenants service failed: %s", err.Error())
 		return nil, util.CreateAPIHandleErrorf(500, "get enterprise[%s] service failed: %s", enterpriseID, err.Error())
 	}
-	was serviceIDs []string
+	var serviceIDs []string
 	for _, svc := range services {
 		serviceIDs = append(serviceIDs, svc.ServiceID)
 	}
@@ -2168,7 +2165,7 @@ func (s *ServiceAction) GetPodContainerMemory(podNames []string) (map[string]map
 }
 
 //TransServieToDelete trans service info to delete table
-func (s *ServiceAction) TransServieToDelete(tenantID, serviceID string) error {
+func (s *ServiceAction) TransServieToDelete(ctx context.Context, tenantID, serviceID string) error {
 	_, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
 	if err != nil && gorm.ErrRecordNotFound == err {
 		logrus.Infof("service[%s] of tenant[%s] do not exist, ignore it", serviceID, tenantID)
@@ -2183,7 +2180,7 @@ func (s *ServiceAction) TransServieToDelete(tenantID, serviceID string) error {
 		return fmt.Errorf("GC task body: %v", err)
 	}
 
-	if err := s.delServiceMetadata(serviceID); err != nil {
+	if err := s.delServiceMetadata(ctx, serviceID); err != nil {
 		return fmt.Errorf("delete service-related metadata: %v", err)
 	}
 
@@ -2216,24 +2213,10 @@ func (s *ServiceAction) isServiceClosed(serviceID string) error {
 	return nil
 }
 
-// delServiceMetadata deletes service-related metadata in the database.
-func (s *ServiceAction) delServiceMetadata(serviceID string) error {
-	service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
-	if err != nil {
-		return err
-	}
-	logrus.Infof("delete service %s %s", serviceID, service.ServiceAlias)
-	tx := db.GetManager().Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			logrus.Errorf("Unexpected panic occurred, rollback transaction: %v", r)
-			tx.Rollback()
-		}
-	}()
+func (s *ServiceAction) deleteComponent(tx *gorm.DB, service *dbmodel.TenantServices) error {
 	delService: = service.ChangeDelete ()
 	delService.ID = 0
 	if err := db.GetManager().TenantServiceDeleteDaoTransactions(tx).AddModel(delService); err != nil {
-		tx.Rollback()
 		return err
 	}
 	var deleteServicePropertyFunc = []func(serviceID string) error{
@@ -2258,24 +2241,58 @@ func (s *ServiceAction) delServiceMetadata(serviceID string) error {
 		db.GetManager().TenantServiceMonitorDaoTransactions(tx).DeleteServiceMonitorByServiceID,
 		db.GetManager().AppConfigGroupServiceDaoTransactions(tx).DeleteEffectiveServiceByServiceID,
 	}
-	if err := GetGatewayHandler().DeleteTCPRuleByServiceIDWithTransaction(serviceID, tx); err != nil {
-		tx.Rollback()
+	if err := GetGatewayHandler().DeleteTCPRuleByServiceIDWithTransaction(service.ServiceID, tx); err != nil {
 		return err
 	}
-	if err := GetGatewayHandler().DeleteHTTPRuleByServiceIDWithTransaction(serviceID, tx); err != nil {
-		tx.Rollback()
+	if err := GetGatewayHandler().DeleteHTTPRuleByServiceIDWithTransaction(service.ServiceID, tx); err != nil {
 		return err
 	}
 	for _, del := range deleteServicePropertyFunc {
-		if err := del(serviceID); err != nil {
+		if err := del(service.ServiceID); err != nil {
 			if err != gorm.ErrRecordNotFound {
-				tx.Rollback()
 				return err
 			}
 		}
 	}
-	if err := tx.Commit().Error; err != nil {
-		tx.Rollback()
+	return nil
+}
+
+// delServiceMetadata deletes service-related metadata in the database.
+func (s *ServiceAction) delServiceMetadata(ctx context.Context, serviceID string) error {
+	service, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("delete service %s %s", serviceID, service.ServiceAlias)
+	return db.GetManager().DB().Transaction(func(tx *gorm.DB) error {
+		if err := s.deleteThirdComponent(ctx, service); err != nil {
+			return err
+		}
+		return s.deleteComponent(tx, service)
+	})
+}
+
+func (s *ServiceAction) deleteThirdComponent(ctx context.Context, component *dbmodel.TenantServices) error {
+	if component.Kind != "third_party" {
+		return nil
+	}
+
+	thirdPartySvcDiscoveryCfg, err := db.GetManager().ThirdPartySvcDiscoveryCfgDao().GetByServiceID(component.ServiceID)
+	if err != nil {
+		return err
+	}
+	if thirdPartySvcDiscoveryCfg == nil {
+		return nil
+	}
+	if thirdPartySvcDiscoveryCfg.Type != string(dbmodel.DiscorveryTypeKubernetes) {
+		return nil
+	}
+
+	newCtx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	err = s.katoClient.KatoV1alpha1().ThirdComponents(component.TenantID).Delete(newCtx, component.ServiceID, metav1.DeleteOptions{})
+	if err != nil && !k8sErrors.IsNotFound(err) {
 		return err
 	}
 	return nil
@@ -2695,7 +2712,15 @@ func (s *ServiceAction) SyncComponentProbes(tx *gorm.DB, components []*api_model
 	)
 	for _, component := range components {
 		componentIDs = append(componentIDs, component.ComponentBase.ComponentID)
-		probes = append(probes, component.Probe.DbModel(component.ComponentBase.ComponentID))
+		modes := make(map[string]struct{})
+		for _, probe := range component.Probes {
+			_, ok := modes[probe.Mode]
+			if ok {
+				continue
+			}
+			probes = append(probes, probe.DbModel(component.ComponentBase.ComponentID))
+			modes[probe.Mode] = struct{}{}
+		}
 	}
 	if err := db.GetManager().ServiceProbeDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
 		return err
@@ -2853,6 +2878,28 @@ func (s *ServiceAction) SyncComponentScaleRules(tx *gorm.DB, components []*api_m
 		return err
 	}
 	return db.GetManager().TenantServceAutoscalerRuleMetricsDaoTransactions(tx).CreateOrUpdateScaleRuleMetricsInBatch(autoScaleRuleMetrics)
+}
+
+// SyncComponentEndpoints -
+func (s *ServiceAction) SyncComponentEndpoints(tx *gorm.DB, components []*api_model.Component) error {
+	where (
+		componentIDs               []string
+		thirdPartySvcDiscoveryCfgs []*dbmodel.ThirdPartySvcDiscoveryCfg
+	)
+	for _, component := range components {
+		if component.Endpoint == nil {
+			continue
+		}
+		componentIDs = append(componentIDs, component.ComponentBase.ComponentID)
+		if component.Endpoint.Kubernetes != nil {
+			thirdPartySvcDiscoveryCfgs = append(thirdPartySvcDiscoveryCfgs, component.Endpoint.DbModel(component.ComponentBase.ComponentID))
+		}
+	}
+
+	if err := db.GetManager().ThirdPartySvcDiscoveryCfgDaoTransactions(tx).DeleteByComponentIDs(componentIDs); err != nil {
+		return err
+	}
+	return db.GetManager().ThirdPartySvcDiscoveryCfgDaoTransactions(tx).CreateOrUpdate3rdSvcDiscoveryCfgInBatch(thirdPartySvcDiscoveryCfgs)
 }
 
 //TransStatus trans service status
