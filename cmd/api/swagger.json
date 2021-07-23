@@ -1003,7 +1003,7 @@
         "tags": [
           "v2"
         ],
-        "summary": "Cloud City Sharing",
+        "summary": "Gridworkz Cloud Sharing",
         "operationId": "sharecloud",
         "parameters": [
           {
@@ -2032,7 +2032,7 @@
                   "x-go-name": "ServiceLabel"
                 },
                 "service_origin": {
-                  "description": "Service creation type cloud cloud city service, assistant cloud help service\nin: body",
+                  "description": "Service creation type cloud gridworkz cloud service, assistant cloud help service\nin: body",
                   "type": "string",
                   "x-go-name": "ServiceOrigin"
                 },

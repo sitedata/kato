@@ -35,7 +35,7 @@ import (
 //ChargesVerifyController service charges verify
 // swagger:operation GET /v2/tenants/{tenant_name}/chargesverify v2 chargesverify
 //
-// Application expansion resource application interface, public cloud cloud city verification, private cloud does not verify
+// Application expansion resource application interface, public cloud gridworkz cloud verification, private cloud does not verify
 //
 // service charges verify
 //

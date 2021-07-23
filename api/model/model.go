@@ -190,7 +190,7 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		UpdateTime time.Time `gorm:"column:update_time" json:"update_time" validate:"update_time"`
-		// service creation type cloud: cloud city service, assistant cloud help service
+		// service creation type cloud: gridworkz cloud service, assistant cloud help service
 		// in: body
 		// required: false
 		ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin" validate:"service_origin"`
@@ -320,7 +320,7 @@ type ServiceStruct struct {
 	// in: body
 	// required: false
 	UpdateTime time.Time `json:"update_time" validate:"update_time"`
-	// service creation type: cloud cloud city service, assistant cloud help service
+	// service creation type: cloud gridworkz cloud service, assistant cloud help service
 	// in: body
 	// required: false
 	ServiceOrigin string `json:"service_origin" validate:"service_origin"`
@@ -746,7 +746,7 @@ type BuildServiceStruct struct {
 		TenantName   string `json:"tenant_name"`
 		ServiceAlias string `json:"service_alias"`
 		Cmd          string `json:"cmd"`
-		//used for cloud city code package creation
+		//used for gridworkz cloud code package creation
 		SlugInfo struct {
 			SlugPath    string `json:"slug_path"`
 			FTPHost     string `json:"ftp_host"`
@@ -1519,7 +1519,7 @@ type BuildInfoRequestStruct struct {
 	ImageInfo BuildImageInfo `json:"image_info,omitempty"`
 	//build from code
 	CodeInfo BuildCodeInfo `json:"code_info,omitempty"`
-	//used for cloud city code package creation
+	//used for gridworkz cloud code package creation
 	SlugInfo BuildSlugInfo `json:"slug_info,omitempty"`
 	//tenantName
 	TenantName string            `json:"-"`

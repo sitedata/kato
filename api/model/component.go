@@ -81,7 +81,7 @@ type ComponentBase struct {
 	// in: body
 	// required: false
 	Namespace string `json:"namespace" validate:"namespace"`
-	// Service creation type cloud cloud city service, assistant cloud help service
+	// Service creation type cloud gridworkz cloud service, assistant cloud help service
 	// in: body
 	// required: false
 	ServiceOrigin string `json:"service_origin" validate:"service_origin"`

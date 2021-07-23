@@ -124,7 +124,7 @@ func (i *SlugShareItem) ShareToFTP() error {
 		i.Logger.Error("Failed to upload source package file", map[string]string{"step": "slug-share", "status": "failure"})
 		return err
 	}
-	i.Logger.Info("Share cloud city remote server completed", map[string]string{"step": "slug-share", "status": "success"})
+	i.Logger.Info("Share gridworkz cloud remote server completed", map[string]string{"step": "slug-share", "status": "success"})
 	return nil
 }
 

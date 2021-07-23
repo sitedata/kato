@@ -184,7 +184,7 @@ type TenantServices struct {
 	Namespace string `gorm:"column:namespace" json:"namespace"`
 	// update time
 	UpdateTime time.Time `gorm:"column:update_time" json:"update_time"`
-	// Service creation type cloud cloud city service, assistant cloud help service
+	// Service creation type cloud gridworkz cloud service, assistant cloud help service
 	ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin"`
 	// kind of service. option: internal, third_party
 	Kind string `gorm:"column:kind;default:'internal'" json:"kind"`
@@ -292,7 +292,7 @@ type TenantServicesDelete struct {
 	Namespace string `gorm:"column:namespace" json:"namespace"`
 	// update time
 	UpdateTime time.Time `gorm:"column:update_time" json:"update_time"`
-	// Service creation type cloud cloud city service, assistant cloud help service
+	// Service creation type cloud gridworkz cloud service, assistant cloud help service
 	ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin"`
 	// kind of service. option: internal, third_party
 	Kind string `gorm:"column:kind;default:'internal'" json:"kind"`
