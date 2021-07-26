@@ -26,7 +26,7 @@ import (
 	"github.com/gridworkz/kato/db/model"
 )
 
-where (
+var (
 	// ErrVolumeNotFound volume not found error, happens when haven't find any matched data
 	ErrVolumeNotFound = errors.New("volume not found")
 )

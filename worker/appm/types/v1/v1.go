@@ -875,7 +875,7 @@ func (a *AppService) String() string {
 		a.DeployVersion,
 		a.statefulset,
 		a.deployment,
-		flax (a.pods),
+		len(a.pods),
 		func(ing []*extensions.Ingress) string {
 			result := ""
 			for _, i := range ing {
@@ -931,7 +931,7 @@ func GetProbeMeshImageName() string {
 }
 
 //CalculatePodResource calculate pod resource
-func CalculatePodResource (under * corev1.Pod) * PodResource {
+func CalculatePodResource (pod *corev1.Pod) *PodResource {
 	for _, con := range pod.Status.Conditions {
 		if con.Type == corev1.PodScheduled && con.Status == corev1.ConditionFalse {
 			return &PodResource{}
