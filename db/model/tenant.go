@@ -23,15 +23,17 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"github.com/gridworkz/kato/util/commonutil"
 )
 
-//Model default field
+//Model Default Field
 type Model struct {
 	ID        uint      `gorm:"column:ID;primary_key"`
 	CreatedAt time.Time `gorm:"column:create_time" json:"create_time"`
 }
 
-//IDModel default ID field
+//IDModel Default ID field
 type IDModel struct {
 	ID uint `gorm:"column:ID;primary_key"`
 }
@@ -44,7 +46,7 @@ type Interface interface {
 // TenantStatus -
 type TenantStatus string
 
-where (
+var (
 	// TenantStatusNormal -
 	TenantStatusNormal TenantStatus = "normal"
 	// TenantStatusDeleting -
@@ -57,7 +59,7 @@ func (t TenantStatus) String() string {
 	return string(t)
 }
 
-//Tenants tenant information
+//Tenants Tenant Information
 type Tenants struct {
 	Model
 	Name        string `gorm:"column:name;size:40;unique_index"`
@@ -67,7 +69,7 @@ type Tenants struct {
 	Status      string `gorm:"column:status;default:'normal'"`
 }
 
-//TableName returns the name of the tenant table
+//TableName Return to Tenant Table Name
 func (t *Tenants) TableName() string {
 	return "tenants"
 }
@@ -80,6 +82,9 @@ var ServiceKindThirdParty ServiceKind = "third_party"
 
 // ServiceKindInternal means internal service
 var ServiceKindInternal ServiceKind = "internal"
+
+// ServiceKindCustom means custom component define
+var ServiceKindCustom ServiceKind = "custom.componentdefinition."
 
 func (s ServiceKind) String() string {
 	return string(s)
@@ -113,7 +118,7 @@ func (s ServiceType) IsSingleton() bool {
 }
 
 // IsState is state service or stateless service
-// TODO fanyangyang simply judges whether it is stateful according to the component
+// TODO gdevs Simple determination of whether a component is stateful or not based on the component
 func (t *TenantServices) IsState() bool {
 	if t.ExtendMethod == "" {
 		return false
@@ -149,50 +154,53 @@ type TenantServices struct {
 	Model
 	TenantID  string `gorm:"column:tenant_id;size:32" json:"tenant_id"`
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
-	// service key
+	// Service Key
 	ServiceKey string `gorm:"column:service_key;size:32" json:"service_key"`
-	// service alias
+	// Service Alias
 	ServiceAlias string `gorm:"column:service_alias;size:30" json:"service_alias"`
-	// service regist endpoint name(host name), used of statefulset
+	// service register endpoint name(host name), used of statefulset
 	ServiceName string `gorm:"column:service_name;size:100" json:"service_name"`
 	// （This field is not currently used, use ExtendMethod）Service type now service support
 	ServiceType string `gorm:"column:service_type;size:32" json:"service_type"`
-	// Service description
+	// Service Description
 	Comment string `gorm:"column:comment" json:"comment"`
 	// Container CPU weight
 	ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu"`
-	// Maximum memory of the container
+	// Maximum container memory
 	ContainerMemory int `gorm:"column:container_memory;default:128" json:"container_memory"`
+	// container GPU, The amount of video memory applied for GPU. The unit is MiB
+	// default is 0, That means no GPU is required
+	ContainerGPU int `gorm:"column:container_gpu;default:0" json:"container_gpu"`
 	//UpgradeMethod service upgrade controller type
 	//such as : `Rolling` `OnDelete`
 	UpgradeMethod string `gorm:"column:upgrade_method;default:'Rolling'" json:"upgrade_method"`
-	// Component type  component deploy type stateless_singleton/stateless_multiple/state_singleton/state_multiple
+	// Component Type  component deploy type stateless_singleton/stateless_multiple/state_singleton/state_multiple
 	ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method"`
-	// number of nodes
+	// Number of nodes
 	Replicas int `gorm:"column:replicas;default:1" json:"replicas"`
-	// Deployment version
+	// Deployment Versions
 	DeployVersion string `gorm:"column:deploy_version" json:"deploy_version"`
-	// Service category: application, cache, store
+	// Service classification: application,cache,store
 	Category string `gorm:"column:category" json:"category"`
 	// Current status of the service: undeploy,running,closed,unusual,starting,checking,stoping(deprecated)
 	CurStatus string `gorm:"column:cur_status;default:'undeploy'" json:"cur_status"`
-	// The billing status is 1 billing, 0 is not billed (deprecated)
+	// Billing status 1 billing, 0 no billing (deprecated)
 	Status int `gorm:"column:status;default:0" json:"status"`
-	// Latest operation ID
+	// Latest Operation ID
 	EventID string `gorm:"column:event_id" json:"event_id"`
 	// Tenant ID
 	Namespace string `gorm:"column:namespace" json:"namespace"`
-	// update time
+	// Update time
 	UpdateTime time.Time `gorm:"column:update_time" json:"update_time"`
-	// Service creation type cloud gridworkz cloud service, assistant cloud help service
+	// Service creation type cloud cloud city service,assistant cloud helper service
 	ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin"`
-	// kind of service. option: internal, third_party
+	// kind of service. option: internal, third_party, custom
 	Kind string `gorm:"column:kind;default:'internal'" json:"kind"`
 	// service bind appID
 	AppID string `gorm:"column:app_id" json:"app_id"`
 }
 
-// Image Mirror image
+//Image Mirroring
 type Image struct {
 	Host      string
 	Namespace string
@@ -206,7 +214,7 @@ func (i Image) String() string {
 	return fmt.Sprintf("%s/%s/%s", i.Host, i.Namespace, i.Name)
 }
 
-//ParseImage simply parse the image name
+//ParseImage Simple parsing of mirror names
 func ParseImage(name string) (image Image) {
 	i := strings.IndexRune(name, '/')
 	if i == -1 || (!strings.ContainsAny(name[:i], ".:") && name[:i] != "localhost") {
@@ -223,7 +231,7 @@ func ParseImage(name string) (image Image) {
 	return
 }
 
-//CreateShareSlug generates source code package sharing address
+//CreateShareSlug Generate the source code package to share the address
 func (t *TenantServices) CreateShareSlug(servicekey, namespace, version string) string {
 	return fmt.Sprintf("%s/%s/%s_%s.tgz", namespace, servicekey, version, t.DeployVersion)
 }
@@ -235,7 +243,7 @@ func (t *TenantServices) ChangeDelete() *TenantServicesDelete {
 	return &delete
 }
 
-//Autodomain builds the default domain name
+//Autodomain Build default domain name
 func (t *TenantServices) Autodomain(tenantName string, containerPort int) string {
 	exDomain := os.Getenv("EX_DOMAIN")
 	if exDomain == "" {
@@ -247,52 +255,55 @@ func (t *TenantServices) Autodomain(tenantName string, containerPort int) string
 	return fmt.Sprintf("%d.%s.%s.%s", containerPort, t.ServiceAlias, tenantName, exDomain)
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServices) TableName() string {
 	return "tenant_services"
 }
 
-//TenantServicesDelete deleted application table
+//TenantServicesDelete Deleted Applications Table
 type TenantServicesDelete struct {
 	Model
 	TenantID  string `gorm:"column:tenant_id;size:32" json:"tenant_id"`
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
-	// service key
+	// Service Key
 	ServiceKey string `gorm:"column:service_key;size:32" json:"service_key"`
-	// service alias
+	// Service Alias
 	ServiceAlias string `gorm:"column:service_alias;size:30" json:"service_alias"`
 	// service regist endpoint name(host name), used of statefulset
 	ServiceName string `gorm:"column:service_name;size:100" json:"service_name"`
 	// Service type now service support stateless_singleton/stateless_multiple/state_singleton/state_multiple
 	ServiceType string `gorm:"column:service_type;size:20" json:"service_type"`
-	// Service description
+	// Service Description
 	Comment string `gorm:"column:comment" json:"comment"`
 	// Container CPU weight
 	ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu"`
-	// Maximum memory of the container
+	// Maximum container memory
 	ContainerMemory int `gorm:"column:container_memory;default:128" json:"container_memory"`
+	// container GPU, The amount of video memory applied for GPU. The unit is MiB
+	// default is 0, That means no GPU is required
+	ContainerGPU int `gorm:"column:container_gpu;default:0" json:"container_gpu"`
 	//UpgradeMethod service upgrade controller type
 	//such as : `Rolling` `OnDelete`
 	UpgradeMethod string `gorm:"column:upgrade_method;default:'Rolling'" json:"upgrade_method"`
-	// Expansion method; 0: stateless; 1: stateful; 2: partition
+	// Expansion mode; 0:stateless; 1:stateful; 2:partitioned
 	ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method"`
-	// number of nodes
+	// Number of nodes
 	Replicas int `gorm:"column:replicas;default:1" json:"replicas"`
-	// Deployment version
+	// Deployment Versions
 	DeployVersion string `gorm:"column:deploy_version" json:"deploy_version"`
-	// Service category: application, cache, store
+	// Service classification: application,cache,store
 	Category string `gorm:"column:category" json:"category"`
 	// Current status of the service: undeploy,running,closed,unusual,starting,checking,stoping(deprecated)
 	CurStatus string `gorm:"column:cur_status;default:'undeploy'" json:"cur_status"`
-	// The billing status is 1 billing, 0 is not billed (deprecated)
+	// Billing status 1 billing, 0 no billing (deprecated)
 	Status int `gorm:"column:status;default:0" json:"status"`
-	// Latest operation ID
+	// Latest Operation ID
 	EventID string `gorm:"column:event_id" json:"event_id"`
 	// Tenant ID
 	Namespace string `gorm:"column:namespace" json:"namespace"`
-	// update time
+	// Update time
 	UpdateTime time.Time `gorm:"column:update_time" json:"update_time"`
-	// Service creation type cloud gridworkz cloud service, assistant cloud help service
+	// Service creation type cloud cloud city service,assistant cloud helper service
 	ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin"`
 	// kind of service. option: internal, third_party
 	Kind string `gorm:"column:kind;default:'internal'" json:"kind"`
@@ -300,12 +311,12 @@ type TenantServicesDelete struct {
 	AppID string `gorm:"column:app_id" json:"app_id"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServicesDelete) TableName() string {
 	return "tenant_services_delete"
 }
 
-//TenantServicesPort application port information
+//TenantServicesPort Application Port Information
 type TenantServicesPort struct {
 	Model
 	TenantID       string `gorm:"column:tenant_id;size:32" validate:"tenant_id|between:30,33" json:"tenant_id"`
@@ -324,29 +335,34 @@ func (t *TenantServicesPort) Key() string {
 	return fmt.Sprintf("%s/%s/%d", t.TenantID, t.ServiceID, t.ContainerPort)
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServicesPort) TableName() string {
 	return "tenant_services_port"
+}
+
+// IsOpen checks if the port is opened.
+func (t *TenantServicesPort) IsOpen() bool {
+	return commonutil.BoolValue(t.IsOuterService) || commonutil.BoolValue(t.IsInnerService)
 }
 
 //TenantServiceLBMappingPort stream application port mapping situation
 type TenantServiceLBMappingPort struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32"`
-	//Load balancing VS use port
+	//Load balancing vs. using ports
 	Port int `gorm:"column:port;unique_index"`
-	//This field is abolished
+	//This field is deprecated
 	//	IP string `gorm:"column:ip"`
-	//Apply the original port
+	//Apply original port
 	ContainerPort int `gorm:"column:container_port"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServiceLBMappingPort) TableName() string {
 	return "tenant_lb_mapping_port"
 }
 
-//TenantServiceRelation application dependency
+//TenantServiceRelation Application Dependencies
 type TenantServiceRelation struct {
 	Model
 	TenantID          string `gorm:"column:tenant_id;size:32" validate:"tenant_id" json:"tenant_id"`
@@ -356,12 +372,12 @@ type TenantServiceRelation struct {
 	DependOrder       int    `gorm:"column:dep_order" validate:"dep_order" json:"dep_order"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServiceRelation) TableName() string {
 	return "tenant_services_relation"
 }
 
-//TenantServiceEnvVar application environment variables
+//TenantServiceEnvVar  Apply environment variables
 type TenantServiceEnvVar struct {
 	Model
 	TenantID      string `gorm:"column:tenant_id;size:32" validate:"tenant_id|between:30,33" json:"tenant_id"`
@@ -374,13 +390,13 @@ type TenantServiceEnvVar struct {
 	Scope         string `gorm:"column:scope;default:'outer'" validate:"scope|in:outer,inner,both" json:"scope"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServiceEnvVar) TableName() string {
-	//TODO: table name modification
+	//TODO:Table Name Modification
 	return "tenant_services_envs"
 }
 
-//TenantServiceMountRelation application mount dependency record
+//TenantServiceMountRelation Mount path (mount application can be customized)
 type TenantServiceMountRelation struct {
 	Model
 	TenantID        string `gorm:"column:tenant_id;size:32" json:"tenant_id" validate:"tenant_id|between:30,33"`
@@ -388,28 +404,28 @@ type TenantServiceMountRelation struct {
 	DependServiceID string `gorm:"column:dep_service_id;size:32" json:"dep_service_id" validate:"dep_service_id|between:30,33"`
 	//Mount path (mount application can be customized)
 	VolumePath string `gorm:"column:mnt_name" json:"volume_path" validate:"volume_path|required"`
-	//Host path (depending on the host path corresponding to the shared storage of the application)
+	//Host path (the host path corresponding to the application-dependent shared storage)
 	HostPath string `gorm:"column:mnt_dir" json:"host_path" validate:"host_path"`
-	//Storage name (depending on the name corresponding to the shared storage of the application)
+	//Storage name (the name corresponding to the shared storage of the dependent application)
 	VolumeName string `gorm:"column:volume_name;size:40" json:"volume_name" validate:"volume_name|required"`
 	VolumeType string `gorm:"column:volume_type" json:"volume_type" validate:"volume_type|required"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServiceMountRelation) TableName() string {
 	return "tenant_services_mnt_relation"
 }
 
-//VolumeType storage type
+//VolumeType Storage Type
 type VolumeType string
 
-//ShareFileVolumeType shared file storage
+//ShareFileVolumeType Shared File Storage
 var ShareFileVolumeType VolumeType = "share-file"
 
-//LocalVolumeType local file storage
+//LocalVolumeType Local File Storage
 var LocalVolumeType VolumeType = "local"
 
-//MemoryFSVolumeType memory file storage
+//MemoryFSVolumeType Memory file storage
 var MemoryFSVolumeType VolumeType = "memoryfs"
 
 //ConfigFileVolumeType configuration file volume type
@@ -430,41 +446,46 @@ func (vt VolumeType) String() string {
 	return string(vt)
 }
 
-//TenantServiceVolume application persistent record
+//TenantServiceVolume Application Persistence Records
 type TenantServiceVolume struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id"`
-	//Service type
+	//Service Type
 	Category string `gorm:"column:category;size:50" json:"category"`
-	//Storage type (share, local, tmpfs)
+	//Storage Type（share,local,tmpfs）
 	VolumeType string `gorm:"column:volume_type;size:64" json:"volume_type"`
-	//Storage name
+	//Storage Name
 	VolumeName string `gorm:"column:volume_name;size:40" json:"volume_name"`
-	//Host address
+	//Host Address
 	HostPath string `gorm:"column:host_path" json:"host_path"`
-	//Mount address
+	//Mount Address
 	VolumePath string `gorm:"column:volume_path" json:"volume_path"`
-	//Whether it is read-only
-	IsReadOnly bool `gorm:"column:is_read_only;default:false" json:"is_read_only"`
-	// VolumeCapacity storage size
+	//Read-only or not
+	IsReadOnly bool `gorm:"column:is_read_only;default:0" json:"is_read_only"`
+	// VolumeCapacity Storage size
 	VolumeCapacity int64 `gorm:"column:volume_capacity" json:"volume_capacity"`
-	// AccessMode Read and write mode（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
+	// AccessMode Read/Write Mode（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
 	AccessMode string `gorm:"column:access_mode" json:"access_mode"`
-	// SharePolicy sharing mode
+	// SharePolicy Shared Model
 	SharePolicy string `gorm:"column:share_policy" json:"share_policy"`
-	// BackupPolicy backup policy
+	// BackupPolicy Backup Strategy
 	BackupPolicy string `gorm:"column:backup_policy" json:"backup_policy"`
-	// ReclaimPolicy recycling strategy
+	// ReclaimPolicy Recycling Strategy
 	ReclaimPolicy string `json:"reclaim_policy"`
-	// Does AllowExpansion support expansion
+	// AllowExpansion Whether to support extensions
 	AllowExpansion bool `gorm:"column:allow_expansion" json:"allow_expansion"`
-	// The storage driver alias used by VolumeProviderName
-	VolumeProviderName string `gorm:"collumn:volume_provider_name" json:"volume_provider_name"`
+	// VolumeProviderName Storage drive aliases used
+	VolumeProviderName string `gorm:"column:volume_provider_name" json:"volume_provider_name"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServiceVolume) TableName() string {
 	return "tenant_services_volume"
+}
+
+// Key returns the key of TenantServiceVolume.
+func (t *TenantServiceVolume) Key() string {
+	return fmt.Sprintf("%s/%s", t.ServiceID, t.VolumeName)
 }
 
 // TenantServiceConfigFile represents a data in configMap which is one of the types of volumes
@@ -480,7 +501,7 @@ func (t *TenantServiceConfigFile) TableName() string {
 	return "tenant_service_config_file"
 }
 
-//TenantServiceLable application advanced label
+//TenantServiceLable Apply advanced tags
 type TenantServiceLable struct {
 	Model
 	ServiceID  string `gorm:"column:service_id;size:32"`
@@ -488,31 +509,31 @@ type TenantServiceLable struct {
 	LabelValue string `gorm:"column:label_value;size:50"`
 }
 
-//TableName table name
+//TableName Table Name
 func (t *TenantServiceLable) TableName() string {
 	return "tenant_services_label"
 }
 
-//LabelKeyNodeSelector node selection label
+//LabelKeyNodeSelector Node selection tab
 var LabelKeyNodeSelector = "node-selector"
 
-//LabelKeyNodeAffinity node affinity label
+//LabelKeyNodeAffinity Node Affinity Labeling
 var LabelKeyNodeAffinity = "node-affinity"
 
-//LabelKeyServiceType application deployment type label
-// TODO fanyangyang is to be deleted, and the component type is recorded in the tenant_service table
+//LabelKeyServiceType Application Deployment Type Tab
+// TODO gdevs To be deleted, the component type is recorded in the tenant_service table
 var LabelKeyServiceType = "service-type"
 
-//LabelKeyServiceAffinity application affinity label
+//LabelKeyServiceAffinity Apply affinity tags
 var LabelKeyServiceAffinity = "service-affinity"
 
-//LabelKeyServiceAntyAffinity applies anti-affinity label
+//LabelKeyServiceAntyAffinity Apply anti-affinity labels
 var LabelKeyServiceAntyAffinity = "service-anti-affinity"
 
 // LabelKeyServicePrivileged -
 var LabelKeyServicePrivileged = "privileged"
 
-//TenantServiceProbe application probe information
+//TenantServiceProbe Application Probe Information
 type TenantServiceProbe struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
@@ -522,19 +543,19 @@ type TenantServiceProbe struct {
 	Path      string `gorm:"column:path" json:"path" validate:"path"`
 	Port      int    `gorm:"column:port;size:5;default:80" json:"port" validate:"port|required|numeric_between:1,65535"`
 	Cmd       string `gorm:"column:cmd;size:150" json:"cmd" validate:"cmd"`
-	//http request header, key=value,key2=value2
+	//http request header，key=value,key2=value2
 	HTTPHeader string `gorm:"column:http_header;size:300" json:"http_header" validate:"http_header"`
-	//Initialize waiting time
+	//Initialization wait time
 	InitialDelaySecond int `gorm:"column:initial_delay_second;size:2;default:4" json:"initial_delay_second" validate:"initial_delay_second"`
-	//Detection interval time
+	//Detection interval
 	PeriodSecond int `gorm:"column:period_second;size:2;default:3" json:"period_second" validate:"period_second"`
 	//Detection timeout
 	TimeoutSecond int `gorm:"column:timeout_second;size:3;default:5" json:"timeout_second" validate:"timeout_second"`
-	//Whether to enable
+	//Enabled or not
 	IsUsed *int `gorm:"column:is_used;size:1;default:1" json:"is_used" validate:"is_used"`
-	//The number of detections marked as failed
+	//Flag for number of failed detections
 	FailureThreshold int `gorm:"column:failure_threshold;size:2;default:3" json:"failure_threshold" validate:"failure_threshold"`
-	//The number of successful detections marked
+	//Number of tests marked as successful
 	SuccessThreshold int    `gorm:"column:success_threshold;size:2;default:1" json:"success_threshold" validate:"success_threshold"`
 	FailureAction    string `gorm:"column:failure_action;" json:"failure_action" validate:"failure_action"`
 }
@@ -555,7 +576,7 @@ const (
 	RestartFailureAction FailureActionType = "liveness"
 )
 
-//TableName table name
+//TableName Grouping
 func (t *TenantServiceProbe) TableName() string {
 	return "tenant_services_probe"
 }

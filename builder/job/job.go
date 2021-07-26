@@ -163,7 +163,7 @@ func (c *controller) ExecJob(ctx context.Context, job *corev1.Pod, logger io.Wri
 		c.subJobStatus.Store(job.Name, result)
 		return nil
 	}
-	_, err := c.KubeClient.CoreV1().Pods(c.namespace).Create(job)
+	_, err := c.KubeClient.CoreV1().Pods(c.namespace).Create(ctx, job, metav1.CreateOptions{})
 	if err != nil {
 		return err
 	}
@@ -194,7 +194,7 @@ func (c *controller) getLogger(ctx context.Context, job string, writer io.Writer
 			// reader log just only do once, if complete, exit this func
 			logrus.Debugf("job[%s] container is ready, start get log stream", job)
 			podLogRequest := c.KubeClient.CoreV1().Pods(c.namespace).GetLogs(job, &corev1.PodLogOptions{Follow: true})
-			reader, err := podLogRequest.Stream()
+			reader, err := podLogRequest.Stream(ctx)
 			if err != nil {
 				logrus.Warnf("get build job pod log data error: %s", err.Error())
 				return
@@ -222,7 +222,7 @@ func (c *controller) DeleteJob(job string) {
 	namespace := c.namespace
 	logrus.Debugf("start delete job: %s", job)
 	// delete job
-	if err := c.KubeClient.CoreV1().Pods(namespace).Delete(job, &metav1.DeleteOptions{}); err != nil {
+	if err := c.KubeClient.CoreV1().Pods(namespace).Delete(context.Background(), job, metav1.DeleteOptions{}); err != nil {
 		if !k8sErrors.IsNotFound(err) {
 			logrus.Errorf("delete job failed: %s", err.Error())
 		}
@@ -233,7 +233,7 @@ func (c *controller) DeleteJob(job string) {
 }
 
 func (c *controller) GetLanguageBuildSetting(lang code.Lang, name string) string {
-	config, err := c.KubeClient.CoreV1().ConfigMaps(c.namespace).Get(name, metav1.GetOptions{})
+	config, err := c.KubeClient.CoreV1().ConfigMaps(c.namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("get configmap %s failure  %s", name, err.Error())
 		return ""
@@ -245,7 +245,7 @@ func (c *controller) GetLanguageBuildSetting(lang code.Lang, name string) string
 }
 
 func (c *controller) GetDefaultLanguageBuildSetting(lang code.Lang) string {
-	config, err := c.KubeClient.CoreV1().ConfigMaps(c.namespace).List(metav1.ListOptions{
+	config, err := c.KubeClient.CoreV1().ConfigMaps(c.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "default=true",
 	})
 	if err != nil {
