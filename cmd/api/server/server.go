@@ -23,7 +23,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-
+	
+	
+	katoscheme "github.com/gridworkz/kato/pkg/generated/clientset/versioned/scheme"
 	"github.com/gridworkz/kato/api/controller"
 	"github.com/gridworkz/kato/api/db"
 	"github.com/gridworkz/kato/api/discover"
@@ -31,15 +33,19 @@ import (
 	"github.com/gridworkz/kato/api/server"
 	"github.com/gridworkz/kato/cmd/api/option"
 	"github.com/gridworkz/kato/event"
+	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
 	etcdutil "github.com/gridworkz/kato/util/etcd"
 	k8sutil "github.com/gridworkz/kato/util/k8s"
 	"github.com/gridworkz/kato/worker/client"
-	"k8s.io/client-go/kubernetes"
-
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//Run
+//Run start run
 func Run(s *option.APIServer) error {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -51,7 +57,7 @@ func Run(s *option.APIServer) error {
 		CertFile:  s.Config.EtcdCertFile,
 		KeyFile:   s.Config.EtcdKeyFile,
 	}
-	//Start service discovery
+	//Start Service Discovery
 	if _, err := discover.CreateEndpointDiscover(etcdClientArgs); err != nil {
 		return err
 	}
@@ -64,6 +70,7 @@ func Run(s *option.APIServer) error {
 	if err := db.CreateEventManager(s.Config); err != nil {
 		logrus.Debugf("create event manager error, %v", err)
 	}
+
 	config, err := k8sutil.NewRestConfig(s.KubeConfigPath)
 	if err != nil {
 		return err
@@ -72,6 +79,19 @@ func Run(s *option.APIServer) error {
 	if err != nil {
 		return err
 	}
+	katoClient := versioned.NewForConfigOrDie(config)
+
+	// k8s runtime client
+	scheme := runtime.NewScheme()
+	clientgoscheme.AddToScheme(scheme)
+	katoscheme.AddToScheme(scheme)
+	k8sClient, err := k8sclient.New(config, k8sclient.Options{
+		Scheme: scheme,
+	})
+	if err != nil {
+		return errors.WithMessage(err, "create k8s client")
+	}
+
 	if err := event.NewManager(event.EventConfig{
 		EventLogServers: s.Config.EventLogServers,
 		DiscoverArgs:    etcdClientArgs,
@@ -85,6 +105,7 @@ func Run(s *option.APIServer) error {
 		EtcdCaFile:    s.Config.EtcdCaFile,
 		EtcdCertFile:  s.Config.EtcdCertFile,
 		EtcdKeyFile:   s.Config.EtcdKeyFile,
+		NonBlock:      s.Config.Debug,
 	})
 	if err != nil {
 		logrus.Errorf("create app status client error, %v", err)
@@ -97,10 +118,10 @@ func Run(s *option.APIServer) error {
 		return err
 	}
 
-	//middleware initialization
+	//Initialize middleware
 	handler.InitProxy(s.Config)
-	//Create handle
-	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, clientset); err != nil {
+	//Create Handle
+	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, clientset, katoClient, k8sClient); err != nil {
 		logrus.Errorf("init all handle error, %v", err)
 		return err
 	}
@@ -108,7 +129,7 @@ func Run(s *option.APIServer) error {
 	if err := controller.CreateV2RouterManager(s.Config, cli); err != nil {
 		logrus.Errorf("create v2 route manager error, %v", err)
 	}
-	// Start api
+	// Launch api
 	apiManager := server.NewManager(s.Config, etcdcli)
 	if err := apiManager.Start(); err != nil {
 		return err
@@ -116,7 +137,7 @@ func Run(s *option.APIServer) error {
 	defer apiManager.Stop()
 	logrus.Info("api router is running...")
 
-	//final step: listen Signal
+	//step finally: listen Signal
 	term := make(chan os.Signal)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
