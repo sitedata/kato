@@ -1,17 +1,15 @@
 package k8s
 
 import (
+	"encoding/json"
 	"net"
 	"os"
-	"time"
 
-	katov1alpha1 "github.com/gridworkz/kato-operator/pkg/apis/kato/v1alpha1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/informers"
+	"k8s.io/apimachinery/pkg/util/strategicpatch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -19,11 +17,7 @@ import (
 	"k8s.io/client-go/tools/reference"
 )
 
-func init() {
-	utilruntime.Must(katov1alpha1.AddToScheme(scheme.Scheme))
-}
-
-// NewClientset
+// NewClientset -
 func NewClientset(kubecfg string) (kubernetes.Interface, error) {
 	c, err := clientcmd.BuildConfigFromFlags("", kubecfg)
 	if err != nil {
@@ -38,7 +32,7 @@ func NewClientset(kubecfg string) (kubernetes.Interface, error) {
 	return clientset, nil
 }
 
-// NewClientsetOrDie
+// NewClientsetOrDie new clientset or die
 // used for who just wants a kubernetes clientset
 func NewClientsetOrDie(kubecfg string) kubernetes.Interface {
 	restConfig, err := NewRestConfig(kubecfg)
@@ -48,7 +42,7 @@ func NewClientsetOrDie(kubecfg string) kubernetes.Interface {
 	return kubernetes.NewForConfigOrDie(restConfig)
 }
 
-// NewRestConfig
+// NewRestConfig new rest config
 func NewRestConfig(kubecfg string) (restConfig *rest.Config, err error) {
 	if kubecfg == "" {
 		return InClusterConfig()
@@ -56,12 +50,12 @@ func NewRestConfig(kubecfg string) (restConfig *rest.Config, err error) {
 	return clientcmd.BuildConfigFromFlags("", kubecfg)
 }
 
-//NewRestClient
+//NewRestClient new rest client
 func NewRestClient(restConfig *rest.Config) (*rest.RESTClient, error) {
 	return rest.RESTClientFor(restConfig)
 }
 
-// InClusterConfig
+// InClusterConfig in cluster config
 func InClusterConfig() (*rest.Config, error) {
 	// Work around https://github.com/kubernetes/kubernetes/issues/40973
 	// See https://github.com/coreos/etcd-operator/issues/731#issuecomment-283804819
@@ -82,15 +76,6 @@ func InClusterConfig() (*rest.Config, error) {
 	return cfg, nil
 }
 
-// NewKatoFilteredSharedInformerFactory
-func NewKatoFilteredSharedInformerFactory(clientset kubernetes.Interface) informers.SharedInformerFactory {
-	return informers.NewFilteredSharedInformerFactory(
-		clientset, 30*time.Second, corev1.NamespaceAll, func(options *metav1.ListOptions) {
-			options.LabelSelector = "creator=Kato"
-		},
-	)
-}
-
 // ExtractLabels extracts the service information from the labels
 func ExtractLabels(labels map[string]string) (string, string, string, string) {
 	if labels == nil {
@@ -99,7 +84,7 @@ func ExtractLabels(labels map[string]string) (string, string, string, string) {
 	return labels["tenant_id"], labels["service_id"], labels["version"], labels["creater_id"]
 }
 
-// ListEventsByPod
+// ListEventsByPod -
 type ListEventsByPod func(kubernetes.Interface, *corev1.Pod) *corev1.EventList
 
 // DefListEventsByPod default implementatoin of ListEventsByPod
@@ -115,4 +100,22 @@ func DefListEventsByPod(clientset kubernetes.Interface, pod *corev1.Pod) *corev1
 	}
 	events, _ := clientset.CoreV1().Events(pod.GetNamespace()).Search(scheme.Scheme, ref)
 	return events
+}
+
+// ObjKey returns the key of the given object.
+func ObjKey(obj metav1.Object) string {
+	return obj.GetName() + "/" + obj.GetNamespace()
+}
+
+// CreatePatch -
+func CreatePatch(o, n, datastruct interface{}) ([]byte, error) {
+	oldData, err := json.Marshal(o)
+	if err != nil {
+		return nil, err
+	}
+	newData, err := json.Marshal(n)
+	if err != nil {
+		return nil, err
+	}
+	return strategicpatch.CreateTwoWayMergePatch(oldData, newData, datastruct)
 }

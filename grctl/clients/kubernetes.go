@@ -23,18 +23,34 @@ import (
 	"os"
 	"path"
 
-	"github.com/gridworkz/kato-operator/pkg/generated/clientset/versioned"
+	katov1alpha1 "github.com/gridworkz/kato-operator/api/v1alpha1"
 	"github.com/gridworkz/kato/builder/sources"
 	k8sutil "github.com/gridworkz/kato/util/k8s"
 	"github.com/sirupsen/logrus"
+	apiextensionsv1beta1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1beta1"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/kubernetes"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
-//K8SClient
+var (
+	scheme = runtime.NewScheme()
+)
+
+func init() {
+	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(katov1alpha1.AddToScheme(scheme))
+	utilruntime.Must(apiextensionsv1beta1.AddToScheme(scheme))
+}
+
+//K8SClient K8SClient
 var K8SClient kubernetes.Interface
 
 //KatoKubeClient kato custom resource client
-var KatoKubeClient versioned.Interface
+var KatoKubeClient client.Client
 
 //InitClient init k8s client
 func InitClient(kubeconfig string) error {
@@ -60,6 +76,14 @@ func InitClient(kubeconfig string) error {
 		logrus.Error("Create kubernetes client error.", err.Error())
 		return err
 	}
-	KatoKubeClient = versioned.NewForConfigOrDie(config)
+	mapper, err := apiutil.NewDynamicRESTMapper(config, apiutil.WithLazyDiscovery)
+	if err != nil {
+		return fmt.Errorf("NewDynamicRESTMapper failure %+v", err)
+	}
+	runtimeClient, err := client.New(config, client.Options{Scheme: scheme, Mapper: mapper})
+	if err != nil {
+		return fmt.Errorf("New kube client failure %+v", err)
+	}
+	KatoKubeClient = runtimeClient
 	return nil
 }

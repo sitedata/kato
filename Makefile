@@ -7,7 +7,7 @@ BASE_DOCKER=./hack/contrib/docker
 default: help
 all: image ## build linux binaries, build images for docker
 
-clean: 
+clean:
 	@rm -rf ${BIN_PATH}/*
 
 ifeq ($(origin WHAT), undefined)
@@ -16,7 +16,7 @@ endif
 ifeq ($(origin STATIC), undefined)
   STATIC = false
 else
-  STATIC = true  
+  STATIC = true
 endif
 
 ifeq ($(origin GOOS), undefined)
@@ -32,10 +32,10 @@ else
 endif
 .PHONY: build
 build:
-	@echo "🐳build ${WHAT} ${GOOS}" 
+	@echo "🐳build ${WHAT} ${GOOS}"
 	@GOOS=$(GOOS) ./localbuild.sh $(WHAT)
 image:
-	@echo "🐳build image ${WHAT}" 	
+	@echo "🐳build image ${WHAT}"
 	@bash ./release.sh ${WHAT} ${PUSH}
 binary:
 	@echo "🐳build binary ${WHAT} os ${GOOS}"

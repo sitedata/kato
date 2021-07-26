@@ -784,8 +784,10 @@ github.com/gridworkz/kato-operator v0.0.0-20210720013103-d6d37013cd28 h1:o6Z+Rb2
 github.com/gridworkz/kato-operator v0.0.0-20210720013103-d6d37013cd28/go.mod h1:j8daUuz4jleMFHiTmU9Mgqgo0yIdND2Lz5HSdEYQXWk=
 github.com/gridworkz/kato-operator v0.0.0-20210725025136-ec9d0bac1220 h1:JO8UVJgoDOB7giJjdg2shz0BMmsm1KWRHYmoI2bSz9s=
 github.com/gridworkz/kato-operator v0.0.0-20210725025136-ec9d0bac1220/go.mod h1:j8daUuz4jleMFHiTmU9Mgqgo0yIdND2Lz5HSdEYQXWk=
-github.com/gridworkz/kato-operator v1.3.1-0.20210401055914-f8fe4bf89a21 h1:iCPI96slvJv88iPc1NJW8zhpkiza0kwB0jtsuZIJLRQ=
-github.com/gridworkz/kato-operator v1.3.1-0.20210401055914-f8fe4bf89a21/go.mod h1:jcQfNoxO67nkLalCmgihYrdWF82TKyuPW032tgGdqVY=
+github.com/gridworkz/kato-operator v0.0.0-20210725155153-531e26f7c083 h1:wK0PMXK1E/Gu0/yykD0IGopLv/QmuvhXhMfBslTUUsc=
+github.com/gridworkz/kato-operator v0.0.0-20210725155153-531e26f7c083/go.mod h1:j8daUuz4jleMFHiTmU9Mgqgo0yIdND2Lz5HSdEYQXWk=
+github.com/gridworkz/kato-operator v0.0.0-20210725203637-bca9e27943ad h1:cAxvmn4+uDzVEG7fug5ojyvaUAudX2oFO9SkPBWH068=
+github.com/gridworkz/kato-operator v0.0.0-20210725203637-bca9e27943ad/go.mod h1:j8daUuz4jleMFHiTmU9Mgqgo0yIdND2Lz5HSdEYQXWk=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.1-0.20190118093823-f849b5445de4/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
 github.com/grpc-ecosystem/go-grpc-middleware v1.1.0/go.mod h1:f5nM7jw/oeRSadq3xCzHAvxcr8HZnzsqU6ILg/0NiiE=
