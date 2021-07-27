@@ -30,7 +30,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//Manager - db manager
+//Manager db manager
 type Manager interface {
 	CloseManager() error
 	Begin() *gorm.DB
@@ -40,6 +40,7 @@ type Manager interface {
 	LicenseDao() dao.LicenseDao
 	AppDao() dao.AppDao
 	ApplicationDao() dao.ApplicationDao
+	ApplicationDaoTransactions(db *gorm.DB) dao.ApplicationDao
 	AppConfigGroupDao() dao.AppConfigGroupDao
 	AppConfigGroupDaoTransactions(db *gorm.DB) dao.AppConfigGroupDao
 	AppConfigGroupServiceDao() dao.AppConfigGroupServiceDao
@@ -102,9 +103,6 @@ type Manager interface {
 	RegionAPIClassDao() dao.RegionAPIClassDao
 	RegionAPIClassDaoTransactions(db *gorm.DB) dao.RegionAPIClassDao
 
-	RegionProcotolsDao() dao.RegionProcotolsDao
-	RegionProcotolsDaoTransactions(db *gorm.DB) dao.RegionProcotolsDao
-
 	NotificationEventDao() dao.NotificationEventDao
 	AppBackupDao() dao.AppBackupDao
 	AppBackupDaoTransactions(db *gorm.DB) dao.AppBackupDao
@@ -146,11 +144,11 @@ var supportDrivers map[string]struct{}
 func init() {
 	supportDrivers = map[string]struct{}{
 		"mysql":       {},
-		"yugabytedb": {},
+		"cockroachdb": {},
 	}
 }
 
-//CreateManager
+//CreateManager Create Manager
 func CreateManager(config config.Config) (err error) {
 	if _, ok := supportDrivers[config.DBType]; !ok {
 		return fmt.Errorf("DB drivers: %s not supported", config.DBType)
@@ -170,7 +168,7 @@ func CreateManager(config config.Config) (err error) {
 	return
 }
 
-//CloseManager - close db manager
+//CloseManager close db manager
 func CloseManager() error {
 	if defaultManager == nil {
 		return errors.New("default db manager not init")
@@ -178,12 +176,12 @@ func CloseManager() error {
 	return defaultManager.CloseManager()
 }
 
-//GetManager - get db manager
+//GetManager get db manager
 func GetManager() Manager {
 	return defaultManager
 }
 
-// SetTestManager - sets the default manager for unit test
+// SetTestManager sets the default manager for unit test
 func SetTestManager(m Manager) {
 	defaultManager = m
 }

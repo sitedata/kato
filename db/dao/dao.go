@@ -75,7 +75,7 @@ type ApplicationDao interface {
 	GetAppByID(appID string) (*model.Application, error)
 	DeleteApp(appID string) error
 	GetByServiceID(sid string) (*model.Application, error)
-	ListByAppIDs (appIDs [] string) ([] * model.Application, error)
+	ListByAppIDs(appIDs []string) ([]*model.Application, error)
 }
 
 //AppConfigGroupDao Application config group Dao
@@ -152,7 +152,7 @@ type TenantServiceDao interface {
 	ListThirdPartyServices() ([]*model.TenantServices, error)
 	ListServicesByTenantID(tenantID string) ([]*model.TenantServices, error)
 	GetServiceTypeByID(serviceID string) (*model.TenantServices, error)
-	ListByAppID (appID string) ([] * model.TenantServices, error)
+	ListByAppID(appID string) ([]*model.TenantServices, error)
 	BindAppByServiceIDs(appID string, serviceIDs []string) error
 	CreateOrUpdateComponentsInBatch(components []*model.TenantServices) error
 	DeleteByComponentIDs(tenantID, appID string, componentIDs []string) error

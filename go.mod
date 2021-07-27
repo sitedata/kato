@@ -49,7 +49,7 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosuri/uitable v0.0.4
-	github.com/gridworkz/kato-oam v1.0.0 // indirect
+	github.com/gridworkz/kato-oam v1.0.0
 	github.com/gridworkz/kato-operator v0.0.0-20210725203637-bca9e27943ad // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/howeyc/fsnotify v0.9.0

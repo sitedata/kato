@@ -44,8 +44,8 @@ type Controller interface {
 	GetJob(string) (*corev1.Pod, error)
 	GetServiceJobs(serviceID string) ([]*corev1.Pod, error)
 	DeleteJob(job string)
-	GetLanguageBuildSetting(lang code.Lang, name string) string
-	GetDefaultLanguageBuildSetting(lang code.Lang) string
+	GetLanguageBuildSetting(ctx context.Context, lang code.Lang, name string) string
+	GetDefaultLanguageBuildSetting(ctx context.Context, lang code.Lang) string
 }
 type controller struct {
 	KubeClient         kubernetes.Interface
@@ -232,7 +232,7 @@ func (c *controller) DeleteJob(job string) {
 	logrus.Infof("delete job %s finish", job)
 }
 
-func (c *controller) GetLanguageBuildSetting(lang code.Lang, name string) string {
+func (c *controller) GetLanguageBuildSetting(ctx context.Context, lang code.Lang, name string) string {
 	config, err := c.KubeClient.CoreV1().ConfigMaps(c.namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("get configmap %s failure  %s", name, err.Error())
@@ -244,7 +244,7 @@ func (c *controller) GetLanguageBuildSetting(lang code.Lang, name string) string
 	return ""
 }
 
-func (c *controller) GetDefaultLanguageBuildSetting(lang code.Lang) string {
+func (c *controller) GetDefaultLanguageBuildSetting(ctx context.Context, lang code.Lang) string {
 	config, err := c.KubeClient.CoreV1().ConfigMaps(c.namespace).List(ctx, metav1.ListOptions{
 		LabelSelector: "default=true",
 	})

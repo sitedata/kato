@@ -18,7 +18,43 @@
 
 package model
 
-//CreatePluginStruct
+import (
+	dbmodel "github.com/gridworkz/kato/db/model"
+	"time"
+)
+
+// Plugin -
+type Plugin struct {
+	PluginID    string `json:"plugin_id" validate:"plugin_id|required"`
+	PluginName  string `json:"plugin_name" validate:"plugin_name|required"`
+	PluginInfo  string `json:"plugin_info" validate:"plugin_info"`
+	ImageURL    string `json:"image_url" validate:"image_url"`
+	GitURL      string `json:"git_url" validate:"git_url"`
+	BuildModel  string `json:"build_model" validate:"build_model"`
+	PluginModel string `json:"plugin_model" validate:"plugin_model"`
+	TenantID    string `json:"tenant_id" validate:"tenant_id"`
+}
+
+// DbModel return database model
+func (p *Plugin) DbModel(tenantID string) *dbmodel.TenantPlugin {
+	return &dbmodel.TenantPlugin{
+		PluginID:    p.PluginID,
+		PluginName: p.PluginName,
+		PluginInfo:  p.PluginInfo,
+		ImageURL:    p.ImageURL,
+		GitURL:      p.GitURL,
+		BuildModel:  p.BuildModel,
+		PluginModel: p.PluginModel,
+		TenantID:    tenantID,
+	}
+}
+
+// BatchCreatePlugins -
+type BatchCreatePlugins struct {
+	Plugins []*Plugin `json:"plugins"`
+}
+
+//CreatePluginStruct CreatePluginStruct
 //swagger:parameters createPlugin
 type CreatePluginStruct struct {
 	// in: path
@@ -26,44 +62,44 @@ type CreatePluginStruct struct {
 	TenantName string `json:"tenant_name"`
 	// in: body
 	Body struct {
-		//plugin id
+		//Plugin id
 		//in: body
 		//required: true
 		PluginID string `json:"plugin_id" validate:"plugin_id|required"`
 		//in: body
 		//required: true
 		PluginName string `json:"plugin_name" validate:"plugin_name|required"`
-		//plugin description
+		//Plugin usage description
 		//in: body
 		//required: false
 		PluginInfo string `json:"plugin_info" validate:"plugin_info"`
-		//plugin docker address
-		//in:body
-		//required: false
+		// Plug-in docker address
+		// in:body
+		// required: false
 		ImageURL string `json:"image_url" validate:"image_url"`
 		//git address
 		//in: body
 		//required: false
 		GitURL string `json:"git_url" validate:"git_url"`
-		//build mode
+		//Build mode
 		//in: body
 		//required: false
 		BuildModel string `json:"build_model" validate:"build_model"`
-		//plugin mode
+		//Plugin mode
 		//in: body
 		//required: false
 		PluginModel string `json:"plugin_model" validate:"plugin_model"`
-		//tenant id
+		//Tenant id
 		//in: body
 		//required: false
 		TenantID string `json:"tenant_id" validate:"tenant_id"`
 	}
 }
 
-//UpdatePluginStruct
+//UpdatePluginStruct UpdatePluginStruct
 //swagger:parameters updatePlugin
 type UpdatePluginStruct struct {
-	// tenant name
+	// Tenant name
 	// in: path
 	// required: true
 	TenantName string `json:"tenant_name" validate:"tenant_name|required"`
@@ -73,15 +109,15 @@ type UpdatePluginStruct struct {
 	PluginID string `json:"plugin_id" validate:"tenant_name|required"`
 	// in: body
 	Body struct {
-		//plugin name
+		//Plugin name
 		//in: body
 		//required: false
 		PluginName string `json:"plugin_name" validate:"plugin_name"`
-		//plugin description
+		//Plugin usage description
 		//in: body
 		//required: false
 		PluginInfo string `json:"plugin_info" validate:"plugin_info"`
-		//plugin docker address
+		//Plugin docker address
 		//in: body
 		//required: false
 		ImageURL string `json:"image_url" validate:"image_url"`
@@ -89,18 +125,18 @@ type UpdatePluginStruct struct {
 		//in: body
 		//required: false
 		GitURL string `json:"git_url" validate:"git_url"`
-		//build mode
+		//Build mode
 		//in: body
 		//required: false
 		BuildModel string `json:"build_model" validate:"build_model"`
-		//plugin mode
+		//Plugin mode
 		//in: body
 		//required: false
 		PluginModel string `json:"plugin_model" validate:"plugin_model"`
 	}
 }
 
-//DeletePluginStruct
+//DeletePluginStruct deletePluginStruct
 //swagger:parameters deletePlugin
 type DeletePluginStruct struct {
 	// in: path
@@ -111,10 +147,10 @@ type DeletePluginStruct struct {
 	PluginID string `json:"plugin_id" validate:"plugin_id|required"`
 }
 
-//ENVStruct
+//ENVStruct ENVStruct
 //swagger:parameters adddefaultenv updatedefaultenv
 type ENVStruct struct {
-	// tenant name
+	// Tenant name
 	// in: path
 	// required: true
 	TenantName string `json:"tenant_name" validate:"tenant_name"`
@@ -134,10 +170,10 @@ type ENVStruct struct {
 	}
 }
 
-//DeleteENVstruct
+//DeleteENVstruct DeleteENVstruct
 //swagger:parameters deletedefaultenv
 type DeleteENVstruct struct {
-	// tenant name
+	// Tenant name
 	// in: path
 	// required: true
 	TenantName string `json:"tenant_name" validate:"tenant_name|required"`
@@ -149,37 +185,37 @@ type DeleteENVstruct struct {
 	// in: path
 	// required; true
 	VersionID string `json:"version_id" validate:"version_id|required"`
-	//configuration item name
+	//Configuration item name
 	//in: path
 	//required: true
 	ENVName string `json:"env_name" validate:"env_name|required"`
 }
 
-//PluginDefaultENV - plug-in default environment variables
+//PluginDefaultENV plugin default environment variable
 type PluginDefaultENV struct {
-	//corresponding plugin id
+	//Corresponding plug-in id
 	//in: body
 	//required: true
 	PluginID string `json:"plugin_id" validate:"plugin_id"`
-	//build version id
+	//Build version id
 	//in: body
 	//required: true
 	VersionID string `json:"version_id" validate:"version_id"`
-	//configuration item name
+	//Configuration item name
 	//in: body
 	//required: true
 	ENVName string `json:"env_name" validate:"env_name"`
-	//configuration item value
+	//Configuration item value
 	//in: body
 	//required: true
 	ENVValue string `json:"env_value" validate:"env_value"`
-	//can be modified by the user
+	//Can be modified by the user
 	//in :body
 	//required: false
 	IsChange bool `json:"is_change" validate:"is_change|bool"`
 }
 
-//BuildPluginStruct
+//BuildPluginStruct BuildPluginStruct
 //swagger:parameters buildPlugin
 type BuildPluginStruct struct {
 	// in: path
@@ -194,11 +230,11 @@ type BuildPluginStruct struct {
 		// in: body
 		// required: false
 		EventID string `json:"event_id" validate:"event_id"`
-		// plugin CPU weight, default 125
+		// Plug-in CPU weight, default 125
 		// in: body
 		// required: true
 		PluginCPU int `json:"plugin_cpu" validate:"plugin_cpu|required"`
-		// plugin maximum memory, default 50
+		// plug-in maximum memory, default 50
 		// in: body
 		// required: true
 		PluginMemory int `json:"plugin_memory" validate:"plugin_memory|required"`
@@ -206,11 +242,11 @@ type BuildPluginStruct struct {
 		// in: body
 		// required: false
 		PluginCMD string `json:"plugin_cmd" validate:"plugin_cmd"`
-		// the version number of the plugin
+		// The version number of the plugin
 		// in: body
 		// required: true
 		BuildVersion string `json:"build_version" validate:"build_version|required"`
-		// plugin build version number
+		// Plug-in build version number
 		// in: body
 		// required: true
 		DeployVersion string `json:"deploy_version" validate:"deploy_version"`
@@ -226,19 +262,19 @@ type BuildPluginStruct struct {
 		// in: body
 		// required: false
 		Password string `json:"password"`
-		// version information, assist in selecting the plug-in version
+		// Version information, assist in choosing the plug-in version
 		// in:body
 		// required: true
 		Info string `json:"info" validate:"info"`
-		// operator
+		// Operator
 		// in: body
 		// required: false
 		Operator string `json:"operator" validate:"operator"`
-		// tenant id
+		//Tenant id
 		// in: body
 		// required: true
 		TenantID string `json:"tenant_id" validate:"tenant_id"`
-		// mirror address
+		// Mirror address
 		// in: body
 		// required: false
 		BuildImage string `json:"build_image" validate:"build_image"`
@@ -253,7 +289,63 @@ type BuildPluginStruct struct {
 	}
 }
 
-//PluginBuildVersionStruct
+// BuildPluginReq -
+type BuildPluginReq struct {
+	PluginID      string `json:"plugin_id" validate:"plugin_id"`
+	EventID       string `json:"event_id" validate:"event_id"`
+	PluginCPU     int    `json:"plugin_cpu" validate:"plugin_cpu|required"`
+	PluginMemory  int    `json:"plugin_memory" validate:"plugin_memory|required"`
+	PluginCMD     string `json:"plugin_cmd" validate:"plugin_cmd"`
+	BuildVersion  string `json:"build_version" validate:"build_version|required"`
+	DeployVersion string `json:"deploy_version" validate:"deploy_version"`
+	RepoURL       string `json:"repo_url" validate:"repo_url"`
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	Info          string `json:"info" validate:"info"`
+	Operator      string `json:"operator" validate:"operator"`
+	TenantID      string `json:"tenant_id" validate:"tenant_id"`
+	BuildImage    string `json:"build_image" validate:"build_image"`
+	ImageInfo     struct {
+		HubURL      string `json:"hub_url"`
+		HubUser     string `json:"hub_user"`
+		HubPassword string `json:"hub_password"`
+		Namespace   string `json:"namespace"`
+		IsTrust     bool   `json:"is_trust,omitempty"`
+	} `json:"ImageInfo" validate:"ImageInfo"`
+}
+
+// DbModel return database model
+func (b BuildPluginReq) DbModel(plugin *dbmodel.TenantPlugin) *dbmodel.TenantPluginBuildVersion {
+	buildVersion := &dbmodel.TenantPluginBuildVersion{
+		VersionID:       b.BuildVersion,
+		DeployVersion:   b.DeployVersion,
+		PluginID:        b.PluginID,
+		Kind:            plugin.BuildModel,
+		Repo:            b.RepoURL,
+		GitURL:          plugin.GitURL,
+		BaseImage:       plugin.ImageURL,
+		ContainerCPU:    b.PluginCPU,
+		ContainerMemory: b.PluginMemory,
+		ContainerCMD:    b.PluginCMD,
+		BuildTime:       time.Now().Format(time.RFC3339),
+		Info:            b.Info,
+		Status:          "building",
+	}
+	if b.PluginCPU == 0 {
+		buildVersion.ContainerCPU = 125
+	}
+	if b.PluginMemory == 0 {
+		buildVersion.ContainerMemory = 50
+	}
+	return buildVersion
+}
+
+// BatchBuildPlugins -
+type BatchBuildPlugins struct {
+	Plugins []*BuildPluginReq `json:"plugins"`
+}
+
+//PluginBuildVersionStruct PluginBuildVersionStruct
 //swagger:parameters deletePluginVersion pluginVersion
 type PluginBuildVersionStruct struct {
 	//in: path
@@ -267,7 +359,7 @@ type PluginBuildVersionStruct struct {
 	VersionID string `json:"version_id" validate:"version_id"`
 }
 
-//AllPluginBuildVersionStruct
+//AllPluginBuildVersionStruct AllPluginBuildVersionStruct
 //swagger:parameters allPluginVersions
 type AllPluginBuildVersionStruct struct {
 	//in: path
@@ -278,7 +370,7 @@ type AllPluginBuildVersionStruct struct {
 	PluginID string `json:"plugin_id" validate:"plugin_id"`
 }
 
-//PluginSetStruct
+//PluginSetStruct PluginSetStruct
 //swagger:parameters updatePluginSet addPluginSet
 type PluginSetStruct struct {
 	//in: path
@@ -316,7 +408,7 @@ type PluginSetStruct struct {
 	}
 }
 
-//GetPluginsStruct
+//GetPluginsStruct GetPluginsStruct
 //swagger:parameters getPlugins
 type GetPluginsStruct struct {
 	//in: path
@@ -324,7 +416,7 @@ type GetPluginsStruct struct {
 	TenantName string `json:"tenant_name"`
 }
 
-//GetPluginSetStruct
+//GetPluginSetStruct GetPluginSetStruct
 //swagger:parameters getPluginSet
 type GetPluginSetStruct struct {
 	//in: path
@@ -335,7 +427,7 @@ type GetPluginSetStruct struct {
 	ServiceAlias string `json:"service_alias"`
 }
 
-//DeletePluginSetStruct
+//DeletePluginSetStruct DeletePluginSetStruct
 //swagger:parameters deletePluginRelation
 type DeletePluginSetStruct struct {
 	//in: path
@@ -344,16 +436,16 @@ type DeletePluginSetStruct struct {
 	//in: path
 	//required: true
 	ServiceAlias string `json:"service_alias"`
-	//plugin id
+	//Plugin id
 	//in: path
 	//required: true
 	PluginID string `json:"plugin_id"`
 }
 
-//GetPluginEnvStruct
+//GetPluginEnvStruct GetPluginEnvStruct
 //swagger:parameters getPluginEnv getPluginDefaultEnv
 type GetPluginEnvStruct struct {
-	//tenant name
+	//Tenant name
 	//in: path
 	//required: true
 	TenantName string `json:"tenant_name"`
@@ -361,13 +453,13 @@ type GetPluginEnvStruct struct {
 	// in: path
 	// required: true
 	PluginID string `json:"plugin_id"`
-	// build version id
+	// Build version id
 	// in: path
 	// required: true
 	VersionID string `json:"version_id"`
 }
 
-//GetVersionEnvStruct
+//GetVersionEnvStruct GetVersionEnvStruct
 //swagger:parameters getVersionEnvs
 type GetVersionEnvStruct struct {
 	// in: path
@@ -382,7 +474,7 @@ type GetVersionEnvStruct struct {
 	PluginID string `json:"plugin_id"`
 }
 
-//SetVersionEnv
+//SetVersionEnv SetVersionEnv
 //swagger:parameters setVersionEnv updateVersionEnv
 type SetVersionEnv struct {
 	// in: path
@@ -399,7 +491,7 @@ type SetVersionEnv struct {
 	Body struct {
 		TenantID  string `json:"tenant_id"`
 		ServiceID string `json:"service_id"`
-		// environment variable
+		// environment variables
 		// in: body
 		// required: true
 		ConfigEnvs ConfigEnvs `json:"config_envs" validate:"config_envs"`
@@ -412,7 +504,7 @@ type ConfigEnvs struct {
 	ComplexEnvs *ResourceSpec `json:"complex_envs" validate:"complex_envs"`
 }
 
-//VersionEnv VersionEnv
+// VersionEnv VersionEnv
 type VersionEnv struct {
 	//variable name
 	//in:body
@@ -424,7 +516,17 @@ type VersionEnv struct {
 	EnvValue string `json:"env_value" validate:"env_value"`
 }
 
-//TransPlugins TransPlugins
+// DbModel return database model
+func (v *VersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantPluginVersionEnv {
+	return &dbmodel.TenantPluginVersionEnv{
+		ServiceID: componentID,
+		PluginID:  pluginID,
+		EnvName: v.EnvName,
+		EnvValue: v.EnvValue,
+	}
+}
+
+// TransPlugins TransPlugins
 type TransPlugins struct {
 	// in: path
 	// required: true
@@ -439,5 +541,59 @@ type TransPlugins struct {
 		// in: body
 		// required: true
 		PluginsID []string `json:"plugins_id" validate:"plugins_id"`
+	}
+}
+
+// PluginVersionEnv -
+type PluginVersionEnv struct {
+	EnvName  string `json:"env_name" validate:"env_name"`
+	EnvValue string `json:"env_value" validate:"env_value"`
+}
+
+// DbModel return database model
+func (p *PluginVersionEnv) DbModel(componentID, pluginID string) *dbmodel.TenantPluginVersionEnv {
+	return &dbmodel.TenantPluginVersionEnv{
+		ServiceID: componentID,
+		PluginID:  pluginID,
+		EnvName:   p.EnvName,
+		EnvValue:  p.EnvValue,
+	}
+}
+
+// TenantPluginVersionConfig -
+type TenantPluginVersionConfig struct {
+	ConfigStr string `json:"config_str" validate:"config_str"`
+}
+
+// DbModel return database model
+func (p *TenantPluginVersionConfig) DbModel(componentID, pluginID string) *dbmodel.TenantPluginVersionDiscoverConfig {
+	return &dbmodel.TenantPluginVersionDiscoverConfig{
+		ServiceID: componentID,
+		PluginID:  pluginID,
+		ConfigStr: p.ConfigStr,
+	}
+}
+
+// ComponentPlugin -
+type ComponentPlugin struct {
+	PluginID        string     `json:"plugin_id"`
+	VersionID       string     `json:"version_id"`
+	PluginModel     string     `json:"plugin_model"`
+	ContainerCPU    int        `json:"container_cpu"`
+	ContainerMemory int        `json:"container_memory"`
+	Switch          bool       `json:"switch"`
+	ConfigEnvs      ConfigEnvs `json:"config_envs" validate:"config_envs"`
+}
+
+// DbModel return database model
+func (p *ComponentPlugin) DbModel(componentID string) *dbmodel.TenantServicePluginRelation {
+	return &dbmodel.TenantServicePluginRelation{
+		VersionID:       p.VersionID,
+		ServiceID:       componentID,
+		PluginID:        p.PluginID,
+		Switch:          p.Switch,
+		PluginModel:     p.PluginModel,
+		ContainerCPU:    p.ContainerCPU,
+		ContainerMemory: p.ContainerMemory,
 	}
 }

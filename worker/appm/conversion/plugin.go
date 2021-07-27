@@ -45,8 +45,8 @@ func TenantServicePlugin(as *typesv1.AppService, dbmanager db.Manager) error {
 		logrus.Errorf("create plugin containers for component %s failure: %s", as.ServiceID, err.Error())
 		return err
 	}
-	subtemplate: = as.GetPodTemplate ()
-	if podtemplate! = nil {
+	podtemplate := as.GetPodTemplate()
+	if podtemplate != nil {
 		if len(preContainers) > 0 {
 			podtemplate.Spec.Containers = append(preContainers, podtemplate.Spec.Containers...)
 		}
@@ -96,12 +96,12 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 		if err != nil {
 			return nil, nil, nil, err
 		}
-		was envFromSecrets [] corev1.EnvFromSource
+		var envFromSecrets []corev1.EnvFromSource
 		envVarSecrets := as.GetEnvVarSecrets(true)
 		for _, secret := range envVarSecrets {
 			envFromSecrets = append(envFromSecrets, corev1.EnvFromSource{
 				SecretRef: &corev1.SecretEnvSource{
-					LocalObjectReference: corev1.LocalObjectReference {
+					LocalObjectReference: corev1.LocalObjectReference{
 						Name: secret.Name,
 					},
 				},
@@ -114,7 +114,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 		pc := v1.Container{
 			Name:                   "plugin-" + pluginR.PluginID,
 			Image:                  versionInfo.BuildLocalImage,
-			Env: * envs,
+			Env:                    *envs,
 			EnvFrom:                envFromSecrets,
 			Resources:              createPluginResources(pluginR.ContainerMemory, pluginR.ContainerCPU),
 			TerminationMessagePath: "",
@@ -155,7 +155,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 				//init container default open security
 				pc.SecurityContext = &corev1.SecurityContext{Privileged: util.Bool(true)}
 			}
-			initContainers = append (initContainers, pc)
+			initContainers = append(initContainers, pc)
 		} else if preconatiner {
 			precontainers = append(precontainers, pc)
 		} else {
@@ -194,7 +194,7 @@ func conversionServicePlugin(as *typesv1.AppService, dbmanager db.Manager) ([]v1
 
 	bootSequence := createProbeMeshInitContainer(as, meshPluginID, as.ServiceAlias, mainContainer.Env)
 	if bootSeqDepServiceIds := as.ExtensionSet["boot_seq_dep_service_ids"]; as.NeedProxy && bootSeqDepServiceIds != "" {
-		initContainers = append (initContainers, bootSequence)
+		initContainers = append(initContainers, bootSequence)
 	}
 	as.BootSeqContainer = &bootSequence
 	return initContainers, precontainers, postcontainers, nil
@@ -209,7 +209,7 @@ func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, en
 
 	container := v1.Container{
 		Name:      "default-tcpmesh-" + as.ServiceID[len(as.ServiceID)-20:],
-		Env: envs,
+		Env:       envs,
 		Image:     typesv1.GetTCPMeshImageName(),
 		Resources: createTCPUDPMeshRecources(as),
 	}
@@ -218,10 +218,10 @@ func createTCPDefaultPluginContainer(as *typesv1.AppService, pluginID string, en
 }
 
 func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container, pluginConfig *api_model.ResourceSpec) {
-	if strings.ToLower(as.ExtensionSet["DISABLE_SIDECAR_CHECK"]) != "true" {
+	if strings.ToLower(as.ExtensionSet["disable_sidecar_check"]) != "true" {
 		var port int
-		if as.ExtensionSet["SIDECAR_CHECK_PORT"] != "" {
-			cport, _ := strconv.Atoi(as.ExtensionSet["SIDECAR_CHECK_PORT"])
+		if as.ExtensionSet["sidecar_check_port"] != "" {
+			cport, _ := strconv.Atoi(as.ExtensionSet["sidecar_check_port"])
 			if cport != 0 {
 				port = cport
 			}
@@ -243,7 +243,7 @@ func setSidecarContainerLifecycle(as *typesv1.AppService, con *corev1.Container,
 			}
 		}
 		con.Lifecycle = &corev1.Lifecycle{
-			PostStart: & corev1.Handler {
+			PostStart: &corev1.Handler{
 				Exec: &v1.ExecAction{
 					Command: []string{"/root/kato-mesh-data-panel", "wait", strconv.Itoa(port)},
 				},
@@ -260,7 +260,7 @@ func createProbeMeshInitContainer(as *typesv1.AppService, pluginID, serviceAlias
 	envs = append(envs, v1.EnvVar{Name: "XDS_HOST_PORT", Value: xdsHostPort})
 	return v1.Container{
 		Name:      "probe-mesh-" + as.ServiceID[len(as.ServiceID)-20:],
-		Env: envs,
+		Env:       envs,
 		Image:     typesv1.GetProbeMeshImageName(),
 		Resources: createTCPUDPMeshRecources(as),
 	}
@@ -311,7 +311,7 @@ func ApplyPluginConfig(as *typesv1.AppService, servicePluginRelation *model.Tena
 
 //applyDefaultMeshPluginConfig applyDefaultMeshPluginConfig
 func applyDefaultMeshPluginConfig(as *typesv1.AppService, dbmanager db.Manager) (string, *api_model.ResourceSpec, error) {
-	var baseServices [] * api_model.BaseService
+	var baseServices []*api_model.BaseService
 	deps, err := dbmanager.TenantServiceRelationDao().GetTenantServiceRelations(as.ServiceID)
 	if err != nil {
 		logrus.Errorf("get service depend service info failure %s", err.Error())
@@ -335,7 +335,7 @@ func applyDefaultMeshPluginConfig(as *typesv1.AppService, dbmanager db.Manager) 
 					Port:               port.ContainerPort,
 					Protocol:           port.Protocol,
 				}
-				baseServices = append (baseServices, depService)
+				baseServices = append(baseServices, depService)
 			}
 		}
 	}
@@ -404,7 +404,7 @@ func createPluginEnvs(pluginID, tenantID, serviceAlias string, mainEnvs []v1.Env
 	if err != nil && err.Error() != gorm.ErrRecordNotFound.Error() {
 		return nil, err
 	}
-	var envs [] v1.EnvVar
+	var envs []v1.EnvVar
 	//first set main service env
 	for _, e := range mainEnvs {
 		envs = append(envs, e)

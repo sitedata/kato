@@ -22,7 +22,16 @@ import (
 	"net/url"
 	"time"
 
+	"github.com/gridworkz/kato/util"
+
 	dbmodel "github.com/gridworkz/kato/db/model"
+	dmodel "github.com/gridworkz/kato/worker/discover/model"
+)
+
+// AppType
+const (
+	AppTypeKato = "kato"
+	AppTypeHelm     = "helm"
 )
 
 //ServiceGetCommon path parameter
@@ -36,7 +45,7 @@ type ServiceGetCommon struct {
 	ServiceAlias string `json:"service_alias"`
 }
 
-//ComposerStruct
+//ComposerStruct ComposerStruct
 // swagger:parameters resolve
 type ComposerStruct struct {
 	// in : body
@@ -74,31 +83,31 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id"`
-		// operator
+		// Operator
 		// in: body
 		// required: false
 		Operator string `json:"operator" validate:"operator"`
-		// apply label,value
+		// Application label, value
 		// in: body
 		// required: false
 		ServiceLabel string `json:"service_label" validate:"service_label"`
-		// node label, format: v1,v2
+		// node label, format: v1, v2
 		// in: body
 		// required: false
 		NodeLabel string `json:"node_label" validate:"node_label"`
-		// depend on id, format: []struct TenantServiceRelation
+		// Depend on id, format: []struct TenantServiceRelation
 		// in: body
 		// required: false
 		DependIDs []dbmodel.TenantServiceRelation `json:"depend_ids" validate:"depend_ids"`
-		// persistent directory information, format: []struct TenantServiceVolume
+		// Persistent directory information, format: []struct TenantServiceVolume
 		// in: body
 		// required: false
 		VolumesInfo []dbmodel.TenantServiceVolume `json:"volumes_info" validate:"volumes_info"`
-		// environment variable information, format: []struct TenantServiceEnvVar
+		// Environment variable information, format: []struct TenantServiceEnvVar
 		// in: body
 		// required: false
 		EnvsInfo []dbmodel.TenantServiceEnvVar `json:"envs_info" validate:"envs_info"`
-		// port information, format: []struct TenantServicesPort
+		// Port information, format: []struct TenantServicesPort
 		// in: body
 		// required: false
 		PortsInfo []dbmodel.TenantServicesPort `json:"ports_info" validate:"ports_info"`
@@ -110,39 +119,39 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: true
 		ServiceAlias string `gorm:"column:service_alias;size:30" json:"service_alias" validate:"service_alias"`
-		// service description
+		// Service description
 		// in: body
 		// required: false
 		Comment string `gorm:"column:comment" json:"comment" validate:"comment"`
-		// service version
+		// Service version
 		// in: body
 		// required: false
 		ServiceVersion string `gorm:"column:service_version;size:32" json:"service_version" validate:"service_version"`
-		// image name
+		// Mirror name
 		// in: body
 		// required: false
 		ImageName string `gorm:"column:image_name;size:100" json:"image_name" validate:"image_name"`
-		// container CPU weight
+		// Container CPU weight
 		// in: body
 		// required: false
 		ContainerCPU int `gorm:"column:container_cpu;default:500" json:"container_cpu" validate:"container_cpu"`
-		// maximum memory of container
+		// Maximum memory of the container
 		// in: body
 		// required: false
 		ContainerMemory int `gorm:"column:container_memory;default:128" json:"container_memory" validate:"container_memory"`
-		// container start command
+		// Container start command
 		// in: body
 		// required: false
 		ContainerCMD string `gorm:"column:container_cmd;size:2048" json:"container_cmd" validate:"container_cmd"`
-		// container environment variables
+		// Container environment variables
 		// in: body
 		// required: false
 		ContainerEnv string `gorm:"column:container_env;size:255" json:"container_env" validate:"container_env"`
-		// volume name
+		// Volume name
 		// in: body
 		// required: false
 		VolumePath string `gorm:"column:volume_path" json:"volume_path" validate:"volume_path"`
-		// container mount directory
+		// Container mount directory
 		// in: body
 		// required: false
 		VolumeMountPath string `gorm:"column:volume_mount_path" json:"volume_mount_path" validate:"volume_mount_path"`
@@ -150,7 +159,7 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		HostPath string `gorm:"column:host_path" json:"host_path" validate:"host_path"`
-		// expansion method; 0: stateless; 1: stateful; 2: partition
+		// Expansion method; 0: stateless; 1: stateful; 2: partition
 		// in: body
 		// required: false
 		ExtendMethod string `gorm:"column:extend_method;default:'stateless';" json:"extend_method" validate:"extend_method"`
@@ -158,31 +167,31 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		Replicas int `gorm:"column:replicas;default:1" json:"replicas" validate:"replicas"`
-		// deployment version
+		// Deployment version
 		// in: body
 		// required: false
 		DeployVersion string `gorm:"column:deploy_version" json:"deploy_version" validate:"deploy_version"`
-		// service classification：application,cache,store
+		// Service category: application, cache, store
 		// in: body
 		// required: false
 		Category string `gorm:"column:category" json:"category" validate:"category"`
-		// latest operation ID
+		// Latest operation ID
 		// in: body
 		// required: false
 		EventID string `gorm:"column:event_id" json:"event_id" validate:"event_id"`
-		// service type
+		// Service type
 		// in: body
 		// required: false
 		ServiceType string `gorm:"column:service_type" json:"service_type" validate:"service_type"`
-		// mirror source
+		// Mirror source
 		// in: body
 		// required: false
 		Namespace string `gorm:"column:namespace" json:"namespace" validate:"namespace"`
-		// sharing type: shared、exclusive
+		// Shared type shared, exclusive
 		// in: body
 		// required: false
 		VolumeType string `gorm:"column:volume_type;default:'shared'" json:"volume_type" validate:"volume_type"`
-		// port type，one_outer; dif_protocol; multi_outer
+		// Port type, one_outer; dif_protocol; multi_outer
 		// in: body
 		// required: false
 		PortType string `gorm:"column:port_type;default:'multi_outer'" json:"port_type" validate:"port_type"`
@@ -190,11 +199,11 @@ type CreateServiceStruct struct {
 		// in: body
 		// required: false
 		UpdateTime time.Time `gorm:"column:update_time" json:"update_time" validate:"update_time"`
-		// service creation type cloud: gridworkz cloud service, assistant cloud help service
+		// Service creation type cloud cloud city service, assistant cloud help service
 		// in: body
 		// required: false
 		ServiceOrigin string `gorm:"column:service_origin;default:'assistant'" json:"service_origin" validate:"service_origin"`
-		// code source: gitlab,github
+		// Code source: gitlab,github
 		// in: body
 		// required: false
 		CodeFrom string `gorm:"column:code_from" json:"code_from" validate:"code_from"`
@@ -212,15 +221,15 @@ type UpdateServiceStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	//in: body
 	Body struct {
-		// container start command
+		// Container start command
 		// in: body
 		// required: false
 		ContainerCMD string `gorm:"column:container_cmd;size:2048" json:"container_cmd" validate:"container_cmd"`
-		// image name
+		// Mirror name
 		// in: body
 		// required: false
 		ImageName string `gorm:"column:image_name;size:100" json:"image_name" validate:"image_name"`
-		// maximum memory of container
+		// Maximum memory of the container
 		// in: body
 		// required: false
 		ContainerMemory int `gorm:"column:container_memory;default:128" json:"container_memory" validate:"container_memory"`
@@ -248,7 +257,7 @@ type ServiceStruct struct {
 	// in: path
 	// required: true
 	ServiceID string `json:"service_id" validate:"service_id"`
-	// service name, used for stateful service DNS
+	// Service name, used for stateful service DNS
 	// in: body
 	// required: false
 	ServiceName string `json:"service_name" validate:"service_name"`
@@ -256,39 +265,43 @@ type ServiceStruct struct {
 	// in: body
 	// required: true
 	ServiceAlias string `json:"service_alias" validate:"service_alias"`
-	// component type
+	// Component type
 	// in: body
 	// required: true
 	ServiceType string `json:"service_type" validate:"service_type"`
-	// service description
+	// Service description
 	// in: body
 	// required: false
 	Comment string `json:"comment" validate:"comment"`
-	// service version
+	// Service version
 	// in: body
 	// required: false
 	ServiceVersion string `json:"service_version" validate:"service_version"`
-	// image name
+	// Mirror name
 	// in: body
 	// required: false
 	ImageName string `json:"image_name" validate:"image_name"`
-	// container CPU weight
+	// Container CPU weight
 	// in: body
 	// required: false
 	ContainerCPU int `json:"container_cpu" validate:"container_cpu"`
-	// maximum memory of container
+	// Maximum memory of the container
 	// in: body
 	// required: false
 	ContainerMemory int `json:"container_memory" validate:"container_memory"`
-	// container start command
+	// component gpu video memory
+	// in: body
+	// required: false
+	ContainerGPU int `json:"container_gpu" validate:"container_gpu"`
+	// Container start command
 	// in: body
 	// required: false
 	ContainerCMD string `json:"container_cmd" validate:"container_cmd"`
-	// container environment variables
+	// Container environment variables
 	// in: body
 	// required: false
 	ContainerEnv string `json:"container_env" validate:"container_env"`
-	// expansion method; 0: stateless; 1: stateful; 2: partition (v5.2 is used for the type of receiving component)
+	// Expansion method; 0: stateless; 1: stateful; 2: partition (v5.2 is used for the type of receiving component)
 	// in: body
 	// required: false
 	ExtendMethod string `json:"extend_method" validate:"extend_method"`
@@ -296,23 +309,23 @@ type ServiceStruct struct {
 	// in: body
 	// required: false
 	Replicas int `json:"replicas" validate:"replicas"`
-	// deployment version
+	// Deployment version
 	// in: body
 	// required: false
 	DeployVersion string `json:"deploy_version" validate:"deploy_version"`
-	// service classification：application,cache,store
+	// Service category: application, cache, store
 	// in: body
 	// required: false
 	Category string `json:"category" validate:"category"`
-	// service current status：undeploy,running,closed,unusual,starting,checking,stoping
+	// Current status of the service: undeploy,running,closed,unusual,starting,checking,stoping
 	// in: body
 	// required: false
 	CurStatus string `json:"cur_status" validate:"cur_status"`
-	// latest operation ID
+	// Latest operation ID
 	// in: body
 	// required: false
 	EventID string `json:"event_id" validate:"event_id"`
-	// mirror source
+	// Mirror source
 	// in: body
 	// required: false
 	Namespace string `json:"namespace" validate:"namespace"`
@@ -320,7 +333,7 @@ type ServiceStruct struct {
 	// in: body
 	// required: false
 	UpdateTime time.Time `json:"update_time" validate:"update_time"`
-	// service creation type: cloud gridworkz cloud service, assistant cloud help service
+	// Service creation type cloud cloud city service, assistant cloud help service
 	// in: body
 	// required: false
 	ServiceOrigin string `json:"service_origin" validate:"service_origin"`
@@ -329,56 +342,76 @@ type ServiceStruct struct {
 	//OSType runtime os type
 	// in: body
 	// required: false
-	OSType         string                               `json:"os_type" validate:"os_type|in:windows,linux"`
-	ServiceLabel   string                               `json:"service_label"  validate:"service_label|in:StatelessServiceType,StatefulServiceType"`
-	NodeLabel      string                               `json:"node_label"  validate:"node_label"`
-	Operator       string                               `json:"operator"  validate:"operator"`
-	RepoURL        string                               `json:"repo_url" validate:"repo_url"`
-	DependIDs      []dbmodel.TenantServiceRelation      `json:"depend_ids" validate:"depend_ids"`
-	VolumesInfo    []TenantServiceVolumeStruct          `json:"volumes_info" validate:"volumes_info"`
-	DepVolumesInfo []dbmodel.TenantServiceMountRelation `json:"dep_volumes_info" validate:"dep_volumes_info"`
-	EnvsInfo       []dbmodel.TenantServiceEnvVar        `json:"envs_info" validate:"envs_info"`
-	PortsInfo      []dbmodel.TenantServicesPort         `json:"ports_info" validate:"ports_info"`
-	Endpoints      *Endpoints                           `json:"endpoints" validate:"endpoints"`
-	AppID          string                               `json:"app_id" validate:"required"`
+	OSType            string                               `json:"os_type" validate:"os_type|in:windows,linux"`
+	ServiceLabel      string                               `json:"service_label"  validate:"service_label|in:StatelessServiceType,StatefulServiceType"`
+	NodeLabel         string                               `json:"node_label"  validate:"node_label"`
+	Operator          string                               `json:"operator"  validate:"operator"`
+	RepoURL           string                               `json:"repo_url" validate:"repo_url"`
+	DependIDs         []dbmodel.TenantServiceRelation      `json:"depend_ids" validate:"depend_ids"`
+	VolumesInfo       []TenantServiceVolumeStruct          `json:"volumes_info" validate:"volumes_info"`
+	DepVolumesInfo    []dbmodel.TenantServiceMountRelation `json:"dep_volumes_info" validate:"dep_volumes_info"`
+	EnvsInfo          []dbmodel.TenantServiceEnvVar        `json:"envs_info" validate:"envs_info"`
+	PortsInfo         []dbmodel.TenantServicesPort         `json:"ports_info" validate:"ports_info"`
+	Endpoints         *Endpoints                           `json:"endpoints" validate:"endpoints"`
+	AppID             string                               `json:"app_id" validate:"required"`
+	ComponentProbes   []ServiceProbe                       `json:"component_probes" validate:"component_probes"`
+	ComponentMonitors []AddServiceMonitorRequestStruct     `json:"component_monitors" validate:"component_monitors"`
+	HTTPRules         []AddHTTPRuleStruct                  `json:"http_rules" validate:"http_rules"`
+	TCPRules          []AddTCPRuleStruct                   `json:"tcp_rules" validate:"tcp_rules"`
 }
 
 // Endpoints holds third-party service endpoints or configuraion to get endpoints.
 type Endpoints struct {
-	Static    string `json:"static" validate:"static"`
-	Discovery string `json:"discovery" validate:"discovery"`
+	Static     []string            `json:"static" validate:"static"`
+	Kubernetes * EndpointKubernetes `json:" kubernetes "validate:" kubernetes "`
+}
+
+// DbModel -
+func (e *Endpoints) DbModel(componentID string) *dbmodel.ThirdPartySvcDiscoveryCfg {
+	return &dbmodel.ThirdPartySvcDiscoveryCfg{
+		ServiceID:   componentID,
+		Type:        string(dbmodel.DiscorveryTypeKubernetes),
+		Namespace:   e.Kubernetes.Namespace,
+		ServiceName: e.Kubernetes.ServiceName,
+	}
+}
+
+// EndpointKubernetes -
+type EndpointKubernetes struct {
+	Namespace   string `json:"namespace"`
+	ServiceName string `json:"serviceName"`
 }
 
 //TenantServiceVolumeStruct -
 type TenantServiceVolumeStruct struct {
 	ServiceID string ` json:"service_id"`
-	//service type
+	//Service type
 	Category string `json:"category"`
-	//storage type（share,local,tmpfs）
+	//Storage type (share, local, tmpfs)
 	VolumeType string `json:"volume_type"`
-	//storage name
+	//Storage name
 	VolumeName string `json:"volume_name"`
-	//host address
+	//Host address
 	HostPath string `json:"host_path"`
-	//mount address
+	//Mount address
 	VolumePath string `json:"volume_path"`
-	//read-only
+	//Whether it is read-only
 	IsReadOnly bool `json:"is_read_only"`
 
 	FileContent string `json:"file_content"`
-	// VolumeCapacity Storage size
+	// VolumeCapacity storage size
 	VolumeCapacity int64 `json:"volume_capacity"`
-	// AccessMode Read and write mode (Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes)
+	// AccessMode 读写模式（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
 	AccessMode string `json:"access_mode"`
-	// SharePolicy Sharing mode
+	// SharePolicy sharing mode
 	SharePolicy string `json:"share_policy"`
-	// BackupPolicy Backup strategy
+	// BackupPolicy backup policy
 	BackupPolicy string `json:"backup_policy"`
-	// ReclaimPolicy Recycling strategy
+	// ReclaimPolicy recycling strategy
 	ReclaimPolicy string `json:"reclaim_policy"`
-	// AllowExpansion Whether to support expansion
+	// Whether AllowExpansion supports expansion
 	AllowExpansion bool `json:"allow_expansion"`
-	// VolumeProviderName Storage driver alias used
+	// The storage driver alias used by VolumeProviderName
 	VolumeProviderName string `json:"volume_provider_name"`
 }
 
@@ -415,7 +448,7 @@ type DeleteServicePort struct {
 	Port int `json:"port"`
 }
 
-//TenantResources TenantResources
+// TenantResources TenantResources
 // swagger:parameters tenantResources
 type TenantResources struct {
 	// in: body
@@ -426,7 +459,7 @@ type TenantResources struct {
 	}
 }
 
-//ServicesResources ServicesResources
+// ServicesResources ServicesResources
 // swagger:parameters serviceResources
 type ServicesResources struct {
 	// in: body
@@ -442,17 +475,17 @@ type ServicesResources struct {
 type CommandResponse struct {
 	// in: body
 	Body struct {
-		//parameter verification error message
+		//Parameter verification error message
 		ValidationError url.Values `json:"validation_error,omitempty"`
 		//API error message
 		Msg string `json:"msg,omitempty"`
-		//single resource entity
+		//Single resource entity
 		Bean interface{} `json:"bean,omitempty"`
-		//resource list
+		//Resource list
 		List interface{} `json:"list,omitempty"`
-		//total number of data sets
+		//Total number of data sets
 		ListAllNumber int `json:"number,omitempty"`
-		//current page number
+		//Current page number
 		Page int `json:"page,omitempty"`
 	}
 }
@@ -471,7 +504,7 @@ type ServicePortInnerOrOuter struct {
 	Port int `json:"port"`
 	//in: body
 	Body struct {
-		// operation value `close` or `open`
+		// Operation value `close` or `open`
 		// in: body
 		// required: true
 		Operation      string `json:"operation"  validate:"operation|required|in:open,close"`
@@ -508,7 +541,7 @@ type RollbackStruct struct {
 	DeployVersion string `json:"deploy_version"`
 }
 
-//StatusList
+//StatusList status list
 type StatusList struct {
 	TenantID      string     `json:"tenant_id"`
 	ServiceID     string     `json:"service_id"`
@@ -523,7 +556,7 @@ type StatusList struct {
 	PodList       []PodsList `json:"pod_list"`
 }
 
-//PodsList
+//PodsList pod list
 type PodsList struct {
 	PodIP    string `json:"pod_ip"`
 	Phase    string `json:"phase"`
@@ -531,19 +564,19 @@ type PodsList struct {
 	NodeName string `json:"node_name"`
 }
 
-//StatsInfo
+//StatsInfo stats info
 type StatsInfo struct {
 	UUID string `json:"uuid"`
 	CPU  int    `json:"cpu"`
 	MEM  int    `json:"memory"`
 }
 
-//TotalStatsInfo
+//TotalStatsInfo total stats info
 type TotalStatsInfo struct {
 	Data []*StatsInfo `json:"data"`
 }
 
-//LicenseInfo
+//LicenseInfo license info
 type LicenseInfo struct {
 	Code       string   `json:"code"`
 	Company    string   `json:"company"`
@@ -557,7 +590,7 @@ type LicenseInfo struct {
 	ModuleList []string `json:"module_list"`
 }
 
-// AddTenantStruct
+// AddTenantStruct AddTenantStruct
 // swagger:parameters addTenant
 type AddTenantStruct struct {
 	//in: body
@@ -579,7 +612,7 @@ type AddTenantStruct struct {
 	}
 }
 
-// UpdateTenantStruct
+// UpdateTenantStruct UpdateTenantStruct
 // swagger:parameters updateTenant
 type UpdateTenantStruct struct {
 	//in: body
@@ -591,7 +624,7 @@ type UpdateTenantStruct struct {
 	}
 }
 
-// ServicesInfoStruct
+// ServicesInfoStruct ServicesInfoStruct
 // swagger:parameters getServiceInfo
 type ServicesInfoStruct struct {
 	// in: path
@@ -599,7 +632,7 @@ type ServicesInfoStruct struct {
 	TenantName string `json:"tenant_name"`
 }
 
-// SetLanguageStruct
+// SetLanguageStruct SetLanguageStruct
 // swagger:parameters setLanguage
 type SetLanguageStruct struct {
 	// in: path
@@ -621,7 +654,7 @@ type SetLanguageStruct struct {
 	}
 }
 
-//StartServiceStruct
+//StartServiceStruct StartServiceStruct
 //swagger:parameters startService stopService restartService
 type StartServiceStruct struct {
 	// in: path
@@ -639,7 +672,7 @@ type StartServiceStruct struct {
 	}
 }
 
-//VerticalServiceStruct
+//VerticalServiceStruct VerticalServiceStruct
 //swagger:parameters verticalService
 type VerticalServiceStruct struct {
 	// in: path
@@ -654,7 +687,7 @@ type VerticalServiceStruct struct {
 		// in: body
 		// required: false
 		EventID string `json:"event_id"`
-		// number of cpus
+		// number of cpu
 		// in: body
 		// required: false
 		ContainerCPU int `json:"container_cpu"`
@@ -665,7 +698,7 @@ type VerticalServiceStruct struct {
 	}
 }
 
-//HorizontalServiceStruct
+//HorizontalServiceStruct HorizontalServiceStruct
 //swagger:parameters horizontalService
 type HorizontalServiceStruct struct {
 	// in: path
@@ -680,14 +713,14 @@ type HorizontalServiceStruct struct {
 		// in: body
 		// required: false
 		EventID string `json:"event_id"`
-		// number of extensions
+		// Number of scaling
 		// in: body
 		// required: false
 		NodeNUM int `json:"node_num"`
 	}
 }
 
-//BuildServiceStruct
+//BuildServiceStruct BuildServiceStruct
 //swagger:parameters serviceBuild
 type BuildServiceStruct struct {
 	// in: path
@@ -706,19 +739,19 @@ type BuildServiceStruct struct {
 		// in: body
 		// required: false
 		ENVS map[string]string `json:"envs" validate:"envs"`
-		// application build type
+		// Application build type
 		// in: body
 		// required: true
 		Kind string `json:"kind" validate:"kind|required"`
-		// follow-up actions, one-click deployment based on the value, if the value is not passed, only the build is performed by default
+		// Follow-up action, one-click deployment based on the value, if the value is not passed, only the build is performed by default
 		// in: body
 		// required: false
 		Action string `json:"action" validate:"action"`
-		// mirror address
+		// Mirror address
 		// in: body
 		// required: false
 		ImageURL string `json:"image_url" validate:"image_url"`
-		// deployment version number
+		// deployed version number
 		// in: body
 		// required: true
 		DeployVersion string `json:"deploy_version" validate:"deploy_version|required"`
@@ -726,7 +759,7 @@ type BuildServiceStruct struct {
 		// in: body
 		// required: false
 		RepoURL string `json:"repo_url" validate:"repo_url"`
-		// branch information
+		// branch branch information
 		// in: body
 		// required: false
 		Branch string `json:"branch" validate:"branch"`
@@ -734,7 +767,7 @@ type BuildServiceStruct struct {
 		// in: body
 		// required: false
 		Lang string `json:"lang" validate:"lang"`
-		// code server type
+		// Code server type
 		// in: body
 		// required: false
 		ServerType   string `json:"server_type" validate:"server_type"`
@@ -746,7 +779,7 @@ type BuildServiceStruct struct {
 		TenantName   string `json:"tenant_name"`
 		ServiceAlias string `json:"service_alias"`
 		Cmd          string `json:"cmd"`
-		//used for gridworkz cloud code package creation
+		//Used for cloud city code package creation
 		SlugInfo struct {
 			SlugPath    string `json:"slug_path"`
 			FTPHost     string `json:"ftp_host"`
@@ -757,7 +790,7 @@ type BuildServiceStruct struct {
 	}
 }
 
-//V1BuildServiceStruct
+//V1BuildServiceStruct V1BuildServiceStruct
 type V1BuildServiceStruct struct {
 	// in: path
 	// required: true
@@ -776,7 +809,7 @@ type V1BuildServiceStruct struct {
 	}
 }
 
-//UpgradeServiceStruct
+//UpgradeServiceStruct UpgradeServiceStruct
 //swagger:parameters upgradeService
 type UpgradeServiceStruct struct {
 	// in: path
@@ -802,7 +835,7 @@ type UpgradeServiceStruct struct {
 	}
 }
 
-//StatusServiceStruct
+//StatusServiceStruct StatusServiceStruct
 //swagger:parameters serviceStatus
 type StatusServiceStruct struct {
 	// in: path
@@ -813,7 +846,7 @@ type StatusServiceStruct struct {
 	ServiceAlias string `json:"service_alias"`
 }
 
-//StatusServiceListStruct
+//StatusServiceListStruct StatusServiceListStruct
 //swagger:parameters serviceStatuslist
 type StatusServiceListStruct struct {
 	// in: path
@@ -822,14 +855,14 @@ type StatusServiceListStruct struct {
 	// in: body
 	// required: true
 	Body struct {
-		// the list of service IDs that need to get the status, if not specified, return the status of all applications of the tenant
+		// The list of service IDs that need to get the status, if not specified, return the status of all applications of the tenant
 		// in: body
 		// required: true
 		ServiceIDs []string `json:"service_ids" validate:"service_ids|required"`
 	}
 }
 
-//AddServiceLabelStruct
+//AddServiceLabelStruct AddServiceLabelStruct
 //swagger:parameters addServiceLabel updateServiceLabel
 type AddServiceLabelStruct struct {
 	// in: path
@@ -840,14 +873,14 @@ type AddServiceLabelStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// tag value, the format is "v1"
-		// in: bod
+		// Tag value, the format is "v1"
+		// in: bid
 		// required: true
 		LabelValues string `json:"label_values"`
 	}
 }
 
-//AddNodeLabelStruct
+//AddNodeLabelStruct AddNodeLabelStruct
 //swagger:parameters addNodeLabel deleteNodeLabel
 type AddNodeLabelStruct struct {
 	// in: path
@@ -858,7 +891,7 @@ type AddNodeLabelStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// tag value, the format is "[v1, v2, v3]"
+		// Tag value, the format is "[v1, v2, v3]"
 		// in: body
 		// required: true
 		LabelValues []string `json:"label_values" validate:"label_values|required"`
@@ -876,7 +909,7 @@ type LabelStruct struct {
 	LabelValue string `json:"label_value" validate:"label_value|required"`
 }
 
-//GetSingleServiceInfoStruct
+// GetSingleServiceInfoStruct GetSingleServiceInfoStruct
 //swagger:parameters getService deleteService
 type GetSingleServiceInfoStruct struct {
 	// in: path
@@ -887,7 +920,7 @@ type GetSingleServiceInfoStruct struct {
 	ServiceAlias string `json:"service_alias"`
 }
 
-//CheckCodeStruct
+//CheckCodeStruct CheckCodeStruct
 //swagger:parameters checkCode
 type CheckCodeStruct struct {
 	// in: path
@@ -903,7 +936,7 @@ type CheckCodeStruct struct {
 		// in: body
 		// required: true
 		URLRepos string `json:"url_repos" validate:"url_repos|required"`
-		// detection type, "first_check"
+		// Check type, "first_check"
 		// in: body
 		// required: true
 		CheckType string `json:"check_type" validate:"check_type|required"`
@@ -931,7 +964,7 @@ type CheckCodeStruct struct {
 	}
 }
 
-//ServiceCheckStruct - application detection, support source code detection, mirror detection, dockerrun detection
+//ServiceCheckStruct application detection, support source code detection, mirror detection, dockerrun detection
 //swagger:parameters serviceCheck
 type ServiceCheckStruct struct {
 	// in: path
@@ -942,14 +975,14 @@ type ServiceCheckStruct struct {
 		//uuid
 		// in: body
 		CheckUUID string `json:"uuid"`
-		//detection source type
+		//Detection source type
 		// in: body
 		// required: true
 		SourceType string `json:"source_type" validate:"source_type|required|in:docker-run,docker-compose,sourcecode,third-party-service"`
 
 		CheckOS string `json:"check_os"`
-		// definition of detection source，
-		// code： https://github.com/gridworkz/kato.git master
+		// Definition of detection source,
+		// Code: https://github.com/gridworkz/kato.git master
 		// docker-run: docker run --name xxx nginx:latest nginx
 		// docker-compose: compose full text
 		// in: body
@@ -962,7 +995,7 @@ type ServiceCheckStruct struct {
 	}
 }
 
-//GetServiceCheckInfoStruct - get application detection information
+//GetServiceCheckInfoStruct to obtain application detection information
 //swagger:parameters getServiceCheckInfo
 type GetServiceCheckInfoStruct struct {
 	// in: path
@@ -973,7 +1006,7 @@ type GetServiceCheckInfoStruct struct {
 	UUID string `json:"uuid"`
 }
 
-//PublicShare share - shared structure
+//PublicShare share shared structure
 type PublicShare struct {
 	ServiceKey string         `json:"service_key" validate:"service_key"`
 	APPVersion string         `json:"app_version" validate:"app_version"`
@@ -986,7 +1019,7 @@ type PublicShare struct {
 	ShareConf  ShareConfItems `json:"share_conf" validate:"share_conf"`
 }
 
-//SlugShare Slug type 
+//SlugShare Slug type
 type SlugShare struct {
 	PublicShare
 	ServiceKey    string `json:"service_key" validate:"service_key"`
@@ -996,13 +1029,13 @@ type SlugShare struct {
 	Dest          string `json:"dest" validate:"dest|in:yb,ys"`
 }
 
-//ImageShare image types
+// ImageShare image type
 type ImageShare struct {
 	PublicShare
 	Image string `json:"image" validate:"image"`
 }
 
-//ShareConfItems - share related configuration
+//ShareConfItems share related configuration
 type ShareConfItems struct {
 	FTPHost       string `json:"ftp_host" validate:"ftp_host"`
 	FTPPort       int    `json:"ftp_port" validate:"ftp_port"`
@@ -1012,7 +1045,7 @@ type ShareConfItems struct {
 	OuterRegistry string `json:"outer_registry" validate:"outer_registry"`
 }
 
-//AddDependencyStruct
+//AddDependencyStruct AddDependencyStruct
 //swagger:parameters addDependency deleteDependency
 type AddDependencyStruct struct {
 	// in: path
@@ -1023,22 +1056,22 @@ type AddDependencyStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// application id
+		// application id that is dependent
 		// in: body
 		// required: true
 		DepServiceID string `json:"dep_service_id"`
-		// the application type to be relied on, the value needs to be passed when adding, and the value does not need to be passed when deleting
+		// The type of application to be relied on, you need to pass a value when adding, and you don't need to pass a value when deleting
 		// in: body
 		// required: false
 		DepServiceType string `json:"dep_service_type"`
-		// unknown, default pass 1, you don’t need to pass it
+		// Unknown, default pass 1, but not pass
 		// in: body
 		// required: false
 		DepOrder string `json:"dep_order"`
 	}
 }
 
-//AddEnvStruct
+//AddEnvStruct AddEnvStruct
 //swagger:parameters addEnv deleteEnv
 type AddEnvStruct struct {
 	// in: path
@@ -1061,22 +1094,22 @@ type AddEnvStruct struct {
 		// in: body
 		// required: true
 		AttrName string `json:"env_name"`
-		// variable value, you need to pass the value when adding, you can not pass when deleting
+		// Variable value, you need to pass the value when adding, you can not pass when deleting
 		// in: body
 		// required: false
 		AttrValue string `json:"env_value"`
-		// can it be modified
+		// Can it be modified
 		// in: body
 		// required: false
 		IsChange bool `json:"is_change"`
-		// scope of application: inner or outer or both
+		// Application range: inner or outer or both
 		// in: body
 		// required: false
 		Scope string `json:"scope"`
 	}
 }
 
-//RollBackStruct
+//RollBackStruct RollBackStruct
 //swagger:parameters rollback
 type RollBackStruct struct {
 	// in: path
@@ -1091,18 +1124,18 @@ type RollBackStruct struct {
 		// in: body
 		// required: false
 		EventID string `json:"event_id"`
-		// version number to roll back to
+		// The version number to roll back to
 		// in: body
 		// required: true
 		DeployVersion string `json:"deploy_version"`
-		// operator
+		// Operator
 		// in: body
 		// required: false
 		Operator string `json:"operator"`
 	}
 }
 
-//AddProbeStruct
+//AddProbeStruct AddProbeStruct
 //swagger:parameters addProbe updateProbe
 type AddProbeStruct struct {
 	// in: path
@@ -1113,7 +1146,7 @@ type AddProbeStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// probe id
+		// Probe id
 		// in: body
 		// required: true
 		ProbeID string `json:"probe_id"`
@@ -1129,46 +1162,46 @@ type AddProbeStruct struct {
 		// in: body
 		// required: false
 		Path string `json:"path"`
-		// port, default is 80
+		// Port, default is 80
 		// in: body
 		// required: false
 		Port int `json:"port"`
-		// run command
+		// Run the command
 		// in: body
 		// required: false
 		Cmd string `json:"cmd"`
-		// http request header,key=value,key2=value2
+		// http request header, key=value, key2=value2
 		// in: body
 		// required: false
 		HTTPHeader string `json:"http_header"`
-		// initialization waiting time, default is 1
+		// Initialize waiting time, default is 1
 		// in: body
 		// required: false
 		InitialDelaySecond int `json:"initial_delay_second"`
-		// detection interval time, default is 3
+		// Detection interval time, default is 3
 		// in: body
 		// required: false
 		PeriodSecond int `json:"period_second"`
-		// detection timeout time, default is 30
+		// Detection timeout, default is 30
 		// in: body
 		// required: false
 		TimeoutSecond int `json:"timeout_second"`
-		// whether to enable
+		// Whether to enable
 		// in: body
 		// required: false
 		IsUsed int `json:"is_used"`
-		// number of tests marked as failed
+		// The number of failed detections marked
 		// in: body
 		// required: false
 		FailureThreshold int `json:"failure_threshold"`
-		// number of tests marked as successful
+		// The number of successful detections marked
 		// in: body
 		// required: false
 		SuccessThreshold int `json:"success_threshold"`
 	}
 }
 
-//DeleteProbeStruct
+//DeleteProbeStruct DeleteProbeStruct
 //swagger:parameters deleteProbe
 type DeleteProbeStruct struct {
 	// in: path
@@ -1179,14 +1212,14 @@ type DeleteProbeStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// probe id
+		// Probe id
 		// in: body
 		// required: true
 		ProbeID string `json:"probe_id"`
 	}
 }
 
-//PodsStructStruct
+//PodsStructStruct PodsStructStruct
 //swagger:parameters getPodsInfo
 type PodsStructStruct struct {
 	// in: path
@@ -1206,7 +1239,7 @@ type Login struct {
 		// in: body
 		// required: true
 		HostPort string `json:"hostport"`
-		// login type
+		// Login type
 		// in: body
 		// required: true
 		LoginType bool `json:"type"`
@@ -1242,7 +1275,7 @@ type Model struct {
 	//CreatedAt time.Time
 }
 
-//AddTenantServiceEnvVar - application environment variables
+//AddTenantServiceEnvVar application environment variables
 type AddTenantServiceEnvVar struct {
 	Model
 	TenantID      string `validate:"tenant_id|between:30,33" json:"tenant_id"`
@@ -1255,7 +1288,21 @@ type AddTenantServiceEnvVar struct {
 	Scope         string `validate:"scope|in:outer,inner,both,build" json:"scope"`
 }
 
-//DelTenantServiceEnvVar -application environment variables
+// DbModel return database model
+func (a *AddTenantServiceEnvVar) DbModel(tenantID, componentID string) *dbmodel.TenantServiceEnvVar {
+	return &dbmodel.TenantServiceEnvVar{
+		TenantID:      tenantID,
+		ServiceID:     componentID,
+		Name:          a.Name,
+		AttrName:      a.AttrName,
+		AttrValue:     a.AttrValue,
+		ContainerPort: a.ContainerPort,
+		IsChange:      true,
+		Scope:         a.Scope,
+	}
+}
+
+//DelTenantServiceEnvVar application environment variables
 type DelTenantServiceEnvVar struct {
 	Model
 	TenantID      string `validate:"tenant_id|between:30,33" json:"tenant_id"`
@@ -1273,7 +1320,7 @@ type ServicePorts struct {
 	Port []*TenantServicesPort
 }
 
-//TenantServicesPort - application port information
+//TenantServicesPort application port information
 type TenantServicesPort struct {
 	Model
 	TenantID       string `gorm:"column:tenant_id;size:32" validate:"tenant_id|between:30,33" json:"tenant_id"`
@@ -1287,7 +1334,24 @@ type TenantServicesPort struct {
 	IsOuterService bool   `gorm:"column:is_outer_service" validate:"is_outer_service|bool" json:"is_outer_service"`
 }
 
-// AddServicePort
+// DbModel return database model
+func (p *TenantServicesPort) DbModel(tenantID, componentID string) *dbmodel.TenantServicesPort {
+	isInnerService := p.IsInnerService
+	isOuterService := p.IsOuterService
+	return &dbmodel.TenantServicesPort{
+		TenantID:       tenantID,
+		ServiceID:      componentID,
+		ContainerPort:  p.ContainerPort,
+		MappingPort:    p.MappingPort,
+		Protocol:       p.Protocol,
+		PortAlias: p.PortAlias,
+		IsInnerService: &isInnerService,
+		IsOuterService: &isOuterService,
+		K8sServiceName: p.K8sServiceName,
+	}
+}
+
+// AddServicePort service port
 // swagger:parameters addPort updatePort
 type AddServicePort struct {
 	// in: path
@@ -1320,15 +1384,15 @@ type plugin struct {
 	// in: body
 	// required: true
 	PortAlias string `json:"port_alias"`
-	// whether to open internal service
+	// Whether to enable internal services
 	// in: body
 	Inner bool `json:"is_inner_service"`
-	// whether to open external services
+	// Whether to open external services
 	// in: body
 	Outer bool `json:"is_outer_service"`
 }
 
-//ServiceProbe - application probe information
+//ServiceProbe application probe information
 type ServiceProbe struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id|between:30,33"`
@@ -1338,28 +1402,49 @@ type ServiceProbe struct {
 	Path      string `gorm:"column:path" json:"path" validate:"path"`
 	Port      int    `gorm:"column:port;size:5;default:80" json:"port" validate:"port|numeric_between:1,65535"`
 	Cmd       string `gorm:"column:cmd;size:150" json:"cmd" validate:"cmd"`
-	//http request header，key=value,key2=value2
+	//http request header, key=value,key2=value2
 	HTTPHeader string `gorm:"column:http_header;size:300" json:"http_header" validate:"http_header"`
-	//initialization waiting time
+	//Initialize waiting time
 	InitialDelaySecond int `gorm:"column:initial_delay_second;size:2;default:1" json:"initial_delay_second" validate:"initial_delay_second"`
-	//detection interval
+	//Detection interval time
 	PeriodSecond int `gorm:"column:period_second;size:2;default:3" json:"period_second" validate:"period_second"`
-	//detection timeout
+	//Detection timeout
 	TimeoutSecond int `gorm:"column:timeout_second;size:3;default:30" json:"timeout_second" validate:"timeout_second"`
-	//whether to enable
+	//Whether to enable
 	IsUsed int `gorm:"column:is_used;size:1;default:0" json:"is_used" validate:"is_used|in:0,1"`
-	//number of tests marked as failed
+	//The number of detections marked as failed
 	FailureThreshold int `gorm:"column:failure_threshold;size:2;default:3" json:"failure_threshold" validate:"failure_threshold"`
-	//number of tests marked as successful
+	//The number of successful detections marked
 	SuccessThreshold int    `gorm:"column:success_threshold;size:2;default:1" json:"success_threshold" validate:"success_threshold"`
 	FailureAction    string `json:"failure_action" validate:"failure_action"`
 }
 
-//TenantServiceVolume - application persistent records
+// DbModel return database model
+func (p *ServiceProbe) DbModel(componentID string) *dbmodel.TenantServiceProbe {
+	return &dbmodel.TenantServiceProbe{
+		ServiceID:          componentID,
+		Cmd:                p.Cmd,
+		FailureThreshold:   p.FailureThreshold,
+		HTTPHeader:         p.HTTPHeader,
+		InitialDelaySecond: p.InitialDelaySecond,
+		IsUsed:             &p.IsUsed,
+		Mode: p.Mode,
+		Path:               p.Path,
+		PeriodSecond:       p.PeriodSecond,
+		Port: p.Port,
+		ProbeID: p.ProbeID,
+		Scheme:             p.Scheme,
+		SuccessThreshold:   p.SuccessThreshold,
+		TimeoutSecond:      p.TimeoutSecond,
+		FailureAction:      p.FailureAction,
+	}
+}
+
+//TenantServiceVolume application persistent record
 type TenantServiceVolume struct {
 	Model
 	ServiceID string `gorm:"column:service_id;size:32" json:"service_id" validate:"service_id"`
-	//service type
+	//Service type
 	Category   string `gorm:"column:category;size:50" json:"category" validate:"category|required"`
 	HostPath   string `gorm:"column:host_path" json:"host_path" validate:"host_path|required"`
 	VolumePath string `gorm:"column:volume_path" json:"volume_path" validate:"volume_path|required"`
@@ -1386,7 +1471,7 @@ type ServiceShare struct {
 	//in: body
 	Body struct {
 		//in: body
-		//application sharing key
+		//App share Key
 		ServiceKey string `json:"service_key" validate:"service_key|required"`
 		AppVersion string `json:"app_version" validate:"app_version|required"`
 		EventID    string `json:"event_id"`
@@ -1414,29 +1499,29 @@ type ExportAppStruct struct {
 	SourceDir string `json:"source_dir"`
 	Body      struct {
 		EventID       string `json:"event_id"`
-		GroupKey      string `json:"group_key"` // TODO consider removing
-		Version       string `json:"version"`   // TODO consider removing
+		GroupKey string `json:"group_key"` // TODO consider removing
+		Version string `json:"version"` // TODO consider removing
 		Format        string `json:"format"`    // only kato-app/docker-compose
 		GroupMetadata string `json:"group_metadata"`
 	}
 }
 
-//BeatchOperationRequestStruct beatch operation request body
-type BeatchOperationRequestStruct struct {
+// BatchOperationReq beatch operation request body
+type BatchOperationReq struct {
 	Operator   string `json:"operator"`
 	TenantName string `json:"tenant_name"`
 	Body       struct {
-		Operation    string                         `json:"operation" validate:"operation|required|in:start,stop,build,upgrade"`
-		BuildInfos   []BuildInfoRequestStruct       `json:"build_infos,omitempty"`
-		StartInfos   []StartOrStopInfoRequestStruct `json:"start_infos,omitempty"`
-		StopInfos    []StartOrStopInfoRequestStruct `json:"stop_infos,omitempty"`
-		UpgradeInfos []UpgradeInfoRequestStruct     `json:"upgrade_infos,omitempty"`
+		Operation string                 `json:"operation" validate:"operation|required|in:start,stop,build,upgrade"`
+		Builds    []*ComponentBuildReq   `json:"build_infos,omitempty"`
+		Starts    []*ComponentStartReq   `json:"start_infos,omitempty"`
+		Stops     []*ComponentStopReq    `json:"stop_infos,omitempty"`
+		Upgrades  []*ComponentUpgradeReq `json:"upgrade_infos,omitempty"`
 	}
 }
 
 //BuildImageInfo -
 type BuildImageInfo struct {
-	// mirror address
+	// Mirror address
 	// in: body
 	// required: false
 	ImageURL string `json:"image_url" validate:"image_url"`
@@ -1451,7 +1536,7 @@ type BuildCodeInfo struct {
 	// in: body
 	// required: false
 	RepoURL string `json:"repo_url" validate:"repo_url"`
-	// branch information
+	// branch branch information
 	// in: body
 	// required: false
 	Branch string `json:"branch" validate:"branch"`
@@ -1459,7 +1544,7 @@ type BuildCodeInfo struct {
 	// in: body
 	// required: false
 	Lang string `json:"lang" validate:"lang"`
-	// code server type
+	// Code server type
 	// in: body
 	// required: false
 	ServerType string `json:"server_type" validate:"server_type"`
@@ -1491,22 +1576,21 @@ var FromMarketImageBuildKing = "build_from_market_image"
 //FromMarketSlugBuildKing build from market slug
 var FromMarketSlugBuildKing = "build_from_market_slug"
 
-//BuildInfoRequestStruct -
-type BuildInfoRequestStruct struct {
+// ComponentBuildReq -
+type ComponentBuildReq struct {
+	ComponentOpGeneralReq
 	// variable
 	// in: body
 	// required: false
 	BuildENVs map[string]string `json:"envs" validate:"envs"`
-	// application build type
+	// Application build type
 	// in: body
 	// required: true
 	Kind string `json:"kind" validate:"kind|required"`
-	// follow-up actions, one-click deployment based on the value, if the value is not passed, only the build is performed by default
+	// Follow-up action, one-click deployment based on the value, if the value is not passed, only the build is performed by default
 	// in: body
 	// required: false
 	Action string `json:"action" validate:"action"`
-	//Event trace ID
-	EventID string `json:"event_id"`
 	// Plan Version
 	PlanVersion string `json:"plan_version"`
 	// Deployed version number, The version is generated by the API
@@ -1519,12 +1603,54 @@ type BuildInfoRequestStruct struct {
 	ImageInfo BuildImageInfo `json:"image_info,omitempty"`
 	//build from code
 	CodeInfo BuildCodeInfo `json:"code_info,omitempty"`
-	//used for gridworkz cloud code package creation
+	//Used for cloud city code package creation
 	SlugInfo BuildSlugInfo `json:"slug_info,omitempty"`
 	//tenantName
-	TenantName string            `json:"-"`
-	ServiceID  string            `json:"service_id"`
-	Configs    map[string]string `json:"configs"`
+	TenantName string `json:"-"`
+}
+
+// GetEventID -
+func (b *ComponentBuildReq) GetEventID() string {
+	if b.EventID == "" {
+		b.EventID = util.NewUUID()
+	}
+	return b.EventID
+}
+
+// BatchOpFailureItem -
+func (b *ComponentBuildReq) BatchOpFailureItem () *ComponentOpResult {
+	return &ComponentOpResult{
+		ServiceID: b.ServiceID,
+		EventID:   b.EventID,
+		Operation: "build",
+		Status: BatchOpResultItemStatusFailure,
+	}
+}
+
+// GetVersion -
+func (b *ComponentBuildReq) GetVersion() string {
+	return b.DeployVersion
+}
+
+//SetVersion -
+func (b *ComponentBuildReq) SetVersion(string) {
+	// no need
+	return
+}
+
+// OpType -
+func (b *ComponentBuildReq) OpType() string {
+	return "build-service"
+}
+
+// GetComponentID -
+func (b *ComponentBuildReq) GetComponentID() string {
+	return b.ServiceID
+}
+
+// TaskBody returns a task body.
+func (b *ComponentBuildReq) TaskBody(cpt *dbmodel.TenantServices) interface{} {
+	return nil
 }
 
 // UpdateBuildVersionReq -
@@ -1532,15 +1658,63 @@ type UpdateBuildVersionReq struct {
 	PlanVersion string `json:"plan_version" validate:"required"`
 }
 
-//UpgradeInfoRequestStruct -
-type UpgradeInfoRequestStruct struct {
+//ComponentUpgradeReq -
+type ComponentUpgradeReq struct {
+	ComponentOpGeneralReq
 	//UpgradeVersion The target version of the upgrade
 	//If empty, the same version is upgraded
 	UpgradeVersion string `json:"upgrade_version"`
-	//Event trace ID
-	EventID   string            `json:"event_id"`
-	ServiceID string            `json:"service_id"`
-	Configs   map[string]string `json:"configs"`
+}
+
+// GetEventID -
+func (u *ComponentUpgradeReq) GetEventID() string {
+	if u.EventID == "" {
+		u.EventID = util.NewUUID()
+	}
+	return u.EventID
+}
+
+// BatchOpFailureItem -
+func (u *ComponentUpgradeReq) BatchOpFailureItem () *ComponentOpResult {
+	return &ComponentOpResult{
+		ServiceID: u.ServiceID,
+		EventID:   u.GetEventID(),
+		Operation: "upgrade",
+		Status: BatchOpResultItemStatusFailure,
+	}
+}
+
+// GetVersion -
+func (u *ComponentUpgradeReq) GetVersion() string {
+	return u.UpgradeVersion
+}
+
+//SetVersion -
+func (u *ComponentUpgradeReq) SetVersion(version string) {
+	if u.UpgradeVersion == "" {
+		u.UpgradeVersion = version
+	}
+}
+
+// GetComponentID -
+func (u *ComponentUpgradeReq) GetComponentID() string {
+	return u.ServiceID
+}
+
+// TaskBody returns the task body.
+func (u *ComponentUpgradeReq) TaskBody(cpt *dbmodel.TenantServices) interface{} {
+	return &dmodel.RollingUpgradeTaskBody{
+		TenantID:         cpt.TenantID,
+		ServiceID: cpt.ServiceID,
+		NewDeployVersion: u.UpgradeVersion,
+		EventID:          u.GetEventID(),
+		Configs:          u.Configs,
+	}
+}
+
+// OpType -
+func (u *ComponentUpgradeReq) OpType() string {
+	return "upgrade-service"
 }
 
 //RollbackInfoRequestStruct -
@@ -1551,16 +1725,6 @@ type RollbackInfoRequestStruct struct {
 	EventID   string            `json:"event_id"`
 	ServiceID string            `json:"service_id"`
 	Configs   map[string]string `json:"configs"`
-}
-
-//StartOrStopInfoRequestStruct -
-type StartOrStopInfoRequestStruct struct {
-	//Event trace ID
-	EventID   string            `json:"event_id"`
-	ServiceID string            `json:"service_id"`
-	Configs   map[string]string `json:"configs"`
-	// When determining the startup sequence of services, you need to know the services they depend on
-	DepServiceIDInBootSeq []string `json:"dep_service_ids_in_boot_seq"`
 }
 
 //BuildMQBodyFrom -
@@ -1643,11 +1807,17 @@ func NewAppStatusFromImport(app *ImportAppStruct) *dbmodel.AppStatus {
 
 // Application -
 type Application struct {
-	AppName      string   `json:"app_name" validate:"required"`
-	ConsoleAppID int64    `json:"console_app_id"`
-	AppID        string   `json:"app_id"`
-	TenantID     string   `json:"tenant_id"`
-	ServiceIDs   []string `json:"service_ids"`
+	EID             string   `json:"eid" validate:"required"`
+	AppName         string   `json:"app_name" validate:"required"`
+	AppType         string   `json:"app_type" validate:"required,oneof=kato helm"`
+	ConsoleAppID    int64    `json:"console_app_id"`
+	AppID           string   `json:"app_id"`
+	TenantID        string   `json:"tenant_id"`
+	ServiceIDs      []string `json:"service_ids"`
+	AppStoreName    string   `json:"app_store_name"`
+	AppStoreURL     string   `json:"app_store_url"`
+	AppTemplateName string   `json:"app_template_name"`
+	Version         string   `json:"version"`
 }
 
 // CreateAppRequest -
@@ -1679,8 +1849,16 @@ type ListServiceResponse struct {
 
 // UpdateAppRequest -
 type UpdateAppRequest struct {
-	AppName        string `json:"app_name"`
-	GovernanceMode string `json:"governance_mode"`
+	AppName        string   `json:"app_name"`
+	GovernanceMode string   `json:"governance_mode"`
+	Overrides      []string `json:"overrides"`
+	Version        string   `json:"version"`
+	Revision       int      `json:"revision"`
+}
+
+// NeedUpdateHelmApp check if necessary to update the helm app.
+func (u *UpdateAppRequest) NeedUpdateHelmApp() bool {
+	return len(u.Overrides) > 0 || u.Version != "" || u.Revision != 0
 }
 
 // BindServiceRequest -
@@ -1688,12 +1866,30 @@ type BindServiceRequest struct {
 	ServiceIDs []string `json:"service_ids"`
 }
 
+// InstallAppReq -
+type InstallAppReq struct {
+	Overrides []string `json:"overrides"`
+}
+
+// ParseAppServicesReq -
+type ParseAppServicesReq struct {
+	Values string `json:"values"`
+}
+
 // ConfigGroupService -
 type ConfigGroupService struct {
-	AppID           string `json:"app_id"`
-	ConfigGroupName string `json:"config_group_name"`
-	ServiceID       string `json:"service_id"`
-	ServiceAlias    string `json:"service_alias"`
+	ServiceID    string `json:"service_id"`
+	ServiceAlias string `json:"service_alias"`
+}
+
+// DbModel return database model
+func (c ConfigGroupService) DbModel(appID, configGroupName string) *dbmodel.ConfigGroupService {
+	return &dbmodel.ConfigGroupService{
+		AppID: appID,
+		ConfigGroupName: configGroupName,
+		ServiceID:       c.ServiceID,
+		ServiceAlias: c.ServiceAlias,
+	}
 }
 
 // ConfigItem -
@@ -1704,6 +1900,16 @@ type ConfigItem struct {
 	ItemValue       string `json:"item_value" validate:"required,max=65535"`
 }
 
+// DbModel return database model
+func (c ConfigItem) DbModel(appID, configGroupName string) *dbmodel.ConfigGroupItem {
+	return &dbmodel.ConfigGroupItem{
+		AppID: appID,
+		ConfigGroupName: configGroupName,
+		ItemKey:         c.ItemKey,
+		ItemValue:       c.ItemValue,
+	}
+}
+
 // ApplicationConfigGroup -
 type ApplicationConfigGroup struct {
 	AppID           string       `json:"app_id"`
@@ -1712,6 +1918,25 @@ type ApplicationConfigGroup struct {
 	ServiceIDs      []string     `json:"service_ids"`
 	ConfigItems     []ConfigItem `json:"config_items"`
 	Enable          bool         `json:"enable"`
+}
+
+// AppConfigGroup Interface for synchronizing application configuration groups
+type AppConfigGroup struct {
+	ConfigGroupName     string               `json:"config_group_name" validate:"required,alphanum,min=2,max=64"`
+	DeployType          string               `json:"deploy_type" validate:"required,oneof=env configfile"`
+	ConfigItems         []ConfigItem         `json:"config_items"`
+	ConfigGroupServices []ConfigGroupService `json:"config_group_services"`
+	Enable              bool                 `json:"enable"`
+}
+
+// DbModel return database model
+func (a AppConfigGroup) DbModel(appID string) *dbmodel.ApplicationConfigGroup {
+	return &dbmodel.ApplicationConfigGroup{
+		AppID: appID,
+		ConfigGroupName: a.ConfigGroupName,
+		DeployType:      a.DeployType,
+		Enable:          a.Enable,
+	}
 }
 
 // ApplicationConfigGroupResp -
@@ -1738,4 +1963,50 @@ type ListApplicationConfigGroupResp struct {
 	Total       int64                        `json:"total"`
 	Page        int                          `json:"page"`
 	PageSize    int                          `json:"pageSize"`
+}
+
+// CheckResourceNameReq -
+type CheckResourceNameReq struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+// CheckResourceNameResp -
+type CheckResourceNameResp struct {
+	Name string `json:"name"`
+}
+
+// HelmAppRelease -
+type HelmAppRelease struct {
+	Revision    int    `json:"revision"`
+	Updated     string `json:"updated"`
+	Status      string `json:"status"`
+	Chart       string `json:"chart"`
+	AppVersion  string `json:"app_version"`
+	Description string `json:"description"`
+}
+
+// AppConfigGroupRelations -
+type AppConfigGroupRelations struct {
+	ConfigGroupName string `json:"config_group_name"`
+}
+
+// DbModel return database model
+func (a *AppConfigGroupRelations) DbModel(appID, serviceID, serviceAlias string) *dbmodel.ConfigGroupService {
+	return &dbmodel.ConfigGroupService{
+		AppID: appID,
+		ConfigGroupName: a.ConfigGroupName,
+		ServiceID:       serviceID,
+		ServiceAlias: serviceAlias,
+	}
+}
+
+// SyncAppConfigGroup -
+type SyncAppConfigGroup struct {
+	AppConfigGroups []AppConfigGroup `json:"app_config_groups"`
+}
+
+// AppStatusesReq -
+type AppStatusesReq struct {
+	AppIDs []string `json:"app_ids"`
 }

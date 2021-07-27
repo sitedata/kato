@@ -4,14 +4,15 @@ import (
 	"github.com/gridworkz/kato/api/util/bcode"
 	"github.com/gridworkz/kato/db/model"
 	"github.com/jinzhu/gorm"
+	"github.com/pkg/errors"
 )
 
-// ApplicationDaoImpl
+// ApplicationDaoImpl -
 type ApplicationDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel -
 func (a *ApplicationDaoImpl) AddModel(mo model.Interface) error {
 	appReq, _ := mo.(*model.Application)
 	var oldApp model.Application
@@ -24,13 +25,13 @@ func (a *ApplicationDaoImpl) AddModel(mo model.Interface) error {
 	return bcode.ErrApplicationExist
 }
 
-//UpdateModel
+//UpdateModel -
 func (a *ApplicationDaoImpl) UpdateModel(mo model.Interface) error {
 	updateReq := mo.(*model.Application)
 	return a.DB.Save(updateReq).Error
 }
 
-// ListApps
+// ListApps -
 func (a *ApplicationDaoImpl) ListApps(tenantID, appName string, page, pageSize int) ([]*model.Application, int64, error) {
 	var datas []*model.Application
 	offset := (page - 1) * pageSize
@@ -49,7 +50,7 @@ func (a *ApplicationDaoImpl) ListApps(tenantID, appName string, page, pageSize i
 	return datas, total, nil
 }
 
-// GetAppByID
+// GetAppByID -
 func (a *ApplicationDaoImpl) GetAppByID(appID string) (*model.Application, error) {
 	var app model.Application
 	if err := a.DB.Where("app_id=?", appID).Find(&app).Error; err != nil {
@@ -61,7 +62,7 @@ func (a *ApplicationDaoImpl) GetAppByID(appID string) (*model.Application, error
 	return &app, nil
 }
 
-// GetByServiceID
+// GetByServiceID -
 func (a *ApplicationDaoImpl) GetByServiceID(sid string) (*model.Application, error) {
 	var app model.Application
 	if err := a.DB.Where("app_id = ?", a.DB.Table("tenant_services").Select("app_id").Where("service_id=?", sid).SubQuery()).Find(&app).Error; err != nil {
@@ -73,7 +74,7 @@ func (a *ApplicationDaoImpl) GetByServiceID(sid string) (*model.Application, err
 	return &app, nil
 }
 
-// DeleteApp Delete application By appID
+// DeleteApp Delete application By appID -
 func (a *ApplicationDaoImpl) DeleteApp(appID string) error {
 	var app model.Application
 	if err := a.DB.Where("app_id=?", appID).Find(&app).Error; err != nil {
@@ -84,3 +85,13 @@ func (a *ApplicationDaoImpl) DeleteApp(appID string) error {
 	}
 	return a.DB.Delete(&app).Error
 }
+
+// ListByAppIDs -
+func (a *ApplicationDaoImpl) ListByAppIDs(appIDs []string) ([]*model.Application, error) {
+	var datas []*model.Application
+	if err := a.DB.Where("app_id in (?)", appIDs).Find(&datas).Error; err != nil {
+		return nil, errors.Wrap(err, "list app by app_ids")
+	}
+	return datas, nil
+}
+

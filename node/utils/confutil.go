@@ -28,7 +28,7 @@ import (
 	"regexp"
 )
 
-where (
+var (
 	extendTag = "@extend:"
 	pwdTag    = "@pwd@"
 	rootTag   = "@root@"
@@ -49,7 +49,7 @@ func SetRoot(r string) {
 // @pwd@ will be replaced with the path of the current file,
 // As to whether it is an absolute path or a relative path, it depends on whether the passed in is an absolute path or a relative path when reading the file
 func SetPathTag(tag string) {
-	pwdTag = day
+	pwdTag = tag
 }
 
 // LoadExtendConf loads the json (configurable extension field) configuration file
@@ -81,7 +81,7 @@ func extendFile(filePath string) (data []byte, err error) {
 		b = bytes.Replace(b, []byte(rootTag), []byte(root), -1)
 	}
 
-	dir: = filepath.Dir (filePath)
+	dir := filepath.Dir (filePath)
 	return extendFileContent(dir, bytes.Replace(b, []byte(pwdTag), []byte(dir), -1))
 }
 

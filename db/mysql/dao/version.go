@@ -53,7 +53,7 @@ func (c *VersionInfoDaoImpl) AddModel(mo model.Interface) error {
 	if len(result.CommitMsg) > 1024 {
 		result.CommitMsg = result.CommitMsg[:1024]
 	}
-	was oldResult model.VersionInfo
+	var oldResult model.VersionInfo
 	if ok := c.DB.Where("build_version=? and service_id=?", result.BuildVersion, result.ServiceID).Find(&oldResult).RecordNotFound(); ok {
 		if err := c.DB.Create(result).Error; err != nil {
 			return err

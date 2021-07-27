@@ -44,7 +44,7 @@ type ConDB struct {
 }
 
 //CreateDBManager get db manager
-//TODO: need to retry when error happens, try 4 times
+//TODO: need to try when error happens, try 4 times
 func CreateDBManager(conf option.Config) error {
 	dbCfg := config.Config{
 		MysqlConnectionInfo: conf.DBConnectionInfo,
@@ -188,38 +188,6 @@ func dbInit() error {
 					tx.Rollback()
 					rollback = true
 					break
-				}
-			}
-			if !rollback {
-				tx.Commit()
-			}
-		} else {
-			return err
-		}
-	}
-
-	//Port Protocol support
-	var rps dbModel.RegionProcotols
-	if err := begin.Where("protocol_group=? and protocol_child=?", "http", "http").Find(&rps).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			data := map[string][]string{
-				"http":   []string{"http"},
-				"stream": []string{"mysql", "tcp", "udp"},
-			}
-			tx := begin
-			var rollback bool
-			for k, v := range data {
-				for _, v1 := range v {
-					if err := db.GetManager().RegionProcotolsDaoTransactions(tx).AddModel(&dbModel.RegionProcotols{
-						ProtocolGroup: k,
-						ProtocolChild: v1,
-						APIVersion:    "v2",
-						IsSupport:     true,
-					}); err != nil {
-						tx.Rollback()
-						rollback = true
-						break
-					}
 				}
 			}
 			if !rollback {

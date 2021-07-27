@@ -20,18 +20,20 @@ package dao
 
 import (
 	"fmt"
+	gormbulkups "github.com/atcdot/gorm-bulk-upsert"
+	pkgerr "github.com/pkg/errors"
 
 	"github.com/gridworkz/kato/db/model"
 
 	"github.com/jinzhu/gorm"
 )
 
-//ServiceProbeDaoImpl
+//ServiceProbeDaoImpl probe dao impl
 type ServiceProbeDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel - add application Probe
+//AddModel Add application Probe
 func (t *ServiceProbeDaoImpl) AddModel(mo model.Interface) error {
 	probe := mo.(*model.TenantServiceProbe)
 	var oldProbe model.TenantServiceProbe
@@ -45,7 +47,7 @@ func (t *ServiceProbeDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel - update application Probe
+//UpdateModel Update application Probe
 func (t *ServiceProbeDaoImpl) UpdateModel(mo model.Interface) error {
 	probe := mo.(*model.TenantServiceProbe)
 	if probe.ID == 0 {
@@ -63,7 +65,7 @@ func (t *ServiceProbeDaoImpl) UpdateModel(mo model.Interface) error {
 	return t.DB.Save(probe).Error
 }
 
-//DeleteModel
+//DeleteModel Delete application probe
 func (t *ServiceProbeDaoImpl) DeleteModel(serviceID string, args ...interface{}) error {
 	probeID := args[0].(string)
 	relation := &model.TenantServiceProbe{
@@ -81,7 +83,7 @@ func (t *ServiceProbeDaoImpl) DelByServiceID(sid string) error {
 	return t.DB.Where("service_id=?", sid).Delete(&model.TenantServiceProbe{}).Error
 }
 
-//GetServiceProbes
+//GetServiceProbes Get application probe
 func (t *ServiceProbeDaoImpl) GetServiceProbes(serviceID string) ([]*model.TenantServiceProbe, error) {
 	var probes []*model.TenantServiceProbe
 	if err := t.DB.Where("service_id=?", serviceID).Find(&probes).Error; err != nil {
@@ -90,7 +92,7 @@ func (t *ServiceProbeDaoImpl) GetServiceProbes(serviceID string) ([]*model.Tenan
 	return probes, nil
 }
 
-//GetServiceUsedProbe
+//GetServiceUsedProbe Get the available probe definitions of the specified mode
 func (t *ServiceProbeDaoImpl) GetServiceUsedProbe(serviceID, mode string) (*model.TenantServiceProbe, error) {
 	var probe model.TenantServiceProbe
 	if err := t.DB.Where("service_id=? and mode=? and is_used=?", serviceID, mode, 1).Find(&probe).Error; err != nil {
@@ -102,7 +104,7 @@ func (t *ServiceProbeDaoImpl) GetServiceUsedProbe(serviceID, mode string) (*mode
 	return &probe, nil
 }
 
-//DELServiceProbesByServiceID
+//DELServiceProbesByServiceID DELServiceProbesByServiceID
 func (t *ServiceProbeDaoImpl) DELServiceProbesByServiceID(serviceID string) error {
 	probes := &model.TenantServiceProbe{
 		ServiceID: serviceID,
@@ -113,12 +115,29 @@ func (t *ServiceProbeDaoImpl) DELServiceProbesByServiceID(serviceID string) erro
 	return nil
 }
 
-//LocalSchedulerDaoImpl - local scheduling storage mysql implementation
+// DeleteByComponentIDs deletes TenantServiceProbe based on componentIDs
+func (t *ServiceProbeDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
+	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantServiceProbe{}).Error
+}
+
+// CreateOrUpdateProbesInBatch -
+func (t *ServiceProbeDaoImpl) CreateOrUpdateProbesInBatch(probes []*model.TenantServiceProbe) error {
+	var objects []interface{}
+	for _, probe := range probes {
+		objects = append(objects, *probe)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update probe in batch")
+	}
+	return nil
+}
+
+//LocalSchedulerDaoImpl Local scheduling storage mysql implementation
 type LocalSchedulerDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Add local scheduling information
 func (t *LocalSchedulerDaoImpl) AddModel(mo model.Interface) error {
 	ls := mo.(*model.LocalScheduler)
 	var oldLs model.LocalScheduler
@@ -132,7 +151,7 @@ func (t *LocalSchedulerDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel
+//UpdateModel Update scheduling information
 func (t *LocalSchedulerDaoImpl) UpdateModel(mo model.Interface) error {
 	ls := mo.(*model.LocalScheduler)
 	if ls.ID == 0 {
@@ -144,7 +163,7 @@ func (t *LocalSchedulerDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//GetLocalScheduler
+//GetLocalScheduler Obtain application local scheduling information
 func (t *LocalSchedulerDaoImpl) GetLocalScheduler(serviceID string) ([]*model.LocalScheduler, error) {
 	var ls []*model.LocalScheduler
 	if err := t.DB.Where("service_id=?", serviceID).Find(&ls).Error; err != nil {
@@ -156,12 +175,12 @@ func (t *LocalSchedulerDaoImpl) GetLocalScheduler(serviceID string) ([]*model.Lo
 	return ls, nil
 }
 
-//ServiceSourceImpl
+//ServiceSourceImpl service source
 type ServiceSourceImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel add service source
 func (t *ServiceSourceImpl) AddModel(mo model.Interface) error {
 	ls := mo.(*model.ServiceSourceConfig)
 	var oldLs model.ServiceSourceConfig
@@ -176,7 +195,7 @@ func (t *ServiceSourceImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel
+//UpdateModel update service source
 func (t *ServiceSourceImpl) UpdateModel(mo model.Interface) error {
 	ls := mo.(*model.LocalScheduler)
 	if ls.ID == 0 {
@@ -188,7 +207,7 @@ func (t *ServiceSourceImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//GetServiceSource
+//GetServiceSource get services source
 func (t *ServiceSourceImpl) GetServiceSource(serviceID string) ([]*model.ServiceSourceConfig, error) {
 	var serviceSources []*model.ServiceSourceConfig
 	if err := t.DB.Where("service_id=?", serviceID).Find(&serviceSources).Error; err != nil {

@@ -1135,7 +1135,7 @@ func (a *appRuntimeStore) GetAppServicesStatus(serviceIDs []string) map[string]s
 }
 
 func (a * appRuntimeStore) GetAppStatus (appID string) (pb.AppStatus_Status, error) {
-	services, err: = db.GetManager (). TenantServiceDao (). ListByAppID (appID)
+	services, err: = db.GetManager().TenantServiceDao().ListByAppID(appID)
 	if err != nil || len(services) == 0 {
 		return pb.AppStatus_NIL, err
 	}
@@ -1559,7 +1559,7 @@ func (a * appRuntimeStore) GetAppResources (appID string) (int64, int64, error) 
 // Compatible with the old version.
 // Versions prior to 5.3.0 have no app_id in the label, only service_id.
 func (a * appRuntimeStore) listPodsByAppIDLegacy (appID string) ([] * corev1.Pod, error) {
-	services, err: = a.dbmanager.TenantServiceDao (). ListByAppID (appID)
+	services, err: = a.dbmanager.TenantServiceDao().ListByAppID(appID)
 	if err != nil {
 		return nil, err
 	}

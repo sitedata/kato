@@ -2577,7 +2577,7 @@ func (s *ServiceAction) SyncComponentVolumeRels(tx *gorm.DB, app *dbmodel.Applic
 		volRels      []*dbmodel.TenantServiceMountRelation
 	)
 	// Get the storage of all components under the application
-	appComponents, err: = db.GetManager (). TenantServiceDao (). ListByAppID (app.AppID)
+	appComponents, err := db.GetManager().TenantServiceDao().ListByAppID(app.AppID)
 	if err != nil {
 		return err
 	}

@@ -61,12 +61,12 @@ type Result struct {
 	Msg  string `json:"msg"`
 }
 
-//ValidatorStructRequest validates the request data
-//data incoming pointer
+//ValidatorStructRequest Verify request data
+//data Incoming pointer
 func ValidatorStructRequest(r *http.Request, data interface{}, message govalidator.MapData) url.Values {
 	opts := govalidator.Options{
 		Request: r,
-		Date: date,
+		Data:    data,
 	}
 	if message != nil {
 		opts.Messages = message
@@ -76,7 +76,7 @@ func ValidatorStructRequest(r *http.Request, data interface{}, message govalidat
 	return result
 }
 
-//ValidatorMapRequest validates the request data from the map
+//ValidatorMapRequest Verify request data from map
 func ValidatorMapRequest(r *http.Request, rule govalidator.MapData, message govalidator.MapData) (map[string]interface{}, url.Values) {
 	data := make(map[string]interface{}, 0)
 	opts := govalidator.Options{
@@ -90,13 +90,13 @@ func ValidatorMapRequest(r *http.Request, rule govalidator.MapData, message gova
 		opts.Messages = message
 	}
 	vd := govalidator.New(opts)
-	e: = vd.ValidateMapJSON ()
+	e := vd.ValidateMapJSON()
 	return data, e
 }
 
-//ValidatorRequestStructAndErrorResponse validates and formats the request data as an object
-// retrun true to continue execution
-// return false parameter error, terminate
+//ValidatorRequestStructAndErrorResponse Validate and format the requested data as an object
+// retrun true Continue execution
+// return false Parameter error, termination
 func ValidatorRequestStructAndErrorResponse(r *http.Request, w http.ResponseWriter, data interface{}, message govalidator.MapData) bool {
 	if re := ValidatorStructRequest(r, data, message); len(re) > 0 {
 		ReturnValidationError(r, w, re)
@@ -105,9 +105,9 @@ func ValidatorRequestStructAndErrorResponse(r *http.Request, w http.ResponseWrit
 	return true
 }
 
-//ValidatorRequestMapAndErrorResponse validates and formats the request data as an object
-// retrun true to continue execution
-// return false parameter error, terminate
+//ValidatorRequestMapAndErrorResponse Validate and format the requested data as an object
+// retrun true Continue execution
+// return false Parameter error, termination
 func ValidatorRequestMapAndErrorResponse(r *http.Request, w http.ResponseWriter, rule govalidator.MapData, messgae govalidator.MapData) (map[string]interface{}, bool) {
 	data, re := ValidatorMapRequest(r, rule, messgae)
 	if len(re) > 0 {
@@ -129,7 +129,7 @@ type ResponseBody struct {
 	Page int `json:"page,omitempty"`
 }
 
-//ParseResponseBody parses into ResponseBody
+//ParseResponseBody Parse into ResponseBody
 func ParseResponseBody(red io.ReadCloser, dataType string) (re ResponseBody, err error) {
 	if red == nil {
 		err = errors.New("readcloser can not be nil")
@@ -148,14 +148,14 @@ func ParseResponseBody(red io.ReadCloser, dataType string) (re ResponseBody, err
 	return
 }
 
-//ReturnValidationError parameter error return
+//ReturnValidationError Parameter return error
 func ReturnValidationError(r *http.Request, w http.ResponseWriter, err url.Values) {
 	logrus.Debugf("validation error, uri: %s; msg: %v", r.RequestURI, ResponseBody{ValidationError: err})
 	r = r.WithContext(context.WithValue(r.Context(), render.StatusCtxKey, http.StatusBadRequest))
 	render.DefaultResponder(w, r, ResponseBody{ValidationError: err})
 }
 
-//ReturnSuccess successfully returned
+//ReturnSuccess Returned Successfully
 func ReturnSuccess(r *http.Request, w http.ResponseWriter, datas interface{}) {
 	r = r.WithContext(context.WithValue(r.Context(), render.StatusCtxKey, http.StatusOK))
 	if datas == nil {
@@ -177,14 +177,14 @@ func ReturnList(r *http.Request, w http.ResponseWriter, listAllNumber, page int,
 	render.DefaultResponder(w, r, ResponseBody{List: list, ListAllNumber: listAllNumber, Page: page})
 }
 
-//ReturnError returns error information
+//ReturnError Return error message
 func ReturnError(r *http.Request, w http.ResponseWriter, code int, msg string) {
 	logrus.Debugf("error code: %d; error uri: %s; error msg: %s", code, r.RequestURI, msg)
 	r = r.WithContext(context.WithValue(r.Context(), render.StatusCtxKey, code))
 	render.DefaultResponder(w, r, ResponseBody{Msg: msg})
 }
 
-//Return custom
+//Return  Customize
 func Return(r *http.Request, w http.ResponseWriter, code int, reb ResponseBody) {
 	r = r.WithContext(context.WithValue(r.Context(), render.StatusCtxKey, code))
 	render.DefaultResponder(w, r, reb)
@@ -224,6 +224,10 @@ func ReturnBcodeError(r *http.Request, w http.ResponseWriter, err error) {
 		status = 400
 		result.Code = 400
 		result.Msg = err.Error()
+	}
+
+	if berr.GetStatus() == 500 {
+		logrus.Errorf("path: %s\n: %+v", r.RequestURI, err)
 	}
 
 	r = r.WithContext(context.WithValue(r.Context(), render.StatusCtxKey, status))

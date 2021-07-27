@@ -20,6 +20,8 @@ package dao
 
 import (
 	"fmt"
+	gormbulkups "github.com/atcdot/gorm-bulk-upsert"
+	pkgerr "github.com/pkg/errors"
 
 	"github.com/gridworkz/kato/db/errors"
 	"github.com/gridworkz/kato/db/model"
@@ -27,12 +29,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//PluginDaoImpl
+//PluginDaoImpl PluginDaoImpl
 type PluginDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Create plugin
 func (t *PluginDaoImpl) AddModel(mo model.Interface) error {
 	plugin := mo.(*model.TenantPlugin)
 	var oldPlugin model.TenantPlugin
@@ -41,13 +43,13 @@ func (t *PluginDaoImpl) AddModel(mo model.Interface) error {
 			return err
 		}
 	} else {
-		logrus.Infof("plugin id: %s; tenant id: %s; tenant plugin already exists", plugin.PluginID, plugin.TenantID)
+		logrus.Infof("plugin id: %s; tenant id: %s; tenant plugin already exist", plugin.PluginID, plugin.TenantID)
 		return errors.ErrRecordAlreadyExist
 	}
 	return nil
 }
 
-//UpdateModel
+//UpdateModel Update plugin
 func (t *PluginDaoImpl) UpdateModel(mo model.Interface) error {
 	plugin := mo.(*model.TenantPlugin)
 	if err := t.DB.Save(plugin).Error; err != nil {
@@ -56,7 +58,7 @@ func (t *PluginDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//GetPluginByID
+//GetPluginByID GetPluginByID
 func (t *PluginDaoImpl) GetPluginByID(id, tenantID string) (*model.TenantPlugin, error) {
 	var plugin model.TenantPlugin
 	if err := t.DB.Where("plugin_id = ? and tenant_id = ?", id, tenantID).Find(&plugin).Error; err != nil {
@@ -77,7 +79,7 @@ func (t *PluginDaoImpl) ListByIDs(ids []string) ([]*model.TenantPlugin, error) {
 	return plugins, nil
 }
 
-//DeletePluginByID
+//DeletePluginByID DeletePluginByID
 func (t *PluginDaoImpl) DeletePluginByID(id, tenantID string) error {
 	var plugin model.TenantPlugin
 	if err := t.DB.Where("plugin_id=? and tenant_id=?", id, tenantID).Delete(&plugin).Error; err != nil {
@@ -86,7 +88,7 @@ func (t *PluginDaoImpl) DeletePluginByID(id, tenantID string) error {
 	return nil
 }
 
-//GetPluginsByTenantID
+//GetPluginsByTenantID GetPluginsByTenantID
 func (t *PluginDaoImpl) GetPluginsByTenantID(tenantID string) ([]*model.TenantPlugin, error) {
 	var plugins []*model.TenantPlugin
 	if err := t.DB.Where("tenant_id=?", tenantID).Find(&plugins).Error; err != nil {
@@ -95,7 +97,7 @@ func (t *PluginDaoImpl) GetPluginsByTenantID(tenantID string) ([]*model.TenantPl
 	return plugins, nil
 }
 
-// ListByTenantID
+// ListByTenantID -
 func (t *PluginDaoImpl) ListByTenantID(tenantID string) ([]*model.TenantPlugin, error) {
 	var plugins []*model.TenantPlugin
 	if err := t.DB.Where("tenant_id=?", tenantID).Find(&plugins).Error; err != nil {
@@ -105,12 +107,24 @@ func (t *PluginDaoImpl) ListByTenantID(tenantID string) ([]*model.TenantPlugin, 
 	return plugins, nil
 }
 
-//PluginDefaultENVDaoImpl
+// CreateOrUpdatePluginsInBatch -
+func (t *PluginDaoImpl) CreateOrUpdatePluginsInBatch(plugins []*model.TenantPlugin) error {
+	var objects []interface{}
+	for _, plugin := range plugins {
+		objects = append(objects, *plugin)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update plugins in batch")
+	}
+	return nil
+}
+
+//PluginDefaultENVDaoImpl PluginDefaultENVDaoImpl
 type PluginDefaultENVDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Add plugin default variables
 func (t *PluginDefaultENVDaoImpl) AddModel(mo model.Interface) error {
 	env := mo.(*model.TenantPluginDefaultENV)
 	var oldENV model.TenantPluginDefaultENV
@@ -127,7 +141,7 @@ func (t *PluginDefaultENVDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel
+//UpdateModel Update plugin default variables
 func (t *PluginDefaultENVDaoImpl) UpdateModel(mo model.Interface) error {
 	env := mo.(*model.TenantPluginDefaultENV)
 	if err := t.DB.Save(env).Error; err != nil {
@@ -136,7 +150,7 @@ func (t *PluginDefaultENVDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//GetALLMasterDefultENVs
+//GetALLMasterDefultENVs GetALLMasterDefultENVs
 func (t *PluginDefaultENVDaoImpl) GetALLMasterDefultENVs(pluginID string) ([]*model.TenantPluginDefaultENV, error) {
 	var envs []*model.TenantPluginDefaultENV
 	if err := t.DB.Where("plugin_id=? and version_id=?", pluginID, "master_rb").Find(&envs).Error; err != nil {
@@ -145,7 +159,7 @@ func (t *PluginDefaultENVDaoImpl) GetALLMasterDefultENVs(pluginID string) ([]*mo
 	return envs, nil
 }
 
-//GetDefaultENVByName
+//GetDefaultENVByName GetDefaultENVByName
 func (t *PluginDefaultENVDaoImpl) GetDefaultENVByName(pluginID, name, versionID string) (*model.TenantPluginDefaultENV, error) {
 	var env model.TenantPluginDefaultENV
 	if err := t.DB.Where("plugin_id=? and env_name=? and version_id=?",
@@ -157,7 +171,7 @@ func (t *PluginDefaultENVDaoImpl) GetDefaultENVByName(pluginID, name, versionID 
 	return &env, nil
 }
 
-//GetDefaultENVSByPluginID
+//GetDefaultENVSByPluginID GetDefaultENVSByPluginID
 func (t *PluginDefaultENVDaoImpl) GetDefaultENVSByPluginID(pluginID, versionID string) ([]*model.TenantPluginDefaultENV, error) {
 	var envs []*model.TenantPluginDefaultENV
 	if err := t.DB.Where("plugin_id=? and version_id=?", pluginID, versionID).Find(&envs).Error; err != nil {
@@ -166,7 +180,7 @@ func (t *PluginDefaultENVDaoImpl) GetDefaultENVSByPluginID(pluginID, versionID s
 	return envs, nil
 }
 
-//DeleteDefaultENVByName
+//DeleteDefaultENVByName DeleteDefaultENVByName
 func (t *PluginDefaultENVDaoImpl) DeleteDefaultENVByName(pluginID, name, versionID string) error {
 	relation := &model.TenantPluginDefaultENV{
 		ENVName: name,
@@ -178,7 +192,7 @@ func (t *PluginDefaultENVDaoImpl) DeleteDefaultENVByName(pluginID, name, version
 	return nil
 }
 
-//DeleteDefaultENVByPluginIDAndVersionID
+//DeleteDefaultENVByPluginIDAndVersionID DeleteDefaultENVByPluginIDAndVersionID
 func (t *PluginDefaultENVDaoImpl) DeleteDefaultENVByPluginIDAndVersionID(pluginID, versionID string) error {
 	relation := &model.TenantPluginDefaultENV{
 		PluginID: pluginID,
@@ -189,7 +203,7 @@ func (t *PluginDefaultENVDaoImpl) DeleteDefaultENVByPluginIDAndVersionID(pluginI
 	return nil
 }
 
-//DeleteAllDefaultENVByPluginID
+//DeleteAllDefaultENVByPluginID DeleteAllDefaultENVByPluginID
 func (t *PluginDefaultENVDaoImpl) DeleteAllDefaultENVByPluginID(pluginID string) error {
 	relation := &model.TenantPluginDefaultENV{
 		PluginID: pluginID,
@@ -200,7 +214,7 @@ func (t *PluginDefaultENVDaoImpl) DeleteAllDefaultENVByPluginID(pluginID string)
 	return nil
 }
 
-//GetDefaultEnvWhichCanBeSetByPluginID
+//GetDefaultEnvWhichCanBeSetByPluginID GetDefaultEnvWhichCanBeSetByPluginID
 func (t *PluginDefaultENVDaoImpl) GetDefaultEnvWhichCanBeSetByPluginID(pluginID, versionID string) ([]*model.TenantPluginDefaultENV, error) {
 	var envs []*model.TenantPluginDefaultENV
 	if err := t.DB.Where("plugin_id=? and is_change=? and version_id=?", pluginID, true, versionID).Find(&envs).Error; err != nil {
@@ -209,12 +223,12 @@ func (t *PluginDefaultENVDaoImpl) GetDefaultEnvWhichCanBeSetByPluginID(pluginID,
 	return envs, nil
 }
 
-//PluginBuildVersionDaoImpl
+//PluginBuildVersionDaoImpl PluginBuildVersionDaoImpl
 type PluginBuildVersionDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Add plug-in build version information
 func (t *PluginBuildVersionDaoImpl) AddModel(mo model.Interface) error {
 	version := mo.(*model.TenantPluginBuildVersion)
 	var oldVersion model.TenantPluginBuildVersion
@@ -229,7 +243,7 @@ func (t *PluginBuildVersionDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel
+//UpdateModel Update plugin default variables
 //The main information generally does not change, only the name and status of the built local mirror need to be changed
 func (t *PluginBuildVersionDaoImpl) UpdateModel(mo model.Interface) error {
 	version := mo.(*model.TenantPluginBuildVersion)
@@ -242,7 +256,7 @@ func (t *PluginBuildVersionDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//DeleteBuildVersionByVersionID
+//DeleteBuildVersionByVersionID DeleteBuildVersionByVersionID
 func (t *PluginBuildVersionDaoImpl) DeleteBuildVersionByVersionID(versionID string) error {
 	relation := &model.TenantPluginBuildVersion{
 		VersionID: versionID,
@@ -253,7 +267,7 @@ func (t *PluginBuildVersionDaoImpl) DeleteBuildVersionByVersionID(versionID stri
 	return nil
 }
 
-//DeleteBuildVersionByPluginID
+//DeleteBuildVersionByPluginID DeleteBuildVersionByPluginID
 func (t *PluginBuildVersionDaoImpl) DeleteBuildVersionByPluginID(pluginID string) error {
 	relation := &model.TenantPluginBuildVersion{
 		PluginID: pluginID,
@@ -264,7 +278,7 @@ func (t *PluginBuildVersionDaoImpl) DeleteBuildVersionByPluginID(pluginID string
 	return nil
 }
 
-//GetBuildVersionByPluginID
+//GetBuildVersionByPluginID GetBuildVersionByPluginID
 func (t *PluginBuildVersionDaoImpl) GetBuildVersionByPluginID(pluginID string) ([]*model.TenantPluginBuildVersion, error) {
 	var versions []*model.TenantPluginBuildVersion
 	if err := t.DB.Where("plugin_id = ? and status= ?", pluginID, "complete").Find(&versions).Error; err != nil {
@@ -273,7 +287,7 @@ func (t *PluginBuildVersionDaoImpl) GetBuildVersionByPluginID(pluginID string) (
 	return versions, nil
 }
 
-//GetBuildVersionByVersionID
+//GetBuildVersionByVersionID GetBuildVersionByVersionID
 func (t *PluginBuildVersionDaoImpl) GetBuildVersionByVersionID(pluginID, versionID string) (*model.TenantPluginBuildVersion, error) {
 	var version model.TenantPluginBuildVersion
 	if err := t.DB.Where("plugin_id=? and version_id = ? ", pluginID, versionID).Find(&version).Error; err != nil {
@@ -282,7 +296,7 @@ func (t *PluginBuildVersionDaoImpl) GetBuildVersionByVersionID(pluginID, version
 	return &version, nil
 }
 
-//GetBuildVersionByDeployVersion
+//GetBuildVersionByDeployVersion GetBuildVersionByDeployVersion
 func (t *PluginBuildVersionDaoImpl) GetBuildVersionByDeployVersion(pluginID, versionID, deployVersion string) (*model.TenantPluginBuildVersion, error) {
 	var version model.TenantPluginBuildVersion
 	if err := t.DB.Where("plugin_id=? and version_id = ? and deploy_version=?", pluginID, versionID, deployVersion).Find(&version).Error; err != nil {
@@ -309,12 +323,24 @@ func (t *PluginBuildVersionDaoImpl) GetLastBuildVersionByVersionID(pluginID, ver
 	return &version, nil
 }
 
-//PluginVersionEnvDaoImpl
+// CreateOrUpdatePluginBuildVersionsInBatch -
+func (t *PluginBuildVersionDaoImpl) CreateOrUpdatePluginBuildVersionsInBatch(buildVersions []*model.TenantPluginBuildVersion) error {
+	var objects []interface{}
+	for _, version := range buildVersions {
+		objects = append(objects, *version)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update plugin build versions in batch")
+	}
+	return nil
+}
+
+//PluginVersionEnvDaoImpl PluginVersionEnvDaoImpl
 type PluginVersionEnvDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Add plugin default variables
 func (t *PluginVersionEnvDaoImpl) AddModel(mo model.Interface) error {
 	env := mo.(*model.TenantPluginVersionEnv)
 	var oldENV model.TenantPluginVersionEnv
@@ -328,7 +354,7 @@ func (t *PluginVersionEnvDaoImpl) AddModel(mo model.Interface) error {
 	return nil
 }
 
-//UpdateModel
+//UpdateModel Update plugin default variables
 func (t *PluginVersionEnvDaoImpl) UpdateModel(mo model.Interface) error {
 	env := mo.(*model.TenantPluginVersionEnv)
 	if env.ID == 0 || env.ServiceID == "" || env.PluginID == "" {
@@ -340,7 +366,7 @@ func (t *PluginVersionEnvDaoImpl) UpdateModel(mo model.Interface) error {
 	return nil
 }
 
-//DeleteEnvByEnvName
+//DeleteEnvByEnvName Delete a single env
 func (t *PluginVersionEnvDaoImpl) DeleteEnvByEnvName(envName, pluginID, serviceID string) error {
 	env := &model.TenantPluginVersionEnv{
 		PluginID:  pluginID,
@@ -350,7 +376,7 @@ func (t *PluginVersionEnvDaoImpl) DeleteEnvByEnvName(envName, pluginID, serviceI
 	return t.DB.Where("env_name=? and plugin_id=? and service_id=?", envName, pluginID, serviceID).Delete(env).Error
 }
 
-//DeleteEnvByPluginID - when deleting plugin dependencies, you need to delete the corresponding env
+//DeleteEnvByPluginID When deleting plugin dependencies, you need to delete the corresponding env
 func (t *PluginVersionEnvDaoImpl) DeleteEnvByPluginID(serviceID, pluginID string) error {
 	env := &model.TenantPluginVersionEnv{
 		PluginID:  pluginID,
@@ -359,7 +385,7 @@ func (t *PluginVersionEnvDaoImpl) DeleteEnvByPluginID(serviceID, pluginID string
 	return t.DB.Where("plugin_id=? and service_id= ?", pluginID, serviceID).Delete(env).Error
 }
 
-//DeleteEnvByServiceID - this is required when deleting the app
+//DeleteEnvByServiceID This is required when deleting the app
 func (t *PluginVersionEnvDaoImpl) DeleteEnvByServiceID(serviceID string) error {
 	env := &model.TenantPluginVersionEnv{
 		ServiceID: serviceID,
@@ -367,7 +393,7 @@ func (t *PluginVersionEnvDaoImpl) DeleteEnvByServiceID(serviceID string) error {
 	return t.DB.Where("service_id=?", serviceID).Delete(env).Error
 }
 
-//GetVersionEnvByServiceID - get the plugin variables that a plugin used under the application depends on
+//GetVersionEnvByServiceID Get the plugin variables that a plugin used under the application depends on
 func (t *PluginVersionEnvDaoImpl) GetVersionEnvByServiceID(serviceID string, pluginID string) ([]*model.TenantPluginVersionEnv, error) {
 	var envs []*model.TenantPluginVersionEnv
 	if err := t.DB.Where("service_id=? and plugin_id=?", serviceID, pluginID).Find(&envs).Error; err != nil {
@@ -376,7 +402,7 @@ func (t *PluginVersionEnvDaoImpl) GetVersionEnvByServiceID(serviceID string, plu
 	return envs, nil
 }
 
-//GetVersionEnvByEnvName
+//GetVersionEnvByEnvName GetVersionEnvByEnvName
 func (t *PluginVersionEnvDaoImpl) GetVersionEnvByEnvName(serviceID, pluginID, envName string) (*model.TenantPluginVersionEnv, error) {
 	var env model.TenantPluginVersionEnv
 	if err := t.DB.Where("service_id=? and plugin_id=? and env_name=?", serviceID, pluginID, envName).Find(&env).Error; err != nil {
@@ -397,7 +423,24 @@ func (t *PluginVersionEnvDaoImpl) ListByServiceID(serviceID string) ([]*model.Te
 	return envs, nil
 }
 
-//PluginVersionConfigDaoImpl
+//DeleteByComponentIDs -
+func (t *PluginVersionEnvDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
+	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantPluginVersionEnv{}).Error
+}
+
+// CreateOrUpdatePluginVersionEnvsInBatch -
+func (t *PluginVersionEnvDaoImpl) CreateOrUpdatePluginVersionEnvsInBatch(versionEnvs []*model.TenantPluginVersionEnv) error {
+	var objects []interface{}
+	for _, env := range versionEnvs {
+		objects = append(objects, *env)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update plugin version env in batch")
+	}
+	return nil
+}
+
+//PluginVersionConfigDaoImpl PluginVersionEnvDaoImpl
 type PluginVersionConfigDaoImpl struct {
 	DB *gorm.DB
 }
@@ -448,7 +491,7 @@ func (t *PluginVersionConfigDaoImpl) DeletePluginConfigByServiceID(serviceID str
 	return nil
 }
 
-//GetPluginConfig
+//GetPluginConfig get service plugin config
 func (t *PluginVersionConfigDaoImpl) GetPluginConfig(serviceID, pluginID string) (*model.TenantPluginVersionDiscoverConfig, error) {
 	var oldconfig model.TenantPluginVersionDiscoverConfig
 	if err := t.DB.Where("service_id=? and plugin_id=?", serviceID, pluginID).Find(&oldconfig).Error; err != nil {
@@ -457,7 +500,7 @@ func (t *PluginVersionConfigDaoImpl) GetPluginConfig(serviceID, pluginID string)
 	return &oldconfig, nil
 }
 
-//GetPluginConfigs
+//GetPluginConfigs get plugin configs
 func (t *PluginVersionConfigDaoImpl) GetPluginConfigs(serviceID string) ([]*model.TenantPluginVersionDiscoverConfig, error) {
 	var oldconfigs []*model.TenantPluginVersionDiscoverConfig
 	if err := t.DB.Where("service_id=?", serviceID).Find(&oldconfigs).Error; err != nil {
@@ -466,12 +509,29 @@ func (t *PluginVersionConfigDaoImpl) GetPluginConfigs(serviceID string) ([]*mode
 	return oldconfigs, nil
 }
 
-//TenantServicePluginRelationDaoImpl
+//DeleteByComponentIDs -
+func (t *PluginVersionConfigDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
+	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantPluginVersionDiscoverConfig{}).Error
+}
+
+// CreateOrUpdatePluginVersionConfigsInBatch -
+func (t *PluginVersionConfigDaoImpl) CreateOrUpdatePluginVersionConfigsInBatch(versionConfigs []*model.TenantPluginVersionDiscoverConfig) error {
+	var objects []interface{}
+	for _, config := range versionConfigs {
+		objects = append(objects, *config)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update plugin version config in batch")
+	}
+	return nil
+}
+
+//TenantServicePluginRelationDaoImpl TenantServicePluginRelationDaoImpl
 type TenantServicePluginRelationDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Add plugin default variables
 func (t *TenantServicePluginRelationDaoImpl) AddModel(mo model.Interface) error {
 	relation := mo.(*model.TenantServicePluginRelation)
 	var oldRelation model.TenantServicePluginRelation
@@ -485,7 +545,7 @@ func (t *TenantServicePluginRelationDaoImpl) AddModel(mo model.Interface) error 
 	return nil
 }
 
-//UpdateModel - pdate plug-in default variables Update dependent version id
+//UpdateModel Update plugin default variables Update dependent version id
 func (t *TenantServicePluginRelationDaoImpl) UpdateModel(mo model.Interface) error {
 	relation := mo.(*model.TenantServicePluginRelation)
 	if relation.ID == 0 {
@@ -497,7 +557,7 @@ func (t *TenantServicePluginRelationDaoImpl) UpdateModel(mo model.Interface) err
 	return nil
 }
 
-//DeleteRelationByServiceIDAndPluginID - delete service plugin correspondence
+//DeleteRelationByServiceIDAndPluginID Delete service plugin correspondence
 func (t *TenantServicePluginRelationDaoImpl) DeleteRelationByServiceIDAndPluginID(serviceID, pluginID string) error {
 	relation := &model.TenantServicePluginRelation{
 		ServiceID: serviceID,
@@ -508,7 +568,7 @@ func (t *TenantServicePluginRelationDaoImpl) DeleteRelationByServiceIDAndPluginI
 		serviceID).Delete(relation).Error
 }
 
-//CheckSomeModelPluginByServiceID
+//CheckSomeModelPluginByServiceID Check whether a certain plug-in is bound and enabled
 func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelPluginByServiceID(serviceID, pluginModel string) (bool, error) {
 	var relations []*model.TenantServicePluginRelation
 	if err := t.DB.Where("service_id=? and plugin_model=? and switch=?", serviceID, pluginModel, true).Find(&relations).Error; err != nil {
@@ -520,7 +580,7 @@ func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelPluginByServiceID(ser
 	return false, nil
 }
 
-//CheckSomeModelLikePluginByServiceID
+//CheckSomeModelLikePluginByServiceID Check whether a certain type of plug-in is bound
 func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelLikePluginByServiceID(serviceID, pluginModel string) (bool, error) {
 	var relations []*model.TenantServicePluginRelation
 	catePlugin := "%" + pluginModel + "%"
@@ -533,7 +593,7 @@ func (t *TenantServicePluginRelationDaoImpl) CheckSomeModelLikePluginByServiceID
 	return false, nil
 }
 
-//DeleteALLRelationByServiceID - delete all plug-in dependencies of serviceID Generally used when deleting applications
+//DeleteALLRelationByServiceID Delete all plug-in dependencies of serviceID Generally used when deleting applications
 func (t *TenantServicePluginRelationDaoImpl) DeleteALLRelationByServiceID(serviceID string) error {
 	relation := &model.TenantServicePluginRelation{
 		ServiceID: serviceID,
@@ -541,7 +601,7 @@ func (t *TenantServicePluginRelationDaoImpl) DeleteALLRelationByServiceID(servic
 	return t.DB.Where("service_id=?", serviceID).Delete(relation).Error
 }
 
-//DeleteALLRelationByPluginID - delete all dependencies of pluginID, generally do not use it, it will affect the startup of associated applications
+//DeleteALLRelationByPluginID Delete all dependencies of pluginID, generally don't use it, it will affect the startup of associated applications
 func (t *TenantServicePluginRelationDaoImpl) DeleteALLRelationByPluginID(pluginID string) error {
 	relation := &model.TenantServicePluginRelation{
 		PluginID: pluginID,
@@ -549,7 +609,7 @@ func (t *TenantServicePluginRelationDaoImpl) DeleteALLRelationByPluginID(pluginI
 	return t.DB.Where("plugin_id=?", pluginID).Delete(relation).Error
 }
 
-//GetALLRelationByServiceID
+//GetALLRelationByServiceID Get all the plug-in dependencies of the current application
 func (t *TenantServicePluginRelationDaoImpl) GetALLRelationByServiceID(serviceID string) ([]*model.TenantServicePluginRelation, error) {
 	var relations []*model.TenantServicePluginRelation
 	if err := t.DB.Where("service_id=?", serviceID).Find(&relations).Error; err != nil {
@@ -558,7 +618,7 @@ func (t *TenantServicePluginRelationDaoImpl) GetALLRelationByServiceID(serviceID
 	return relations, nil
 }
 
-//GetRelateionByServiceIDAndPluginID
+//GetRelateionByServiceIDAndPluginID GetRelateionByServiceIDAndPluginID
 func (t *TenantServicePluginRelationDaoImpl) GetRelateionByServiceIDAndPluginID(serviceID, pluginID string) (*model.TenantServicePluginRelation, error) {
 	relation := &model.TenantServicePluginRelation{
 		PluginID:  pluginID,
@@ -570,12 +630,29 @@ func (t *TenantServicePluginRelationDaoImpl) GetRelateionByServiceIDAndPluginID(
 	return relation, nil
 }
 
-//TenantServicesStreamPluginPortDaoImpl
+//DeleteByComponentIDs -
+func (t *TenantServicePluginRelationDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
+	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantServicePluginRelation{}).Error
+}
+
+// CreateOrUpdatePluginRelsInBatch -
+func (t *TenantServicePluginRelationDaoImpl) CreateOrUpdatePluginRelsInBatch(relations []*model.TenantServicePluginRelation) error {
+	var objects []interface{}
+	for _, relation := range relations {
+		objects = append(objects, *relation)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update plugin relation in batch")
+	}
+	return nil
+}
+
+//TenantServicesStreamPluginPortDaoImpl TenantServicesStreamPluginPortDaoImpl
 type TenantServicesStreamPluginPortDaoImpl struct {
 	DB *gorm.DB
 }
 
-//AddModel
+//AddModel Add plug-in port mapping information
 func (t *TenantServicesStreamPluginPortDaoImpl) AddModel(mo model.Interface) error {
 	port := mo.(*model.TenantServicesStreamPluginPort)
 	var oldPort model.TenantServicesStreamPluginPort
@@ -592,7 +669,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) AddModel(mo model.Interface) err
 	return nil
 }
 
-//UpdateModel
+//UpdateModel Update plug-in port mapping information
 func (t *TenantServicesStreamPluginPortDaoImpl) UpdateModel(mo model.Interface) error {
 	port := mo.(*model.TenantServicesStreamPluginPort)
 	if port.ID == 0 {
@@ -604,7 +681,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) UpdateModel(mo model.Interface) 
 	return nil
 }
 
-//GetPluginMappingPorts
+//GetPluginMappingPorts GetPluginMappingPorts  descending sort
 func (t *TenantServicesStreamPluginPortDaoImpl) GetPluginMappingPorts(
 	serviceID string) ([]*model.TenantServicesStreamPluginPort, error) {
 	var ports []*model.TenantServicesStreamPluginPort
@@ -614,7 +691,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) GetPluginMappingPorts(
 	return ports, nil
 }
 
-//GetPluginMappingPortByServiceIDAndContainerPort
+//GetPluginMappingPortByServiceIDAndContainerPort GetPluginMappingPortByServiceIDAndContainerPort
 func (t *TenantServicesStreamPluginPortDaoImpl) GetPluginMappingPortByServiceIDAndContainerPort(
 	serviceID string,
 	pluginModel string,
@@ -632,7 +709,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) GetPluginMappingPortByServiceIDA
 	return &port, nil
 }
 
-//SetPluginMappingPort
+//SetPluginMappingPort SetPluginMappingPort
 func (t *TenantServicesStreamPluginPortDaoImpl) SetPluginMappingPort(
 	tenantID string,
 	serviceID string,
@@ -642,7 +719,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) SetPluginMappingPort(
 	if err != nil {
 		return 0, err
 	}
-	//if allocated, return
+	//if have been allocated,return
 	for _, oldp := range ports {
 		if oldp.ContainerPort == containerPort {
 			return oldp.PluginPort, nil
@@ -680,7 +757,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) SetPluginMappingPort(
 			continue
 		}
 	}
-	//The port is the same as the pre-allocated port
+	//The port is the same as the pre-allocated port, redistributed
 	if containerPort == (oldMaxPort.PluginPort + 1) {
 		newPort.PluginPort = oldMaxPort.PluginPort + 2
 		if err := t.AddModel(newPort); err != nil {
@@ -695,7 +772,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) SetPluginMappingPort(
 	return newPort.PluginPort, nil
 }
 
-//DeletePluginMappingPortByContainerPort
+//DeletePluginMappingPortByContainerPort DeletePluginMappingPortByContainerPort
 func (t *TenantServicesStreamPluginPortDaoImpl) DeletePluginMappingPortByContainerPort(
 	serviceID string,
 	pluginModel string,
@@ -711,7 +788,7 @@ func (t *TenantServicesStreamPluginPortDaoImpl) DeletePluginMappingPortByContain
 		containerPort).Delete(relation).Error
 }
 
-//DeleteAllPluginMappingPortByServiceID
+//DeleteAllPluginMappingPortByServiceID DeleteAllPluginMappingPortByServiceID
 func (t *TenantServicesStreamPluginPortDaoImpl) DeleteAllPluginMappingPortByServiceID(serviceID string) error {
 	relation := &model.TenantServicesStreamPluginPort{
 		ServiceID: serviceID,
@@ -729,4 +806,21 @@ func (t *TenantServicesStreamPluginPortDaoImpl) ListByServiceID(sid string) ([]*
 		return nil, err
 	}
 	return result, nil
+}
+
+//DeleteByComponentIDs -
+func (t *TenantServicesStreamPluginPortDaoImpl) DeleteByComponentIDs(componentIDs []string) error {
+	return t.DB.Where("service_id in (?)", componentIDs).Delete(&model.TenantServicesStreamPluginPort{}).Error
+}
+
+// CreateOrUpdateStreamPluginPortsInBatch -
+func (t *TenantServicesStreamPluginPortDaoImpl) CreateOrUpdateStreamPluginPortsInBatch(spPorts []*model.TenantServicesStreamPluginPort) error {
+	var objects []interface{}
+	for _, volRel := range spPorts {
+		objects = append(objects, *volRel)
+	}
+	if err := gormbulkups.BulkUpsert(t.DB, objects, 2000); err != nil {
+		return pkgerr.Wrap(err, "create or update stream plugin port failed in batch")
+	}
+	return nil
 }

@@ -26,18 +26,28 @@ import (
 	"time"
 
 	"github.com/gridworkz/kato/api/client/prometheus"
+	"github.com/gridworkz/kato/api/model"
 	api_model "github.com/gridworkz/kato/api/model"
 	"github.com/gridworkz/kato/api/util"
+	"github.com/gridworkz/kato/api/util/bcode"
 	"github.com/gridworkz/kato/cmd/api/option"
 	"github.com/gridworkz/kato/db"
 	dbmodel "github.com/gridworkz/kato/db/model"
 	mqclient "github.com/gridworkz/kato/mq/client"
+	"github.com/gridworkz/kato/pkg/apis/kato/v1alpha1"
+	rutil "github.com/gridworkz/kato/util"
 	"github.com/gridworkz/kato/worker/client"
 	"github.com/gridworkz/kato/worker/server/pb"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //TenantAction tenant act
@@ -49,17 +59,30 @@ type TenantAction struct {
 	cacheClusterResourceStats *ClusterResourceStats
 	cacheTime                 time.Time
 	prometheusCli             prometheus.Interface
+	k8sClient                 k8sclient.Client
+	resources                 map[string]runtime.Object
 }
 
 //CreateTenManager create Manger
 func CreateTenManager(mqc mqclient.MQClient, statusCli *client.AppRuntimeSyncClient,
-	optCfg *option.Config, kubeClient *kubernetes.Clientset, prometheusCli prometheus.Interface) *TenantAction {
+	optCfg *option.Config,
+	kubeClient *kubernetes.Clientset,
+	prometheusCli prometheus.Interface,
+	k8sClient k8sclient.Client) *TenantAction {
+
+	resources := map[string]runtime.Object{
+		"helmApp": &v1alpha1.HelmApp{},
+		"service": &corev1.Service{},
+	}
+
 	return &TenantAction{
 		MQClient:      mqc,
 		statusCli:     statusCli,
 		OptCfg:        optCfg,
 		kubeClient:    kubeClient,
 		prometheusCli: prometheusCli,
+		k8sClient:     k8sClient,
+		resources:     resources,
 	}
 }
 
@@ -113,7 +136,7 @@ func (t *TenantAction) GetTenants(query string) ([]*dbmodel.Tenants, error) {
 	return tenants, err
 }
 
-//GetTenantsByEid
+//GetTenantsByEid GetTenantsByEid
 func (t *TenantAction) GetTenantsByEid(eid, query string) ([]*dbmodel.Tenants, error) {
 	tenants, err := db.GetManager().TenantDao().GetTenantByEid(eid, query)
 	if err != nil {
@@ -130,7 +153,7 @@ func (t *TenantAction) UpdateTenant(tenant *dbmodel.Tenants) error {
 // DeleteTenant deletes tenant based on the given tenantID.
 //
 // tenant can only be deleted without service or plugin
-func (t *TenantAction) DeleteTenant(tenantID string) error {
+func (t *TenantAction) DeleteTenant(ctx context.Context, tenantID string) error {
 	// check if there are still services
 	services, err := db.GetManager().TenantServiceDao().ListServicesByTenantID(tenantID)
 	if err != nil {
@@ -138,7 +161,7 @@ func (t *TenantAction) DeleteTenant(tenantID string) error {
 	}
 	if len(services) > 0 {
 		for _, service := range services {
-			GetServiceManager().TransServieToDelete(tenantID, service.ServiceID)
+			GetServiceManager().TransServieToDelete(ctx, tenantID, service.ServiceID)
 		}
 	}
 
@@ -232,7 +255,7 @@ func (t *TenantAction) GetTenantsByUUID(uuid string) (*dbmodel.Tenants, error) {
 	return tenant, err
 }
 
-//StatsMemCPU
+//StatsMemCPU StatsMemCPU
 func (t *TenantAction) StatsMemCPU(services []*dbmodel.TenantServices) (*api_model.StatsInfo, error) {
 	cpus := 0
 	mem := 0
@@ -261,7 +284,7 @@ type QueryResult struct {
 }
 
 //GetTenantsResources Gets the resource usage of the specified tenant.
-func (t *TenantAction) GetTenantsResources(tr *api_model.TenantResources) (map[string]map[string]interface{}, error) {
+func (t *TenantAction) GetTenantsResources(ctx context.Context, tr *api_model.TenantResources) (map[string]map[string]interface{}, error) {
 	ids, err := db.GetManager().TenantDao().GetTenantIDsByNames(tr.Body.TenantNames)
 	if err != nil {
 		return nil, err
@@ -279,7 +302,7 @@ func (t *TenantAction) GetTenantsResources(tr *api_model.TenantResources) (map[s
 		serviceTenantCount[s.TenantID]++
 	}
 	// get cluster resources
-	clusterStats, err := t.GetAllocatableResources()
+	clusterStats, err := t.GetAllocatableResources(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting allocatalbe cpu and memory: %v", err)
 	}
@@ -379,10 +402,10 @@ type ClusterResourceStats struct {
 	RequestMemory int64
 }
 
-func (t *TenantAction) initClusterResource() error {
+func (t *TenantAction) initClusterResource(ctx context.Context) error {
 	if t.cacheClusterResourceStats == nil || t.cacheTime.Add(time.Minute*3).Before(time.Now()) {
 		var crs ClusterResourceStats
-		nodes, err := t.kubeClient.CoreV1().Nodes().List(metav1.ListOptions{})
+		nodes, err := t.kubeClient.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
 		if err != nil {
 			logrus.Errorf("get cluster nodes failure %s", err.Error())
 			return err
@@ -411,9 +434,9 @@ func (t *TenantAction) initClusterResource() error {
 }
 
 // GetAllocatableResources returns allocatable cpu and memory (MB)
-func (t *TenantAction) GetAllocatableResources() (*ClusterResourceStats, error) {
+func (t *TenantAction) GetAllocatableResources(ctx context.Context) (*ClusterResourceStats, error) {
 	var crs ClusterResourceStats
-	if t.initClusterResource() != nil {
+	if t.initClusterResource(ctx) != nil {
 		return &crs, nil
 	}
 	ts, err := t.statusCli.GetAllTenantResource()
@@ -492,7 +515,7 @@ func (t *TenantAction) getPodNums(serviceID string) int {
 	return len(pods.OldPods) + len(pods.NewPods)
 }
 
-//TenantsSum
+//TenantsSum TenantsSum
 func (t *TenantAction) TenantsSum() (int, error) {
 	s, err := db.GetManager().TenantDao().GetALLTenants("")
 	if err != nil {
@@ -501,16 +524,40 @@ func (t *TenantAction) TenantsSum() (int, error) {
 	return len(s), nil
 }
 
-//GetProtocols
+//GetProtocols GetProtocols
 func (t *TenantAction) GetProtocols() ([]*dbmodel.RegionProcotols, *util.APIHandleError) {
-	rps, err := db.GetManager().RegionProcotolsDao().GetAllSupportProtocol("v2")
-	if err != nil {
-		return nil, util.CreateAPIHandleErrorFromDBError("get all support protocols", err)
-	}
-	return rps, nil
+	return []*dbmodel.RegionProcotols{
+		{
+			ProtocolGroup: "http",
+			ProtocolChild: "http",
+			APIVersion:    "v2",
+			IsSupport:     true,
+		},
+		{
+			ProtocolGroup: "http",
+			ProtocolChild: "grpc",
+			APIVersion:    "v2",
+			IsSupport:     true,
+		}, {
+			ProtocolGroup: "stream",
+			ProtocolChild: "tcp",
+			APIVersion:    "v2",
+			IsSupport:     true,
+		}, {
+			ProtocolGroup: "stream",
+			ProtocolChild: "udp",
+			APIVersion:    "v2",
+			IsSupport:     true,
+		}, {
+			ProtocolGroup: "stream",
+			ProtocolChild: "mysql",
+			APIVersion:    "v2",
+			IsSupport:     true,
+		},
+	}, nil
 }
 
-//TransPlugins
+//TransPlugins TransPlugins
 func (t *TenantAction) TransPlugins(tenantID, tenantName, fromTenant string, pluginList []string) *util.APIHandleError {
 	tenantInfo, err := db.GetManager().TenantDao().GetTenantIDByName(fromTenant)
 	if err != nil {
@@ -558,9 +605,35 @@ func (t *TenantAction) IsClosedStatus(status string) bool {
 }
 
 //GetClusterResource get cluster resource
-func (t *TenantAction) GetClusterResource() *ClusterResourceStats {
-	if t.initClusterResource() != nil {
+func (t *TenantAction) GetClusterResource(ctx context.Context) *ClusterResourceStats {
+	if t.initClusterResource(ctx) != nil {
 		return nil
 	}
 	return t.cacheClusterResourceStats
+}
+
+// CheckResourceName checks resource name.
+func (t *TenantAction) CheckResourceName(ctx context.Context, namespace string, req *model.CheckResourceNameReq) (*model.CheckResourceNameResp, error) {
+	obj, ok := t.resources[req.Type]
+	if !ok {
+		return nil, bcode.NewBadRequest("unsupported resource: " + req.Type)
+	}
+
+	nctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	retries := 3
+	for i := 0; i < retries; i++ {
+		if err := t.k8sClient.Get(nctx, types.NamespacedName{Namespace: namespace, Name: req.Name}, obj); err != nil {
+			if k8sErrors.IsNotFound(err) {
+				break
+			}
+			return nil, errors.Wrap(err, "ensure app name")
+		}
+		req.Name += "-" + rutil.NewUUID()[:5]
+	}
+
+	return &model.CheckResourceNameResp{
+		Name: req.Name,
+	}, nil
 }

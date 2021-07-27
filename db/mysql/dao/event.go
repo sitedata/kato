@@ -19,10 +19,12 @@
 package dao
 
 import (
+	"context"
 	"strings"
 	"time"
 
 	gormbulkups "github.com/atcdot/gorm-bulk-upsert"
+	ctxutil "github.com/gridworkz/kato/api/util/ctx"
 	"github.com/gridworkz/kato/db/model"
 	"github.com/jinzhu/gorm"
 	"github.com/pkg/errors"
@@ -32,7 +34,7 @@ import (
 //AddModel AddModel
 func (c *EventDaoImpl) AddModel(mo model.Interface) error {
 	result := mo.(*model.ServiceEvent)
-	was oldResult model.ServiceEvent
+	var oldResult model.ServiceEvent
 	if ok := c.DB.Where("event_id=?", result.EventID).Find(&oldResult).RecordNotFound(); ok {
 		if err := c.DB.Create(result).Error; err != nil {
 			return err
@@ -47,7 +49,7 @@ func (c *EventDaoImpl) AddModel(mo model.Interface) error {
 //UpdateModel UpdateModel
 func (c *EventDaoImpl) UpdateModel(mo model.Interface) error {
 	update := mo.(*model.ServiceEvent)
-	was oldResult model.ServiceEvent
+	var oldResult model.ServiceEvent
 	if ok := c.DB.Where("event_id=?", update.EventID).Find(&oldResult).RecordNotFound(); !ok {
 		update.ID = oldResult.ID
 		if err := c.DB.Save(&update).Error; err != nil {
@@ -59,7 +61,7 @@ func (c *EventDaoImpl) UpdateModel(mo model.Interface) error {
 
 //EventDaoImpl EventLogMessageDaoImpl
 type EventDaoImpl struct {
-	DB * gorm.DB
+	DB *gorm.DB
 }
 
 // CreateEventsInBatch creates events in batch.
@@ -96,9 +98,22 @@ func (c *EventDaoImpl) GetEventByEventIDs(eventIDs []string) ([]*model.ServiceEv
 		if err == gorm.ErrRecordNotFound {
 			return nil, nil
 		}
-		return nil, err
+		return nil, errors.Wrap(err, "list events")
 	}
 	return result, nil
+}
+
+// UpdateInBatch -
+func (c *EventDaoImpl) UpdateInBatch(events []*model.ServiceEvent) error {
+	var objects []interface{}
+	for _, event := range events {
+		event := event
+		objects = append(objects, *event)
+	}
+	if err := gormbulkups.BulkUpsert(c.DB, objects, 2000); err != nil {
+		return errors.Wrap(err, "update events in batch")
+	}
+	return nil
 }
 
 //GetEventByServiceID get event log message
@@ -138,7 +153,7 @@ func (c *EventDaoImpl) ListByTargetID(targetID string) ([]*model.ServiceEvent, e
 // GetEventsByTarget get event by target with page
 func (c *EventDaoImpl) GetEventsByTarget(target, targetID string, offset, limit int) ([]*model.ServiceEvent, int, error) {
 	var result []*model.ServiceEvent
-	was total int
+	var total int
 	db := c.DB
 	if target != "" && targetID != "" {
 		// Compatible with previous 5.1.7 data, with null target and targetid
@@ -163,7 +178,7 @@ func (c *EventDaoImpl) GetEventsByTarget(target, targetID string, offset, limit 
 
 // GetEventsByTenantID get event by tenantID
 func (c *EventDaoImpl) GetEventsByTenantID(tenantID string, offset, limit int) ([]*model.ServiceEvent, int, error) {
-	was total int
+	var total int
 	if err := c.DB.Model(&model.ServiceEvent{}).Where("tenant_id=?", tenantID).Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
@@ -206,9 +221,20 @@ func (c *EventDaoImpl) LatestFailurePodEvent(podName string) (*model.ServiceEven
 	return &event, nil
 }
 
+// SetEventStatus -
+func (c *EventDaoImpl) SetEventStatus(ctx context.Context, status model.EventStatus) error {
+	event, _ := ctx.Value(ctxutil.ContextKey("event")).(*model.ServiceEvent)
+	if event != nil {
+		event.FinalStatus = "complete"
+		event.Status = string(status)
+		return c.UpdateModel(event)
+	}
+	return nil
+}
+
 //NotificationEventDaoImpl NotificationEventDaoImpl
 type NotificationEventDaoImpl struct {
-	DB * gorm.DB
+	DB *gorm.DB
 }
 
 //AddModel AddModel
@@ -217,7 +243,7 @@ func (c *NotificationEventDaoImpl) AddModel(mo model.Interface) error {
 	result.LastTime = time.Now()
 	result.FirstTime = time.Now()
 	result.CreatedAt = time.Now()
-	was oldResult model.NotificationEvent
+	var oldResult model.NotificationEvent
 	if ok := c.DB.Where("hash = ?", result.Hash).Find(&oldResult).RecordNotFound(); ok {
 		if err := c.DB.Create(result).Error; err != nil {
 			return err
@@ -231,7 +257,7 @@ func (c *NotificationEventDaoImpl) AddModel(mo model.Interface) error {
 //UpdateModel UpdateModel
 func (c *NotificationEventDaoImpl) UpdateModel(mo model.Interface) error {
 	result := mo.(*model.NotificationEvent)
-	was oldResult model.NotificationEvent
+	var oldResult model.NotificationEvent
 	if ok := c.DB.Where("hash = ?", result.Hash).Find(&oldResult).RecordNotFound(); !ok {
 		result.FirstTime = oldResult.FirstTime
 		result.ID = oldResult.ID
