@@ -107,7 +107,7 @@ type ProvisionController struct {
 	// To determine if the informer is internal or external
 	customClaimInformer, customVolumeInformer, customClassInformer bool
 
-	claimQueue workqueue.RateLimitingInterface
+	claimQueue  workqueue.RateLimitingInterface
 	volumeQueue workqueue.RateLimitingInterface
 
 	// Identity of this controller, generated at creation time and not persisted
@@ -347,7 +347,7 @@ func VolumesInformer(informer cache.SharedInformer) func(*ProvisionController) e
 		if c.HasRun() {
 			return errRuntime
 		}
-		c.volumeInformer = inform
+		c.volumeInformer = informer
 		c.customVolumeInformer = true
 		return nil
 	}
@@ -362,7 +362,7 @@ func ClassesInformer(informer cache.SharedInformer) func(*ProvisionController) e
 		if c.HasRun() {
 			return errRuntime
 		}
-		c.classInformer = inform
+		c.classInformer = informer
 		c.customClassInformer = true
 		return nil
 	}
@@ -432,13 +432,13 @@ func NewProvisionController(
 	eventRecorder := broadcaster.NewRecorder(scheme.Scheme, v1.EventSource{Component: component})
 
 	controller := &ProvisionController{
-		client: client,
-		cfg: cfg,
+		client:                        client,
+		cfg:                           cfg,
 		provisioners:                  provisioners,
 		kubeVersion:                   utilversion.MustParseSemantic(kubeVersion),
 		id:                            id,
 		component:                     component,
-		eventRecorder: eventRecorder,
+		eventRecorder:                 eventRecorder,
 		resyncPeriod:                  DefaultResyncPeriod,
 		exponentialBackOffOnError:     DefaultExponentialBackOffOnError,
 		threadiness:                   DefaultThreadiness,
@@ -454,7 +454,7 @@ func NewProvisionController(
 		metricsPort:                   DefaultMetricsPort,
 		metricsAddress:                DefaultMetricsAddress,
 		metricsPath:                   DefaultMetricsPath,
-		hasRun: false,
+		hasRun:                        false,
 		hasRunLock:                    &sync.Mutex{},
 	}
 
@@ -462,12 +462,12 @@ func NewProvisionController(
 		option(controller)
 	}
 
-	ratelimiter: = workqueue.NewMaxOfRateLimiter (
+	ratelimiter := workqueue.NewMaxOfRateLimiter(
 		workqueue.NewItemExponentialFailureRateLimiter(15*time.Second, 1000*time.Second),
 		&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
 	)
 	if !controller.exponentialBackOffOnError {
-		ratelimiter = workqueue.NewMaxOfRateLimiter (
+		ratelimiter = workqueue.NewMaxOfRateLimiter(
 			workqueue.NewItemExponentialFailureRateLimiter(15*time.Second, 15*time.Second),
 			&workqueue.BucketRateLimiter{Limiter: rate.NewLimiter(rate.Limit(10), 100)},
 		)
@@ -966,7 +966,7 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 	if _, ok := ctrl.provisioners[provisioner]; !ok {
 		// class.Provisioner has either changed since shouldProvision() or
 		// annDynamicallyProvisioned contains different provisioner than
-		// class.Provisions.
+		// class.Provisioner.
 		logrus.Error(logOperation(operation, "unknown provisioner %q requested in claim's StorageClass", provisioner))
 		return nil
 	}
@@ -996,7 +996,7 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 	if ctrl.kubeVersion.AtLeast(utilversion.MustParseSemantic("v1.11.0")) {
 		// Get SelectedNode
 		if nodeName, ok := claim.Annotations[annSelectedNode]; ok {
-			selectedNode, err = ctrl.client.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{}) // TODO (verify) cache Nodes
+			selectedNode, err = ctrl.client.CoreV1().Nodes().Get(ctx, nodeName, metav1.GetOptions{}) // TODO (verult) cache Nodes
 			if err != nil {
 				err = fmt.Errorf("failed to get target node: %v", err)
 				ctrl.eventRecorder.Event(claim, v1.EventTypeWarning, "ProvisioningFailed", err.Error())
@@ -1021,7 +1021,7 @@ func (ctrl *ProvisionController) provisionClaimOperation(ctx context.Context, cl
 
 	options := VolumeOptions{
 		PersistentVolumeReclaimPolicy: reclaimPolicy,
-		PVName: pvName,
+		PVName:                        pvName,
 		PVC:                           claim,
 		PersistentVolumeSource:        grdatapv.Spec.PersistentVolumeSource,
 		MountOptions:                  mountOptions,
@@ -1290,7 +1290,7 @@ func (ctrl *ProvisionController) fetchAllowedTopologies(storageClassName string)
 // Provisioners that implement BlockProvisioner interface and return true to SupportsBlock
 // will be regarded as supported for block volume.
 func (ctrl *ProvisionController) supportsBlock(pr Provisioner) bool {
-	if blockProvisioner, ok: = per (BlockProvisioner); ok {
+	if blockProvisioner, ok := pr.(BlockProvisioner); ok {
 		return blockProvisioner.SupportsBlock()
 	}
 	return false

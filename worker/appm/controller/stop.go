@@ -152,7 +152,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 		}
 		s.manager.store.OnDeletes(deployment)
 	}
-	//step 6: delete all pods
+	//step 6: delete all pod
 	var gracePeriodSeconds int64
 	if pods := app.GetPods(true); pods != nil {
 		for _, pod := range pods {
@@ -194,7 +194,7 @@ func (s *stopController) stopOne(app v1.AppService) error {
 		}
 	}
 
-	//step 9: waiting for endpoint to be ready
+	//step 9: waiting endpoint ready
 	app.Logger.Info("Delete all app model success, will waiting app closed", event.GetLoggerOption("running"))
 	return s.WaitingReady(app)
 }

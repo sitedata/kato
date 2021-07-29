@@ -19,6 +19,7 @@
 package controller
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"sync"
@@ -28,6 +29,7 @@ import (
 	"github.com/gridworkz/kato/util"
 	v1 "github.com/gridworkz/kato/worker/appm/types/v1"
 	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	types "k8s.io/apimachinery/pkg/types"
 )
 
@@ -38,7 +40,7 @@ type scalingController struct {
 	stopChan     chan struct{}
 }
 
-//Begin start handle service scaling
+//Begin  start handle service scaling
 func (s *scalingController) Begin() {
 	var wait sync.WaitGroup
 	for _, service := range s.appService {
@@ -62,21 +64,33 @@ func (s *scalingController) Begin() {
 	s.manager.callback(s.controllerID, nil)
 }
 
-//Replicas fetch replicas to n
+//Replicas petch replicas to n
 func Replicas(n int) []byte {
 	return []byte(fmt.Sprintf(`{"spec":{"replicas":%d}}`, n))
 }
 
 func (s *scalingController) scalingOne(service v1.AppService) error {
 	if statefulset := service.GetStatefulSet(); statefulset != nil {
-		_, err := s.manager.client.AppsV1().StatefulSets(statefulset.Namespace).Patch(statefulset.Name, types.StrategicMergePatchType, Replicas(int(service.Replicas)))
+		_, err := s.manager.client.AppsV1().StatefulSets(statefulset.Namespace).Patch(
+			context.Background(),
+			statefulset.Name,
+			types.StrategicMergePatchType,
+			Replicas(int(service.Replicas)),
+			metav1.PatchOptions{},
+		)
 		if err != nil {
 			logrus.Error("patch statefulset info error.", err.Error())
 			return err
 		}
 	}
 	if deployment := service.GetDeployment(); deployment != nil {
-		_, err := s.manager.client.AppsV1().Deployments(deployment.Namespace).Patch(deployment.Name, types.StrategicMergePatchType, Replicas(int(service.Replicas)))
+		_, err := s.manager.client.AppsV1().Deployments(deployment.Namespace).Patch(
+			context.Background(),
+			deployment.Name,
+			types.StrategicMergePatchType,
+			Replicas(int(service.Replicas)),
+			metav1.PatchOptions{},
+		)
 		if err != nil {
 			logrus.Error("patch deployment info error.", err.Error())
 			return err

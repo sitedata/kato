@@ -52,6 +52,7 @@ type Controller struct {
 	ctx                 context.Context
 	cancel              context.CancelFunc
 	conf                option.Config
+	restConfig          *rest.Config
 	store               store.Storer
 	dbmanager           db.Manager
 	memoryUse           *prometheus.GaugeVec
@@ -63,19 +64,19 @@ type Controller struct {
 	namespaceCPURequest *prometheus.GaugeVec
 	namespaceCPULimit   *prometheus.GaugeVec
 	pc                  *controller.ProvisionController
-	helmAppController   * helmapp.Controller
+	helmAppController   *helmapp.Controller
 	controllers         []mcontroller.Controller
 	isLeader            bool
 
 	kubeClient kubernetes.Interface
 
 	stopCh          chan struct{}
-	podEvent * podevent.PodEvent
+	podEvent        *podevent.PodEvent
 	volumeTypeEvent *sync.VolumeTypeEvent
 
 	version      *version.Info
-	katosssc controller.Provisions
-	katosslc controller.Provisions
+	katosssc controller.Provisioner
+	katosslc controller.Provisioner
 	mgr          ctrl.Manager
 }
 
@@ -106,35 +107,19 @@ func NewMasterController(conf option.Config, store store.Storer, kubeClient kube
 	}, serverVersion.GitVersion)
 	stopCh := make(chan struct{})
 
-	mgr, err := ctrl.NewManager(restConfig, ctrl.Options{
-		Scheme:           common.Scheme,
-		LeaderElection:   false,
-		LeaderElectionID: "controllers.kato.io",
-	})
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-	thirdcomponentController, err := thirdcomponent.Setup(ctx, mgr)
-	if err != nil {
-		cancel()
-		return nil, err
-	}
-
 	helmAppController := helmapp.NewController(ctx, stopCh, kubeClient, katoClient,
 		store.Informer().HelmApp, store.Lister().HelmApp, conf.Helm.RepoFile, conf.Helm.RepoCache, conf.Helm.RepoCache)
 
 	return &Controller{
-		conf: conf,
+		conf:              conf,
+		restConfig:        restConfig,
 		pc:                pc,
 		helmAppController: helmAppController,
-		controllers:       []mcontroller.Controller{thirdcomponentController},
-		store: store,
+		store:             store,
 		stopCh:            stopCh,
 		cancel:            cancel,
 		ctx:               ctx,
 		dbmanager:         db.GetManager(),
-		MSc: MSc,
 		memoryUse: prometheus.NewGaugeVec(prometheus.GaugeOpts{
 			Namespace: "app_resource",
 			Name:      "appmemory",
@@ -173,7 +158,7 @@ func NewMasterController(conf option.Config, store store.Storer, kubeClient kube
 		diskCache:       statistical.CreatDiskCache(ctx),
 		podEvent:        podevent.New(conf.KubeClient, stopCh),
 		volumeTypeEvent: sync.New(stopCh),
-		kubeClient: kubeClient,
+		kubeClient:      kubeClient,
 		katosssc:    katossscProvisioner,
 		katosslc:    katosslcProvisioner,
 		version:         serverVersion,
@@ -208,10 +193,27 @@ func (m *Controller) Start() error {
 		defer m.store.UnRegisterVolumeTypeListener("volumeTypeEvent")
 		go m.volumeTypeEvent.Handle()
 
-		// helmet app controller
+		// helm app controller
 		go m.helmAppController.Start()
 		defer m.helmAppController.Stop()
+
 		// start controller
+		mgr, err := ctrl.NewManager(m.restConfig, ctrl.Options{
+			Scheme:           common.Scheme,
+			LeaderElection:   false,
+			LeaderElectionID: "controllers.kato.io",
+		})
+		if err != nil {
+			logrus.Errorf("create new manager: %v", err)
+			return
+		}
+		thirdComponentController, err := thirdcomponent.Setup(ctx, mgr)
+		if err != nil {
+			logrus.Errorf("setup third component controller: %v", err)
+			return
+		}
+		m.mgr = mgr
+		m.controllers = append(m.controllers, thirdComponentController)
 		stopchan := make(chan struct{})
 		go m.mgr.Start(stopchan)
 
@@ -283,7 +285,7 @@ func (m *Controller) Scrape(ch chan<- prometheus.Metric, scrapeDurationDesc *pro
 	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, time.Since(scrapeTime).Seconds(), "collect.memory")
 	scrapeTime = time.Now()
 	diskcache := m.diskCache.Get()
-	for k, v: = range diskcache {
+	for k, v := range diskcache {
 		key := strings.Split(k, "_")
 		if len(key) == 3 {
 			m.fsUse.WithLabelValues(key[2], key[1], key[0], string(model.ShareFileVolumeType)).Set(v)
@@ -305,11 +307,12 @@ func (m *Controller) Scrape(ch chan<- prometheus.Metric, scrapeDurationDesc *pro
 	m.namespaceMemRequest.Collect(ch)
 	m.namespaceCPURequest.Collect(ch)
 	for _, contro := range m.controllers {
-		vs. Collect (ch)
+		contro.Collect(ch)
 	}
 	logrus.Infof("success collect worker master metric")
 }
 
+// GetStore -
 func (m *Controller) GetStore() store.Storer {
 	return m.store
 }

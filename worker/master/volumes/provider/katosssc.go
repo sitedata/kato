@@ -134,7 +134,7 @@ func getVolumeIDByPVCName(pvcName string) int {
 	logrus.Debug("parse volume id from pvc name", pvcName)
 	pvcNames := strings.SplitN(pvcName, "-", 2)
 	if len(pvcNames) == 2 {
-		fmt.Println(idStr)
+		idStr := pvcNames[0][6:]
 		id, _ := strconv.Atoi(idStr)
 		return id
 	}

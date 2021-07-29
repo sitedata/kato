@@ -28,9 +28,12 @@ import (
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/db/config"
 	"github.com/gridworkz/kato/event"
+	"github.com/gridworkz/kato/pkg/common"
+	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
 	etcdutil "github.com/gridworkz/kato/util/etcd"
 	k8sutil "github.com/gridworkz/kato/util/k8s"
 	"github.com/gridworkz/kato/worker/appm"
+	"github.com/gridworkz/kato/worker/appm/componentdefinition"
 	"github.com/gridworkz/kato/worker/appm/controller"
 	"github.com/gridworkz/kato/worker/appm/store"
 	"github.com/gridworkz/kato/worker/discover"
@@ -41,6 +44,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/util/flowcontrol"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 //Run start run
@@ -84,12 +88,20 @@ func Run(s *option.Worker) error {
 		return err
 	}
 	s.Config.KubeClient = clientset
+	runtimeClient, err := client.New(restConfig, client.Options{Scheme: common.Scheme})
+	if err != nil {
+		logrus.Errorf("create kube runtime client error: %s", err.Error())
+		return err
+	}
+	katoClient := versioned.NewForConfigOrDie(restConfig)
+	//step 3: create componentdefinition builder factory
+	componentdefinition.NewComponentDefinitionBuilder(s.Config.RBDNamespace)
 
-	//step 3: create resource store
+	//step 4: create component resource store
 	startCh := channels.NewRingChannel(1024)
 	updateCh := channels.NewRingChannel(1024)
 	probeCh := channels.NewRingChannel(1024)
-	cachestore := store.NewStore(restConfig, clientset, db.GetManager(), s.Config, startCh, probeCh)
+	cachestore := store.NewStore(restConfig, clientset, katoClient, db.GetManager(), s.Config, startCh, probeCh)
 	appmController := appm.NewAPPMController(clientset, cachestore, startCh, updateCh, probeCh)
 	if err := appmController.Start(); err != nil {
 		logrus.Errorf("error starting appm controller: %v", err)
@@ -100,13 +112,12 @@ func Run(s *option.Worker) error {
 		return err
 	}
 
-	//step 4: create controller manager
-	controllerManager := controller.NewManager(cachestore, clientset)
+	//step 5: create controller manager
+	controllerManager := controller.NewManager(cachestore, clientset, runtimeClient)
 	defer controllerManager.Stop()
 
-	//step 5 : start runtime master
-
-	masterCon, err := master.NewMasterController(s.Config, restConfig, cachestore)
+	//step 6 : start runtime master
+	masterCon, err := master.NewMasterController(s.Config, cachestore, clientset, katoClient, restConfig)
 	if err != nil {
 		return err
 	}
@@ -115,28 +126,29 @@ func Run(s *option.Worker) error {
 	}
 	defer masterCon.Stop()
 
-	//step 6 : create discover module
+	//step 7 : create discover module
 	garbageCollector := gc.NewGarbageCollector(clientset)
 	taskManager := discover.NewTaskManager(s.Config, cachestore, controllerManager, garbageCollector, startCh)
 	if err := taskManager.Start(); err != nil {
 		return err
 	}
 	defer taskManager.Stop()
-	//step 7: start app runtimer server
+
+	//step 8: start app runtimer server
 	runtimeServer := server.CreaterRuntimeServer(s.Config, cachestore, clientset, updateCh)
 	runtimeServer.Start(errChan)
 
-	//step 8: create application use resource exporter.
+	//step 9: create application use resource exporter.
 	exporterManager := monitor.NewManager(s.Config, masterCon, controllerManager)
 	if err := exporterManager.Start(); err != nil {
 		return err
 	}
 	defer exporterManager.Stop()
 
-	logrus.Info("worker begin running...")
+	logrus.Info("worker begins running...")
 
 	//step finally: listen Signal
-	term := make(chan os.Signal)
+	term := make(chan os.Signal, 1)
 	signal.Notify(term, os.Interrupt, syscall.SIGTERM)
 	select {
 	case <-term:

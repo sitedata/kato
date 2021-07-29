@@ -19,6 +19,7 @@
 package thirdparty
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/eapache/channels"
@@ -250,6 +251,9 @@ func (t *thirdparty) k8sEndpoints(as *v1.AppService, epinfo []*v1.RbdEndpoint) (
 		// inner or outer
 		if *p.IsInnerService {
 			ep.Name = fmt.Sprintf("service-%d-%d", p.ID, p.ContainerPort)
+			if p.K8sServiceName != "" {
+				ep.Name = p.K8sServiceName
+			}
 			ep.Labels = as.GetCommonLabels(map[string]string{
 				"name":         as.ServiceAlias + "Service",
 				"service-kind": model.ServiceKindThirdParty.String(),
@@ -263,9 +267,6 @@ func (t *thirdparty) k8sEndpoints(as *v1.AppService, epinfo []*v1.RbdEndpoint) (
 		// inner or outer
 		if *p.IsOuterService {
 			ep.Name = fmt.Sprintf("service-%d-%dout", p.ID, p.ContainerPort)
-			if p.K8sServiceName != "" {
-				ep.Name = p.K8sServiceName
-			}
 			ep.Labels = as.GetCommonLabels(map[string]string{
 				"name":         as.ServiceAlias + "ServiceOUT",
 				"service-kind": model.ServiceKindThirdParty.String(),
@@ -505,7 +506,7 @@ func (t *thirdparty) runUpdate(event discovery.Event) {
 		return
 	}
 	//rbdep.IP may be set "1.1.1.1" if it is domain
-	//so cache domain address for show after handle complete
+	//so cache doamin address for show after handle complete
 	showEndpointIP := rbdep.IP
 	switch event.Type {
 	case discovery.UpdateEvent, discovery.CreateEvent:
@@ -520,15 +521,15 @@ func (t *thirdparty) runUpdate(event discovery.Event) {
 				logrus.Errorf("create or update service %s failure %s", service.Name, err.Error())
 			}
 		}
-		logrus.Debugf("upgrade endpoints and service for thirdparty app %s", as.ServiceAlias)
+		logrus.Debugf("upgrade endpoints and service for third app %s", as.ServiceAlias)
 	case discovery.DeleteEvent:
 		removeAddress(as, rbdep)
-		logrus.Debugf("thirdparty endpoint %s ip %s is deleted", rbdep.UUID, showEndpointIP)
+		logrus.Debugf("third endpoint %s ip %s is deleted", rbdep.UUID, showEndpointIP)
 	case discovery.HealthEvent:
 		updateAddress(as, rbdep, true)
-		logrus.Debugf("thirdparty endpoint %s ip %s is onlined", rbdep.UUID, showEndpointIP)
+		logrus.Debugf("third endpoint %s ip %s is onlined", rbdep.UUID, showEndpointIP)
 	case discovery.UnhealthyEvent:
-		logrus.Debugf("thirdparty endpoint %s ip %s is offlined", rbdep.UUID, showEndpointIP)
+		logrus.Debugf("third endpoint %s ip %s is offlined", rbdep.UUID, showEndpointIP)
 		updateAddress(as, rbdep, false)
 	}
 }
@@ -538,7 +539,7 @@ func (t *thirdparty) runDelete(sid string) {
 	if eps := as.GetEndpoints(true); eps != nil {
 		for _, ep := range eps {
 			logrus.Debugf("Endpoints delete: %+v", ep)
-			err := t.clientset.CoreV1().Endpoints(as.TenantID).Delete(ep.Name, &metav1.DeleteOptions{})
+			err := t.clientset.CoreV1().Endpoints(as.TenantID).Delete(context.Background(), ep.Name, metav1.DeleteOptions{})
 			if err != nil && !errors.IsNotFound(err) {
 				logrus.Warningf("error deleting endpoint empty old app endpoints: %v", err)
 			}

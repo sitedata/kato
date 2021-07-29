@@ -30,7 +30,7 @@ import (
 	"github.com/gridworkz/kato/eventlog/cluster/distribution"
 	"github.com/gridworkz/kato/eventlog/conf"
 	"github.com/gridworkz/kato/eventlog/db"
-	"github.com/gridworkz/kato//eventlog/store"
+	"github.com/gridworkz/kato/eventlog/store"
 	"github.com/pebbe/zmq4"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/context"
@@ -53,7 +53,7 @@ type Sub struct {
 	distribution   *distribution.Distribution
 }
 
-// SubClient -	
+// SubClient -
 type SubClient struct {
 	context *zmq4.Context
 	socket  *zmq4.Socket
@@ -61,7 +61,7 @@ type SubClient struct {
 	quit    chan interface{}
 }
 
-//NewSub - create zmq sub server
+//NewSub Create zmq sub client
 func NewSub(conf conf.PubSubConf, log *logrus.Entry, storeManager store.Manager, discover dis.Manager, distribution *distribution.Distribution) *Sub {
 	ctx, cancel := context.WithCancel(context.Background())
 	return &Sub{
@@ -79,7 +79,7 @@ func NewSub(conf conf.PubSubConf, log *logrus.Entry, storeManager store.Manager,
 	}
 }
 
-//Run
+//Run Run
 func (s *Sub) Run() error {
 	go s.instanceListen()
 	go s.checkHealth()
@@ -87,7 +87,7 @@ func (s *Sub) Run() error {
 	return nil
 }
 
-//Stop
+//Stop Stop
 func (s *Sub) Stop() {
 	s.cancel()
 	s.subLock.Lock()
@@ -176,13 +176,13 @@ func (s *Sub) listen(ins *dis.Instance) {
 						logSize, _ := strconv.Atoi(data[2])
 						s.distribution.Update(db.MonitorData{InstanceID: data[0], ServiceSize: serviceSize, LogSizePeerM: int64(logSize)})
 					} else {
-						s.log.Error("cluster sub receive a message protocol error.")
+						s.log.Error("cluster sub received a message protocol error.")
 					}
 				} else {
-					s.log.Error("cluster sub receive a message protocol error.")
+					s.log.Error("cluster sub received a message protocol error.")
 				}
 			} else {
-				s.log.Error("cluster sub receive a message protocol error.")
+				s.log.Error("cluster sub received a message protocol error.")
 			}
 			return nil
 		}
