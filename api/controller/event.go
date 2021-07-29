@@ -66,7 +66,7 @@ func (t *TenantStruct) Event(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	events, err: = handler.GetServiceEventHandler (). ListByEventIDs (eventIDs)
+	events, err := handler.GetServiceEventHandler (). ListByEventIDs (eventIDs)
 	if err != nil {
 		httputil.ReturnBcodeError(r, w, err)
 		return
@@ -79,7 +79,7 @@ func (t *TenantStruct) Event(w http.ResponseWriter, r *http.Request) {
 //support query from start and end time or all
 // swagger:operation GET  /v2/notificationEvent v2/notificationEvent getevents
 //
-// Get data center notification event
+// Get data center notification events
 //
 // get events
 //
@@ -94,7 +94,7 @@ func (t *TenantStruct) Event(w http.ResponseWriter, r *http.Request) {
 //       "$ref": "#/responses/commandResponse"
 // description: unified return format
 func GetNotificationEvents(w http.ResponseWriter, r *http.Request) {
-	was startTime, endTime time.Time
+	var startTime, endTime time.Time
 	start := r.FormValue("start")
 	end := r.FormValue("end")
 	if si, err := strconv.Atoi(start); err == nil {
@@ -173,7 +173,7 @@ func HandleNotificationEvent(w http.ResponseWriter, r *http.Request) {
 		httputil.ReturnError(r, w, 400, "ServiceAlias id do not empty")
 		return
 	}
-	was act Act
+	var handle Handle
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &handle.Body, nil)
 	if !ok {
 		return

@@ -44,19 +44,19 @@ func init() {
 	checkFuncList = append(checkFuncList, netcore)
 }
 
-//ErrCodeNotExist
-var ErrCodeNotExist = fmt.Errorf("code does not exist")
+//ErrCodeNotExist Code is empty error
+var ErrCodeNotExist = fmt.Errorf("code is not exist")
 
-//ErrCodeDirNotExist
-var ErrCodeDirNotExist = fmt.Errorf("code dir does not exist")
+//ErrCodeDirNotExist Code directory does not exist
+var ErrCodeDirNotExist = fmt.Errorf("code dir is not exist")
 
-//ErrCodeUnableIdentify
-var ErrCodeUnableIdentify = fmt.Errorf("unable to identify code lang")
+//ErrCodeUnableIdentify The code does not recognize the language
+var ErrCodeUnableIdentify = fmt.Errorf("code lang unable to identify")
 
 //ErrKatoFileNotFound kato file not found
 var ErrKatoFileNotFound = fmt.Errorf("kato file not found")
 
-//Lang
+//Lang Language type
 type Lang string
 
 //String return lang string
@@ -64,7 +64,7 @@ func (l Lang) String() string {
 	return string(l)
 }
 
-//NO
+//NO Empty language type
 var NO Lang = "no"
 
 //Dockerfile Lang
@@ -114,6 +114,9 @@ var Grails Lang = "Grails"
 
 //NetCore Lang
 var NetCore Lang = ".NetCore"
+
+//OSS Lang
+var OSS Lang = "OSS"
 
 //GetLangType check code lang
 func GetLangType(homepath string) (Lang, error) {

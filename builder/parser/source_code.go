@@ -19,13 +19,15 @@
 package parser
 
 import (
+	"context"
+	"encoding/base64"
 	"fmt"
+	"os"
 	"path"
 	"runtime"
 	"strconv"
 	"strings"
 
-	"github.com/docker/docker/client"
 	"github.com/gridworkz/kato/builder"
 	"github.com/gridworkz/kato/builder/parser/code"
 	multi "github.com/gridworkz/kato/builder/parser/code/multisvc"
@@ -34,26 +36,26 @@ import (
 	"github.com/gridworkz/kato/db/model"
 	"github.com/gridworkz/kato/event"
 	"github.com/gridworkz/kato/util"
+	"github.com/melbahja/got"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/src-d/go-git.v4/plumbing"
 	"gopkg.in/src-d/go-git.v4/plumbing/transport" //"github.com/docker/docker/client"
 )
 
-//SourceCodeParse docker run - command resolution or direct image name resolution
+//SourceCodeParse docker run Command resolution or direct image name resolution
 type SourceCodeParse struct {
-	ports        map[int]*types.Port
-	volumes      map[string]*types.Volume
-	envs         map[string]*types.Env
-	source       string
-	memory       int
-	image        Image
-	args         []string
-	branchs      []string
-	errors       []ParseError
-	dockerclient *client.Client
-	logger       event.Logger
-	Lang         code.Lang
+	ports   map[int]*types.Port
+	volumes map[string]*types.Volume
+	envs    map[string]*types.Env
+	source  string
+	memory  int
+	image   Image
+	args    []string
+	branchs []string
+	errors  []ParseError
+	logger  event.Logger
+	Lang    code.Lang
 
 	Runtime      bool `json:"runtime"`
 	Dependencies bool `json:"dependencies"`
@@ -63,7 +65,7 @@ type SourceCodeParse struct {
 	services []*types.Service
 }
 
-//CreateSourceCodeParse
+//CreateSourceCodeParse create parser
 func CreateSourceCodeParse(source string, logger event.Logger) Parser {
 	return &SourceCodeParse{
 		source:  source,
@@ -76,13 +78,14 @@ func CreateSourceCodeParse(source string, logger event.Logger) Parser {
 	}
 }
 
-//Parse - get the code Analyze the code Verify the code
+//Parse Get the code - Analyze the code - Verify the code
 func (d *SourceCodeParse) Parse() ParseErrorList {
 	if d.source == "" {
 		d.logger.Error("Source code check input parameter error", map[string]string{"step": "parse"})
 		d.errappend(Errorf(FatalError, "source can not be empty"))
 		return d.errors
 	}
+	logrus.Debugf("component source check info: %s", d.source)
 	var csi sources.CodeSourceInfo
 	err := ffjson.Unmarshal([]byte(d.source), &csi)
 	if err != nil {
@@ -94,17 +97,25 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		csi.Branch = "master"
 	}
 	if csi.RepositoryURL == "" {
-		d.logger.Error("Git project warehouse address cannot be empty", map[string]string{"step": "parse"})
-		d.errappend(ErrorAndSolve(FatalError, "Git project warehouse address format error", SolveAdvice("modify_url", "Please confirm and modify the warehouse address")))
+		d.logger.Error("Git project repository address cannot be empty", map[string]string{"step": "parse"})
+		d.errappend(ErrorAndSolve(FatalError, "Git project repository address format error", SolveAdvice("modify_url", "Please confirm and modify the repository address")))
 		return d.errors
 	}
-	//Verify warehouse address
+	//Verify repository address
 	buildInfo, err := sources.CreateRepostoryBuildInfo(csi.RepositoryURL, csi.ServerType, csi.Branch, csi.TenantID, csi.ServiceID)
 	if err != nil {
-		d.logger.Error("Git project warehouse address format error", map[string]string{"step": "parse"})
-		d.errappend(ErrorAndSolve(FatalError, "Git project warehouse address format error", SolveAdvice("modify_url", "Please confirm and modify the warehouse address")))
+		d.logger.Error("Git project repository address format error", map[string]string{"step": "parse"})
+		d.errappend(ErrorAndSolve(FatalError, "Git project repository address format error", SolveAdvice("modify_url", "Please confirm and modify the repository address")))
 		return d.errors
 	}
+	// The source code is useless after the test is completed, and needs to be deleted.
+	defer func() {
+		if sources.CheckFileExist(buildInfo.GetCodeHome()) {
+			if err := sources.RemoveDir(buildInfo.GetCodeHome()); err != nil {
+				logrus.Warningf("remove source code: %v", err)
+			}
+		}
+	}()
 	gitFunc := func() ParseErrorList {
 		//get code
 		if !util.DirIsEmpty(buildInfo.GetCodeHome()) {
@@ -118,39 +129,39 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		if err != nil {
 			if err == transport.ErrAuthenticationRequired || err == transport.ErrAuthorizationFailed {
 				if buildInfo.GetProtocol() == "ssh" {
-					d.errappend(ErrorAndSolve(FatalError, "Git project warehouse requires security verification", SolveAdvice("get_publickey", "Please obtain the authorization key to configure it in your warehouse project")))
+					d.errappend(ErrorAndSolve(FatalError, "Git project repository requires security verification", SolveAdvice("get_publickey", "Please obtain the authorized key configuration to your warehouse project")))
 				} else {
-					d.errappend(ErrorAndSolve(FatalError, "Git project warehouse requires security verification", SolveAdvice("modify_userpass", "Please provide the correct account password")))
+					d.errappend(ErrorAndSolve(FatalError, "Git project repository requires security verification", SolveAdvice("modify_userpass", "Please provide the correct account password")))
 				}
 				return d.errors
 			}
 			if err == plumbing.ErrReferenceNotFound {
-				solve := "Please go to the code warehouse to check the correct branch situation"
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Git project warehouse specified branch %s does not exist", csi.Branch), solve))
+				solve := "Please go to the code repository to check the correct branch situation"
+				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Git project repository specified branch %s does not exist", csi.Branch), solve))
 				return d.errors
 			}
 			if err == transport.ErrRepositoryNotFound {
-				solve := SolveAdvice("modify_repo", "Please confirm whether the warehouse address is correct")
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Git project repository does not exist"), solve))
+				solve := SolveAdvice("modify_repo", "Please confirm whether the repository address is correct")
+				d.errappend(ErrorAndSolve(FatalError, "Git project repository does not exist", solve))
 				return d.errors
 			}
 			if err == transport.ErrEmptyRemoteRepository {
 				solve := SolveAdvice("open_repo", "Please confirm that the code has been submitted")
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("No valid file in Git project warehouse"), solve))
+				d.errappend(ErrorAndSolve(FatalError, "There is no valid file in the Git project repository", solve))
 				return d.errors
 			}
 			if strings.Contains(err.Error(), "ssh: unable to authenticate") {
-				solve := SolveAdvice("get_publickey", "Please get the authorized key configuration to your warehouse project to try")
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Remote warehouse SSH authentication error"), solve))
+				solve := SolveAdvice("get_publickey", "Please get the authorization key to configure to your repository project to try?")
+				d.errappend(ErrorAndSolve(FatalError, "Remote repository SSH authentication error", solve))
 				return d.errors
 			}
 			if strings.Contains(err.Error(), "context deadline exceeded") {
 				solve := "Please confirm whether the source code repository can be accessed normally"
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Get code timed out"), solve))
+				d.errappend(ErrorAndSolve(FatalError, "Get code timed out", solve))
 				return d.errors
 			}
 			logrus.Errorf("git clone error,%s", err.Error())
-			d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Failed to get code"), "Please confirm whether the warehouse can be accessed normally, or contact customer service for consultation"))
+			d.errappend(ErrorAndSolve(FatalError, "Failed to get code"+err.Error(), "Please confirm whether the repository can be accessed normally."))
 			return d.errors
 		}
 		//Get branch
@@ -172,7 +183,6 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 	svnFunc := func() ParseErrorList {
 		if sources.CheckFileExist(buildInfo.GetCodeHome()) {
 			if err := sources.RemoveDir(buildInfo.GetCodeHome()); err != nil {
-				//d.errappend(ErrorAndSolve(err, "Clean up the cache dir error", "please submit the code to the warehouse"))
 				return d.errors
 			}
 		}
@@ -181,20 +191,61 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		rs, err := svnclient.UpdateOrCheckout(buildInfo.BuildPath)
 		if err != nil {
 			if strings.Contains(err.Error(), "svn:E170000") {
-				solve := "Please go to the code warehouse to check the correct branch situation"
-				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("svn project warehouse designated branch %s does not exist", csi.Branch), solve))
+				solve := "Please go to the code repository to check the correct branch situation"
+				d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Svn project repository designated branch %s does not exist", csi.Branch), solve))
 				return d.errors
 			}
 			logrus.Errorf("svn checkout or update error,%s", err.Error())
-			d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("Failed to get code"), "Please confirm whether the warehouse can be accessed normally, or check the community documentation"))
+			d.errappend(ErrorAndSolve(FatalError, "Failed to get code"+err.Error(), "Please confirm whether the warehouse can be accessed normally, or check the community documentation"))
 			return d.errors
 		}
-		//get branches
+		//get branchs
 		d.branchs = rs.Branchs
 		return nil
 	}
-	logrus.Debugf("start get service code by %s server type", csi.ServerType)
-	
+	ossFunc := func() ParseErrorList {
+		g := got.NewWithContext(context.Background())
+		util.CheckAndCreateDir(buildInfo.GetCodeHome())
+		fileName := path.Join(buildInfo.GetCodeHome(), path.Base(csi.RepositoryURL))
+		if err := g.Do(&got.Download{
+			URL:  csi.RepositoryURL,
+			Dest: fileName,
+			Header: []got.GotHeader{
+				{Key: "Authorization", Value: "Basic " + basicAuth(csi.User, csi.Password)},
+			},
+		}); err != nil {
+			logrus.Errorf("download package file from oss failure %s", err.Error())
+			d.errappend(ErrorAndSolve(FatalError, "File download failed:"+err.Error(), "Please confirm that the file can be downloaded normally"))
+			return d.errors
+		}
+		fi, err := os.Stat(fileName)
+		if err != nil {
+			d.errappend(ErrorAndSolve(FatalError, "File download failed:"+err.Error(), "Please confirm that the file can be downloaded normally"))
+			return d.errors
+		}
+		logrus.Infof("download package file success, size %d MB", fi.Size()/1024/1024)
+		ext := path.Ext(csi.RepositoryURL)
+		switch ext {
+		case ".tar":
+			if err := util.UnTar(fileName, buildInfo.GetCodeHome(), false); err != nil {
+				logrus.Errorf("untar package file failure %s", err.Error())
+				d.errappend(ErrorAndSolve(FatalError, "File decompression failed", "Please confirm whether the file is a tar specification file"))
+			}
+		case ".tgz", ".tar.gz":
+			if err := util.UnTar(fileName, buildInfo.GetCodeHome(), true); err != nil {
+				logrus.Errorf("untar package file failure %s", err.Error())
+				d.errappend(ErrorAndSolve(FatalError, "File decompression failed", "Please confirm whether the file is a tgz specification file"))
+			}
+		case ".zip":
+			if err := util.Unzip(fileName, buildInfo.GetCodeHome()); err != nil {
+				logrus.Errorf("untar package file failure %s", err.Error())
+				d.errappend(ErrorAndSolve(FatalError, "File decompression failed", "Please confirm whether the file is a zip file"))
+			}
+		}
+		logrus.Infof("unpack package file success")
+		return d.errors
+	}
+	logrus.Debugf("start get service %s code by %s server type", csi.ServiceID, csi.ServerType)
 	//Get the code repository
 	switch csi.ServerType {
 	case "git":
@@ -205,32 +256,28 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		if err := svnFunc(); err != nil && err.IsFatalError() {
 			return err
 		}
+	case "oss":
+		if err := ossFunc(); err != nil && err.IsFatalError() {
+			return err
+		}
 	default:
 		//default git
-		logrus.Warningf("do not get void server type,default use git")
+		logrus.Warningf("do not get void server type, default use git")
 		if err := gitFunc(); err != nil && err.IsFatalError() {
 			return err
 		}
 	}
-	// The source code is useless after the test is completed, and needs to be deleted.
-	defer func() {
-		if sources.CheckFileExist(buildInfo.GetCodeHome()) {
-			if err := sources.RemoveDir(buildInfo.GetCodeHome()); err != nil {
-				logrus.Warningf("remove source code: %v", err)
-			}
-		}
-	}()
 
 	//read katofile
 	rbdfileConfig, err := code.ReadKatoFile(buildInfo.GetCodeBuildAbsPath())
 	if err != nil {
 		if err != code.ErrKatoFileNotFound {
-			d.errappend(ErrorAndSolve(NegligibleError, "The katofile definition format is incorrect", "You can refer to the document description to configure this file to define application attributes"))
+			d.errappend(ErrorAndSolve(NegligibleError, "The katofile definition format is wrong", "You can refer to the documentation to configure this file to define application properties"))
 		}
 	}
 	//Judgment target directory
 	var buildPath = buildInfo.GetCodeBuildAbsPath()
-	//Parse code type
+	//Parse the code type
 	var lang code.Lang
 	if rbdfileConfig != nil && rbdfileConfig.Language != "" {
 		lang = code.Lang(rbdfileConfig.Language)
@@ -238,18 +285,18 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 		lang, err = code.GetLangType(buildPath)
 		if err != nil {
 			if err == code.ErrCodeDirNotExist {
-				d.errappend(ErrorAndSolve(FatalError, "The source code directory does not exist", "Failed to get the code task, please contact customer service"))
+				d.errappend(ErrorAndSolve(FatalError, "The source directory does not exist", "Failed to get code task, please contact customer service"))
 			} else if err == code.ErrCodeNotExist {
-				d.errappend(ErrorAndSolve(FatalError, "The code in the warehouse does not exist", "Please submit the code to the warehouse"))
+				d.errappend(ErrorAndSolve(FatalError, "The code does not exist in the repository", "Please submit the code to the repository"))
 			} else {
-				d.errappend(ErrorAndSolve(FatalError, "The code cannot recognize the language type", "Please refer to the document to view the platform language support specification"))
+				d.errappend(ErrorAndSolve(FatalError, "The code does not recognize the language type", "Please refer to the document to view the platform language support specification"))
 			}
 			return d.errors
 		}
 	}
 	d.Lang = lang
 	if lang == code.NO {
-		d.errappend(ErrorAndSolve(FatalError, "The code cannot recognize the language type", "Please refer to the document to view the platform language support specification"))
+		d.errappend(ErrorAndSolve(FatalError, "The code does not recognize the language type", "Please refer to the document to view the platform language support specification"))
 		return d.errors
 	}
 	//check code Specification
@@ -304,7 +351,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 			d.errappend(ErrorAndSolve(FatalError, fmt.Sprintf("error listing modules: %v", err), "check source code for multi-modules"))
 			return d.errors
 		}
-		if services != nil && len(services) > 1 {
+		if len(services) > 1 {
 			d.isMulti = true
 			d.services = services
 		}
@@ -381,7 +428,7 @@ func (d *SourceCodeParse) Parse() ParseErrorList {
 	return d.errors
 }
 
-//ReadRbdConfigAndLang read katofile and lang
+//ReadRbdConfigAndLang read katofile  and lang
 func ReadRbdConfigAndLang(buildInfo *sources.RepostoryBuildInfo) (*code.KatoFileConfig, code.Lang, error) {
 	rbdfileConfig, err := code.ReadKatoFile(buildInfo.GetCodeBuildAbsPath())
 	if err != nil {
@@ -420,12 +467,12 @@ func (d *SourceCodeParse) errappend(pe ParseError) {
 	d.errors = append(d.errors, pe)
 }
 
-//GetBranches
+//GetBranchs Get a list of branches
 func (d *SourceCodeParse) GetBranchs() []string {
 	return d.branchs
 }
 
-//GetPorts
+//GetPorts Get port list
 func (d *SourceCodeParse) GetPorts() (ports []types.Port) {
 	for _, cv := range d.ports {
 		ports = append(ports, *cv)
@@ -433,7 +480,7 @@ func (d *SourceCodeParse) GetPorts() (ports []types.Port) {
 	return ports
 }
 
-//GetVolumes
+//GetVolumes Get storage list
 func (d *SourceCodeParse) GetVolumes() (volumes []types.Volume) {
 	for _, cv := range d.volumes {
 		volumes = append(volumes, *cv)
@@ -441,12 +488,12 @@ func (d *SourceCodeParse) GetVolumes() (volumes []types.Volume) {
 	return
 }
 
-//GetValid
+//GetValid Is the source legal?
 func (d *SourceCodeParse) GetValid() bool {
 	return false
 }
 
-//GetEnvs
+//GetEnvs Environment variable
 func (d *SourceCodeParse) GetEnvs() (envs []types.Env) {
 	for _, cv := range d.envs {
 		envs = append(envs, *cv)
@@ -454,27 +501,27 @@ func (d *SourceCodeParse) GetEnvs() (envs []types.Env) {
 	return
 }
 
-//GetImage
+//GetImage Get mirror
 func (d *SourceCodeParse) GetImage() Image {
 	return d.image
 }
 
-//GetArgs
+//GetArgs Startup parameters
 func (d *SourceCodeParse) GetArgs() []string {
 	return d.args
 }
 
-//GetMemory
+//GetMemory Get memory
 func (d *SourceCodeParse) GetMemory() int {
 	return d.memory
 }
 
-//GetLang
+//GetLang Get recognition language
 func (d *SourceCodeParse) GetLang() code.Lang {
 	return d.Lang
 }
 
-//GetServiceInfo
+//GetServiceInfo Get service info
 func (d *SourceCodeParse) GetServiceInfo() []ServiceInfo {
 	serviceInfo := ServiceInfo{
 		Ports:       d.GetPorts(),
@@ -579,4 +626,9 @@ func (d *SourceCodeParse) parseDockerfileInfo(dockerfile string) bool {
 	// dockerfile empty args
 	d.args = []string{}
 	return true
+}
+
+func basicAuth(username, password string) string {
+	auth := username + ":" + password
+	return base64.StdEncoding.EncodeToString([]byte(auth))
 }

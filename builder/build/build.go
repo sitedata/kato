@@ -25,6 +25,7 @@ import (
 
 	"github.com/gridworkz/kato/builder"
 	"github.com/gridworkz/kato/builder/parser/code"
+	"github.com/gridworkz/kato/builder/sources"
 	"github.com/gridworkz/kato/event"
 	"k8s.io/client-go/kubernetes"
 
@@ -43,6 +44,7 @@ func init() {
 	buildcreaters[code.Python] = slugBuilder
 	buildcreaters[code.Nodejs] = slugBuilder
 	buildcreaters[code.Golang] = slugBuilder
+	buildcreaters[code.OSS] = slugBuilder
 }
 
 var buildcreaters map[code.Lang]CreaterBuild
@@ -52,7 +54,7 @@ type Build interface {
 	Build(*Request) (*Response, error)
 }
 
-//CreaterBuild
+//CreaterBuild CreaterBuild
 type CreaterBuild func() (Build, error)
 
 //MediumType Build output medium type
@@ -82,6 +84,7 @@ type Request struct {
 	CacheDir      string
 	TGZDir        string
 	RepositoryURL string
+	CodeSouceInfo sources.CodeSourceInfo
 	Branch        string
 	ServiceAlias  string
 	ServiceID     string
@@ -108,14 +111,14 @@ type HostAlias struct {
 	Hostnames []string `json:"hostnames,omitempty" protobuf:"bytes,2,rep,name=hostnames"`
 }
 
-//Commit
+//Commit Commit
 type Commit struct {
 	User    string
 	Message string
 	Hash    string
 }
 
-//GetBuild
+//GetBuild GetBuild
 func GetBuild(lang code.Lang) (Build, error) {
 	if fun, ok := buildcreaters[lang]; ok {
 		return fun()
@@ -123,7 +126,7 @@ func GetBuild(lang code.Lang) (Build, error) {
 	return slugBuilder()
 }
 
-//CreateImageName
+//CreateImageName create image name
 func CreateImageName(serviceID, deployversion string) string {
 	return strings.ToLower(fmt.Sprintf("%s/%s:%s", builder.REGISTRYDOMAIN, serviceID, deployversion))
 }

@@ -34,8 +34,8 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	"github.com/gridworkz/gotty/server"
-	"github.com/gridworkz/gotty/webtty"
+	"github.com/barnettZQG/gotty/server"
+	"github.com/barnettZQG/gotty/webtty"
 	httputil "github.com/gridworkz/kato/util/http"
 	k8sutil "github.com/gridworkz/kato/util/k8s"
 	"github.com/gorilla/websocket"

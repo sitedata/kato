@@ -34,7 +34,7 @@ import (
 	config "github.com/gridworkz/kato/cmd/grctl/option"
 )
 
-//NewCmdTenant
+//NewCmdTenant tenant cmd
 func NewCmdTenant() cli.Command {
 	c := cli.Command{
 		Name:  "tenant",
@@ -121,7 +121,7 @@ func getTenantInfo(c *cli.Context) error {
 		}
 		fmt.Println("Running application:")
 		fmt.Println(runtable.Render())
-		fmt.Println("Apps that are not running:")
+		fmt.Println("Applications that are not running:")
 		fmt.Println(closedtable.Render())
 		return nil
 	}
@@ -141,10 +141,10 @@ func findTenantResourceUsage(c *cli.Context) error {
 	table.AddRow("Tenant ID:", resources.UUID)
 	table.AddRow("Enterprise ID:", resources.EID)
 	table.AddRow("Using CPU resources:", fmt.Sprintf("%.2f Core", float64(resources.UsedCPU)/1000))
-	table.AddRow("Memory resources are being used:", fmt.Sprintf("%d %s", resources.UsedMEM, "Mb"))
+	table.AddRow("Using memory resources:", fmt.Sprintf("%d %s", resources.UsedMEM, "Mb"))
 	table.AddRow("Disk resources are being used:", fmt.Sprintf("%.2f Mb", resources.UsedDisk/1024))
 	table.AddRow("Total allocated CPU resources:", fmt.Sprintf("%.2f Core", float64(resources.AllocatedCPU)/1000))
-	table.AddRow("Total allocated memory resources:, fmt.Sprintf("%d %s", resources.AllocatedMEM, "Mb"))
+	table.AddRow("Total allocated memory resources:", fmt.Sprintf("%d %s", resources.AllocatedMEM, "Mb"))
 	fmt.Println(table)
 	return nil
 }

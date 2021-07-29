@@ -32,14 +32,14 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//ServiceCheckInput
+//ServiceCheckInput Task input data
 type ServiceCheckInput struct {
 	CheckUUID string `json:"uuid"`
 	//Detection source type
 	SourceType string `json:"source_type"`
 
-	// Definition of detection source，
-	// code: https://github.com/shurcooL/githubql.git master
+	// Definition of detection source,
+	// Code: https://github.com/shurcooL/githubql.git master
 	// docker-run: docker run --name xxx nginx:latest nginx
 	// docker-compose: compose full text
 	SourceBody string `json:"source_body"`
@@ -49,15 +49,15 @@ type ServiceCheckInput struct {
 	EventID    string `json:"event_id"`
 }
 
-//ServiceCheckResult
+//ServiceCheckResult Application test results
 type ServiceCheckResult struct {
-	//Detection status: Success Failure
+	//Detection status Success Failure
 	CheckStatus string                `json:"check_status"`
 	ErrorInfos  parser.ParseErrorList `json:"error_infos"`
 	ServiceInfo []parser.ServiceInfo  `json:"service_info"`
 }
 
-//CreateResult
+//CreateResult Create test results
 func CreateResult(ErrorInfos parser.ParseErrorList, ServiceInfo []parser.ServiceInfo) (ServiceCheckResult, error) {
 	var sr ServiceCheckResult
 	if ErrorInfos != nil && ErrorInfos.IsFatalError() {
@@ -77,12 +77,12 @@ func CreateResult(ErrorInfos parser.ParseErrorList, ServiceInfo []parser.Service
 	return sr, nil
 }
 
-//ServiceCheck -application creation source detection
+//serviceCheck Application creation source detection
 func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
-	//step1 determine the application source type
-	//step2 obtain application source media, mirror or source code
-	//step3 analyze and judge application source specifications
-	//complete
+	//step1 Determine the application source type
+	//step2 Obtain application source media, mirror or source code
+	//step3 Analyze and judge application source specifications
+	//Finish
 	var input ServiceCheckInput
 	if err := ffjson.Unmarshal(task.TaskBody, &input); err != nil {
 		logrus.Error("Unmarshal service check input data error.", err.Error())
@@ -125,14 +125,12 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 		return
 	}
 	errList := pr.Parse()
-	if errList != nil {
-		for i, err := range errList {
-			if err.SolveAdvice == "" && input.SourceType != "sourcecode" {
-				errList[i].SolveAdvice = fmt.Sprintf("The parser thinks that the image is named: %s, please confirm whether it is correct or whether the mirror exists", pr.GetImage())
-			}
-			if err.SolveAdvice == "" && input.SourceType == "sourcecode" {
-				errList[i].SolveAdvice = fmt.Sprintf("Intelligent source code analysis failed, please contact customer service")
-			}
+	for i, err := range errList {
+		if err.SolveAdvice == "" && input.SourceType != "sourcecode" {
+			errList[i].SolveAdvice = fmt.Sprintf("The parser thinks that the image name is: %s, Please confirm whether it is correct or whether the mirror exists", pr.GetImage())
+		}
+		if err.SolveAdvice == "" && input.SourceType == "sourcecode" {
+			errList[i].SolveAdvice = "Source code intelligent parsing failed"
 		}
 	}
 	serviceInfos := pr.GetServiceInfo()
@@ -156,5 +154,5 @@ func (e *exectorManager) serviceCheck(task *pb.TaskMessage) {
 		logger.Error("Failed to store test results.", map[string]string{"step": "callback", "status": "failure"})
 	}
 	logrus.Infof("check service by type: %s  success", input.SourceType)
-	logger.Info("The test result was created successfully.", map[string]string{"step": "last", "status": "success"})
+	logger.Info("Successfully created the test result。", map[string]string{"step": "last", "status": "success"})
 }

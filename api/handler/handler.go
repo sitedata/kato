@@ -26,24 +26,28 @@ import (
 	"github.com/gridworkz/kato/api/handler/share"
 	"github.com/gridworkz/kato/cmd/api/option"
 	"github.com/gridworkz/kato/db"
+	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
 	etcdutil "github.com/gridworkz/kato/util/etcd"
 	"github.com/gridworkz/kato/worker/client"
 	"github.com/sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
+	k8sclient "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-//InitHandle initialize handle
+//InitHandle Initialize the handle
 func InitHandle(conf option.Config,
-	etcdClientArgs * etcdutil.ClientArgs,
-	statusCli * client.AppRuntimeSyncClient,
-	etcdcli * clientv3.Client,
-	kubeClient * kubernetes.Clientset,
+	etcdClientArgs *etcdutil.ClientArgs,
+	statusCli *client.AppRuntimeSyncClient,
+	etcdcli *clientv3.Client,
+	kubeClient *kubernetes.Clientset,
+	katoClient versioned.Interface,
+	k8sClient k8sclient.Client,
 ) error {
 	mq := api_db.MQManager{
 		EtcdClientArgs: etcdClientArgs,
 		DefaultServer:  conf.MQAPI,
 	}
-	mqClient, errMQ: = mq.NewMQManager ()
+	mqClient, errMQ := mq.NewMQManager()
 	if errMQ != nil {
 		logrus.Errorf("new MQ manager failed, %v", errMQ)
 		return errMQ
@@ -56,10 +60,10 @@ func InitHandle(conf option.Config,
 		return err
 	}
 	dbmanager := db.GetManager()
-	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli)
+	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, katoClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
-	defaultTenantHandler = CreateTenManager(mqClient, statusCli, &conf, kubeClient, prometheusCli)
+	defaultTenantHandler = CreateTenManager(mqClient, statusCli, &conf, kubeClient, prometheusCli, k8sClient)
 	defaultNetRulesHandler = CreateNetRulesManager(etcdcli)
 	defaultCloudHandler = CreateCloudManager(conf)
 	defaultAPPBackupHandler = group.CreateBackupHandle(mqClient, statusCli, etcdcli)
@@ -73,21 +77,21 @@ func InitHandle(conf option.Config,
 	defaultGatewayHandler = CreateGatewayManager(dbmanager, mqClient, etcdcli)
 	def3rdPartySvcHandler = Create3rdPartySvcHandler(dbmanager, statusCli)
 	operationHandler = CreateOperationHandler(mqClient)
-	batchOperationHandler = CreateBatchOperationHandler (mqClient, statusCli, operationHandler)
+	batchOperationHandler = CreateBatchOperationHandler(mqClient, statusCli, operationHandler)
 	defaultAppRestoreHandler = NewAppRestoreHandler()
 	defPodHandler = NewPodHandler(statusCli)
-	defClusterHandler = NewClusterHandler (kubeClient, conf.RbdNamespace)
+	defClusterHandler = NewClusterHandler(kubeClient, conf.RbdNamespace)
 	defaultVolumeTypeHandler = CreateVolumeTypeManger(statusCli)
 	defaultEtcdHandler = NewEtcdHandler(etcdcli)
 	defaultmonitorHandler = NewMonitorHandler(prometheusCli)
-	defApplicationHandler = NewApplicationHandler(statusCli, prometheusCli)
 	defServiceEventHandler = NewServiceEventHandler()
+	defApplicationHandler = NewApplicationHandler(statusCli, prometheusCli, katoClient, kubeClient)
 	return nil
 }
 
 var defaultServieHandler ServiceHandler
 var shareHandler *share.ServiceShareHandle
-var pluginShareHandler * share.PluginShareHandle
+var pluginShareHandler *share.PluginShareHandle
 var defaultmonitorHandler MonitorHandler
 
 //GetMonitorHandle get monitor handler
@@ -110,7 +114,7 @@ func GetServiceManager() ServiceHandler {
 	return defaultServieHandler
 }
 
-was defaultPluginHandler PluginHandler
+var defaultPluginHandler PluginHandler
 
 //GetPluginManager get manager
 func GetPluginManager() PluginHandler {
@@ -124,10 +128,10 @@ func GetTenantManager() TenantHandler {
 	return defaultTenantHandler
 }
 
-was defaultNetRulesHandler NetRulesHandler
+var defaultNetRulesHandler NetRulesHandler
 
 //GetRulesManager get manager
-func GetRulesManager () NetRulesHandler {
+func GetRulesManager() NetRulesHandler {
 	return defaultNetRulesHandler
 }
 
@@ -154,7 +158,7 @@ func GetAppHandler() *AppAction {
 
 var defaultAPPBackupHandler *group.BackupHandle
 
-// GetAPPBackupHandler GetAPPBackupHandler
+//GetAPPBackupHandler GetAPPBackupHandler
 func GetAPPBackupHandler() *group.BackupHandle {
 	return defaultAPPBackupHandler
 }
@@ -176,39 +180,39 @@ func Get3rdPartySvcHandler() *ThirdPartyServiceHanlder {
 var batchOperationHandler *BatchOperationHandler
 
 //GetBatchOperationHandler get handler
-func GetBatchOperationHandler () *BatchOperationHandler {
+func GetBatchOperationHandler() *BatchOperationHandler {
 	return batchOperationHandler
 }
 
-was operationHandler * OperationHandler
+var operationHandler *OperationHandler
 
 //GetOperationHandler get handler
 func GetOperationHandler() *OperationHandler {
 	return operationHandler
 }
 
-was defaultAppRestoreHandler AppRestoreHandler
+var defaultAppRestoreHandler AppRestoreHandler
 
 // GetAppRestoreHandler returns a default AppRestoreHandler
-func GetAppRestoreHandler () AppRestoreHandler {
+func GetAppRestoreHandler() AppRestoreHandler {
 	return defaultAppRestoreHandler
 }
 
-was defPodHandler PodHandler
+var defPodHandler PodHandler
 
 // GetPodHandler returns the defalut PodHandler
 func GetPodHandler() PodHandler {
 	return defPodHandler
 }
 
-was defaultEtcdHandler * EtcdHandler
+var defaultEtcdHandler *EtcdHandler
 
 // GetEtcdHandler returns the default etcd handler.
 func GetEtcdHandler() *EtcdHandler {
 	return defaultEtcdHandler
 }
 
-was defClusterHandler ClusterHandler
+var defClusterHandler ClusterHandler
 
 // GetClusterHandler returns the default cluster handler.
 func GetClusterHandler() ClusterHandler {
@@ -222,7 +226,7 @@ func GetApplicationHandler() ApplicationHandler {
 	return defApplicationHandler
 }
 
-var defServiceEventHandler * ServiceEventHandler
+var defServiceEventHandler *ServiceEventHandler
 
 // GetServiceEventHandler -
 func GetServiceEventHandler() *ServiceEventHandler {

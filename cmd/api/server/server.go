@@ -57,7 +57,7 @@ func Run(s *option.APIServer) error {
 		CertFile:  s.Config.EtcdCertFile,
 		KeyFile:   s.Config.EtcdKeyFile,
 	}
-	//Start Service Discovery
+	//Start service discovery
 	if _, err := discover.CreateEndpointDiscover(etcdClientArgs); err != nil {
 		return err
 	}
@@ -118,9 +118,9 @@ func Run(s *option.APIServer) error {
 		return err
 	}
 
-	//Initialize middleware
+	//Initiate middleware
 	handler.InitProxy(s.Config)
-	//Create Handle
+	//Create handle
 	if err := handler.InitHandle(s.Config, etcdClientArgs, cli, etcdcli, clientset, katoClient, k8sClient); err != nil {
 		logrus.Errorf("init all handle error, %v", err)
 		return err
@@ -129,7 +129,7 @@ func Run(s *option.APIServer) error {
 	if err := controller.CreateV2RouterManager(s.Config, cli); err != nil {
 		logrus.Errorf("create v2 route manager error, %v", err)
 	}
-	// Launch api
+	// Start api
 	apiManager := server.NewManager(s.Config, etcdcli)
 	if err := apiManager.Start(); err != nil {
 		return err

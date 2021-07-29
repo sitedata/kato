@@ -113,7 +113,7 @@ func upstreamClusters(serviceAlias, namespace string, dependsServices []*api_mod
 		}
 		clusterOption.HealthyPanicThreshold = options.HealthyPanicThreshold
 		clusterOption.ConnectionTimeout = envoyv2.ConverTimeDuration(options.ConnectionTimeout)
-		// set port realy protocol
+		// set port relay protocol
 		portProtocol := service.Labels["port_protocol"]
 		clusterOption.Protocol = portProtocol
 		clusterOption.GrpcHealthServiceName = options.GrpcHealthServiceName

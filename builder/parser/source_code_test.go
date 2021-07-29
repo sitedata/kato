@@ -42,9 +42,9 @@ func TestParseDockerfileInfo(t *testing.T) {
 	fmt.Println(parse.GetServiceInfo())
 }
 
-//ServiceCheckResult
+//ServiceCheckResult Application test results
 type ServiceCheckResult struct {
-	//Detection status: Success/Failure
+	//Detection status Success Failure
 	CheckStatus string         `json:"check_status"`
 	ErrorInfos  ParseErrorList `json:"error_infos"`
 	ServiceInfo []ServiceInfo  `json:"service_info"`
@@ -54,7 +54,7 @@ func TestSourceCode(t *testing.T) {
 	sc := sources.CodeSourceInfo{
 		ServerType:    "",
 		RepositoryURL: "https://github.com/gridworkz/fserver.git",
-		Branch:        "master",
+		Branch:        "main",
 	}
 	b, _ := json.Marshal(sc)
 	p := CreateSourceCodeParse(string(b), nil)
@@ -64,6 +64,28 @@ func TestSourceCode(t *testing.T) {
 	}
 	re := ServiceCheckResult{
 		CheckStatus: "Failure",
+		ErrorInfos:  err,
+		ServiceInfo: p.GetServiceInfo(),
+	}
+	body, _ := json.Marshal(re)
+	fmt.Printf("%s \n", string(body))
+}
+
+func TestOSSCheck(t *testing.T) {
+	sc := sources.CodeSourceInfo{
+		ServerType:    "oss",
+		RepositoryURL: "https://storage.googleapis.com/kato-files/artifactory/dev/java-war-demo-master.zip",
+		User:          "demo",
+		Password:      "gr123465!",
+	}
+	b, _ := json.Marshal(sc)
+	p := CreateSourceCodeParse(string(b), nil)
+	err := p.Parse()
+	if err != nil && err.IsFatalError() {
+		t.Fatal(err)
+	}
+	re := ServiceCheckResult{
+		CheckStatus: "Success",
 		ErrorInfos:  err,
 		ServiceInfo: p.GetServiceInfo(),
 	}

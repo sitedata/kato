@@ -41,7 +41,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-//CheckAndCreateDir
+//CheckAndCreateDir check and create dir
 func CheckAndCreateDir(path string) error {
 	if subPathExists, err := FileExists(path); err != nil {
 		return fmt.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", path)
@@ -61,7 +61,7 @@ func CheckAndCreateDir(path string) error {
 	return nil
 }
 
-//CheckAndCreateDirByMode
+//CheckAndCreateDirByMode check and create dir
 func CheckAndCreateDirByMode(path string, mode os.FileMode) error {
 	if subPathExists, err := FileExists(path); err != nil {
 		return fmt.Errorf("Could not determine if subPath %s exists; will not attempt to change its permissions", path)
@@ -81,7 +81,7 @@ func CheckAndCreateDirByMode(path string, mode os.FileMode) error {
 	return nil
 }
 
-//DirIsEmpty
+//DirIsEmpty Verify that the directory is empty
 func DirIsEmpty(dir string) bool {
 	infos, err := ioutil.ReadDir(dir)
 	if len(infos) == 0 || err != nil {
@@ -90,12 +90,12 @@ func DirIsEmpty(dir string) bool {
 	return false
 }
 
-//OpenOrCreateFile
+//OpenOrCreateFile open or create file
 func OpenOrCreateFile(filename string) (*os.File, error) {
 	return os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0777)
 }
 
-//FileExists
+//FileExists check file exist
 func FileExists(filename string) (bool, error) {
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
 		return false, nil
@@ -105,14 +105,14 @@ func FileExists(filename string) (bool, error) {
 	return true, nil
 }
 
-//SearchFileBody
+//SearchFileBody Whether the search file contains the specified string
 func SearchFileBody(filename, searchStr string) bool {
 	body, _ := ioutil.ReadFile(filename)
 	return strings.Contains(string(body), searchStr)
 }
 
-//IsHaveFile
-//Except for opening files
+//IsHaveFile Specifies whether the directory contains files
+//.Except for opening files
 func IsHaveFile(path string) bool {
 	files, _ := ioutil.ReadDir(path)
 	for _, file := range files {
@@ -123,8 +123,7 @@ func IsHaveFile(path string) bool {
 	return false
 }
 
-//SearchFile - search whether there is a specified file in the specified directory, specify the number
-//of levels of the search directory, -1 is the full directory search
+//SearchFile Search whether there is a specified file in the specified directory, specify the number of layers in the search directory, -1 is the full directory search
 func SearchFile(pathDir, name string, level int) bool {
 	if level == 0 {
 		return false
@@ -152,7 +151,7 @@ func SearchFile(pathDir, name string, level int) bool {
 	return false
 }
 
-//FileExistsWithSuffix - whether the specified directory contains files with the specified suffix
+//FileExistsWithSuffix Whether the specified directory contains files with the specified suffix
 func FileExistsWithSuffix(pathDir, suffix string) bool {
 	files, _ := ioutil.ReadDir(pathDir)
 	for _, file := range files {
@@ -193,9 +192,8 @@ func CmdRunWithTimeout(cmd *exec.Cmd, timeout time.Duration) (bool, error) {
 	}
 }
 
-//ReadHostID - read the current machine ID
-//ID is the unique identifier of the node, acp_node will maintain the binding relationship 
-//between ID and machine information in etcd
+//ReadHostID read the current machine ID
+//ID is the unique identifier of the node, acp_node will maintain the binding relationship between ID and machine information in etcd
 func ReadHostID(filePath string) (string, error) {
 	if filePath == "" {
 		if runtime.GOOS == "windows" {
@@ -266,7 +264,7 @@ func getMacAddrs() (macAddrs []string) {
 	return macAddrs
 }
 
-//LocalIP Get this machine ip
+//LocalIP Get local ip
 // Get the first non loopback ip
 func LocalIP() (net.IP, error) {
 	tables, err := net.Interfaces()
@@ -291,7 +289,7 @@ func LocalIP() (net.IP, error) {
 	return nil, fmt.Errorf("cannot find local IP address")
 }
 
-//GetIDFromKey - get id from etcd key
+//GetIDFromKey Get id from etcd key
 func GetIDFromKey(key string) string {
 	index := strings.LastIndex(key, "/")
 	if index < 0 {
@@ -304,7 +302,7 @@ func GetIDFromKey(key string) string {
 	return key[index+1:]
 }
 
-//Deweight - remove array duplication
+//Deweight Remove array duplication
 func Deweight(data *[]string) {
 	var result []string
 	if len(*data) < 1024 {
@@ -352,7 +350,7 @@ func GetDirSizeByCmd(path string) float64 {
 	return float64(i)
 }
 
-//GetFileSize
+//GetFileSize get file size
 func GetFileSize(path string) int64 {
 	if fileInfo, err := os.Stat(path); err == nil {
 		return fileInfo.Size()
@@ -360,7 +358,7 @@ func GetFileSize(path string) int64 {
 	return 0
 }
 
-//GetDirSize - kb as unit
+//GetDirSize kb as unit
 func GetDirSize(path string) float64 {
 	if ok, err := FileExists(path); err != nil || !ok {
 		return 0
@@ -400,7 +398,7 @@ func walkDir(dir string, wg *sync.WaitGroup, fileSizes chan<- int64, concurrent 
 		<-concurrent
 	}()
 	for _, entry := range listDirNonSymlink(dir) {
-		if entry.IsDir() { //dictionary
+		if entry.IsDir() { //content
 			wg.Add(1)
 			subDir := filepath.Join(dir, entry.Name())
 			go walkDir(subDir, wg, fileSizes, concurrent)
@@ -425,7 +423,7 @@ func listDir(dir string) []os.FileInfo {
 	return entries
 }
 
-// List all entries of non-soft chain type in the specified directory
+// List all entries of non-soft link type in the specified directory
 func listDirNonSymlink(dir string) []os.FileInfo {
 	sema <- struct{}{}
 	defer func() { <-sema }()
@@ -444,7 +442,7 @@ func listDirNonSymlink(dir string) []os.FileInfo {
 	return result
 }
 
-//RemoveSpaces 
+//RemoveSpaces Remove space items
 func RemoveSpaces(sources []string) (re []string) {
 	for _, s := range sources {
 		if s != " " && s != "" && s != "\t" && s != "\n" && s != "\r" {
@@ -455,7 +453,7 @@ func RemoveSpaces(sources []string) (re []string) {
 	return
 }
 
-//CmdExec
+//CmdExec CmdExec
 func CmdExec(args string) (string, error) {
 	out, err := exec.Command("bash", "-c", args).Output()
 	if err != nil {
@@ -464,7 +462,7 @@ func CmdExec(args string) (string, error) {
 	return string(out), nil
 }
 
-//Zip - zip compressing source dir to target file
+//Zip zip compressing source dir to target file
 func Zip(source, target string) error {
 	if err := CheckAndCreateDir(filepath.Dir(target)); err != nil {
 		return err
@@ -527,6 +525,16 @@ func Zip(source, target string) error {
 	})
 
 	return err
+}
+
+func UnTar(archive, target string, zip bool) error {
+	parameter := "-x"
+	if zip {
+		parameter = "-zx"
+	}
+	command := []string{"tar", parameter, "-C", target, "-f", archive}
+	cmd := exec.Command(command[0], command[1:]...)
+	return cmd.Run()
 }
 
 //Unzip archive file to target dir
@@ -623,7 +631,7 @@ func CopyFile(source, target string) error {
 	return nil
 }
 
-//GetParentDirectory
+//GetParentDirectory GetParentDirectory
 func GetParentDirectory(dirctory string) string {
 	return substr(dirctory, 0, strings.LastIndex(dirctory, "/"))
 }
@@ -637,7 +645,7 @@ func substr(s string, pos, length int) string {
 	return string(runes[pos:l])
 }
 
-//Rename - move file
+//Rename move file
 func Rename(old, new string) error {
 	_, err := os.Stat(GetParentDirectory(new))
 	if err != nil {
@@ -652,7 +660,7 @@ func Rename(old, new string) error {
 	return os.Rename(old, new)
 }
 
-//MergeDir
+//MergeDir MergeDir
 //if Subdirectories already exist, Don't replace
 func MergeDir(fromdir, todir string) error {
 	files, err := ioutil.ReadDir(fromdir)
@@ -698,7 +706,7 @@ func GetDirList(dirpath string, level int) ([]string, error) {
 	return dirlist, nil
 }
 
-//GetFileList
+//GetFileList -
 func GetFileList(dirpath string, level int) ([]string, error) {
 	var dirlist []string
 	list, err := ioutil.ReadDir(dirpath)
@@ -742,7 +750,7 @@ func GetDirNameList(dirpath string, level int) ([]string, error) {
 	return dirlist, nil
 }
 
-//GetCurrentDir
+//GetCurrentDir get current dir
 func GetCurrentDir() string {
 	dir, err := filepath.Abs("./")
 	if err != nil {
@@ -801,3 +809,12 @@ func Getenv(key, def string) string {
 	}
 	return value
 }
+
+// Elapsed measures the execution time.
+func Elapsed(what string) func() {
+	start := time.Now()
+	return func() {
+		logrus.Debugf("%s took %v", what, time.Since(start))
+	}
+}
+

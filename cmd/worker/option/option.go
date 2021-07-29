@@ -21,6 +21,7 @@ package option
 import (
 	"fmt"
 	"os"
+	"path"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
@@ -49,11 +50,20 @@ type Config struct {
 	Listen                  string
 	HostIP                  string
 	ServerPort              int
-	KubeClient kubernetes.Interface
+	KubeClient              kubernetes.Interface
 	LeaderElectionNamespace string
 	LeaderElectionIdentity  string
 	RBDNamespace            string
 	GrdataPVCName           string
+	Helm                    Helm
+}
+
+// Helm helm configuration.
+type Helm struct {
+	DataDir    string
+	RepoFile   string
+	RepoCache  string
+	ChartCache string
 }
 
 //Worker  worker server
@@ -95,9 +105,17 @@ func (a *Worker) AddFlags(fs *pflag.FlagSet) {
 	fs.StringVar(&a.LeaderElectionIdentity, "leader-election-identity", "", "Unique idenity of this attcher. Typically name of the pod where the attacher runs.")
 	fs.StringVar(&a.RBDNamespace, "rbd-system-namespace", "rbd-system", "rbd components kubernetes namespace")
 	fs.StringVar(&a.GrdataPVCName, "grdata-pvc-name", "rbd-cpt-grdata", "The name of grdata persistent volume claim")
+	fs.StringVar(&a.Helm.DataDir, "helm-data-dir", "helm-data-dir", "The data directory of Helm.")
+
+	if a.Helm.DataDir == "" {
+		a.Helm.DataDir = "/grdata/helm"
+	}
+	a.Helm.RepoFile = path.Join(a.Helm.DataDir, "repo/repositories.yaml")
+	a.Helm.RepoCache = path.Join(a.Helm.DataDir, "cache")
+	a.Helm.ChartCache = path.Join(a.Helm.DataDir, "chart")
 }
 
-//SetLog set log
+//SetLog Set log
 func (a *Worker) SetLog() {
 	level, err := logrus.ParseLevel(a.LogLevel)
 	if err != nil {
@@ -107,7 +125,7 @@ func (a *Worker) SetLog() {
 	logrus.SetLevel(level)
 }
 
-//CheckEnv detects environment variables
+//CheckEnv Detect environment variables
 func (a *Worker) CheckEnv() error {
 	if err := os.Setenv("GRDATA_PVC_NAME", a.Config.GrdataPVCName); err != nil {
 		return fmt.Errorf("set env 'GRDATA_PVC_NAME': %v", err)

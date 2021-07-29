@@ -28,14 +28,14 @@ import (
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/db/model"
 
-	"github.com/gridworkz/kato/api/middleware"
+	ctxutil "github.com/gridworkz/kato/api/util/ctx"
 	httputil "github.com/gridworkz/kato/util/http"
 )
 
 //ChargesVerifyController service charges verify
 // swagger:operation GET /v2/tenants/{tenant_name}/chargesverify v2 chargesverify
 //
-// Application expansion resource application interface, public cloud gridworkz cloud verification, private cloud does not verify
+// Application expansion resource application interface, public cloud cloud city verification, private cloud does not verify
 //
 // service charges verify
 //
@@ -52,9 +52,9 @@ import (
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: The status code is not 200, indicating that an error occurred during the verification process. Status code 200, msg represents the actual status：success, illegal_quantity, missing_tenant, owned_fee, region_unauthorized, lack_of_memory
+// description: The status code is not 200, indicating that an error occurred during the verification process. Status code 200, msg represents the actual status: success, illegal_quantity, missing_tenant, owned_fee, region_unauthorized, lack_of_memory
 func ChargesVerifyController(w http.ResponseWriter, r *http.Request) {
-	tenant := r.Context().Value(middleware.ContextKey("tenant")).(*model.Tenants)
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*model.Tenants)
 	if tenant.EID == "" {
 		eid := r.FormValue("eid")
 		if eid == "" {
@@ -76,7 +76,7 @@ func ChargesVerifyController(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if publicCloud := os.Getenv("PUBLIC_CLOUD"); publicCloud != "true" {
-		err := cloud.PriChargeSverify(tenant, quantityInt)
+		err := cloud.PriChargeSverify(r.Context(), tenant, quantityInt)
 		if err != nil {
 			err.Handle(r, w)
 			return

@@ -42,7 +42,7 @@ import (
 
 var re = regexp.MustCompile(`\s`)
 
-//ExportApp - export app to specified format (kato-app or dockercompose)
+//ExportApp Export app to specified format(kato-app or dockercompose)
 type ExportApp struct {
 	EventID      string `json:"event_id"`
 	Format       string `json:"format"`
@@ -68,7 +68,7 @@ func NewExportApp(in []byte, m *exectorManager) (TaskWorker, error) {
 	}, nil
 }
 
-//Run
+//Run Run
 func (i *ExportApp) Run(timeout time.Duration) error {
 	// disable Md5 checksum
 	// if ok := i.isLatest(); ok {
@@ -138,7 +138,7 @@ func (i *ExportApp) cacheMd5() {
 	if err := exec.Command("sh", "-c", fmt.Sprintf("md5sum %s > %s.md5", metadataFile, metadataFile)).Run(); err != nil {
 		err = errors.New(fmt.Sprintf("Failed to create md5 file: %v", err))
 		logrus.Error(err)
-        }
+	}
 	logrus.Infof("create md5 file success")
 }
 
@@ -148,13 +148,13 @@ func (i *ExportApp) exportKatoAPP(ram v1alpha1.KatoApplicationConfig) (*export.R
 	return ramExporter.Export()
 }
 
-// exportDockerCompose export app to docker compose app
-func (i *ExportApp) exportDockerCompose(ram v1alpha1.RainbondApplicationConfig) (*export.Result, error) {
+//  exportDockerCompose export app to docker compose app
+func (i *ExportApp) exportDockerCompose(ram v1alpha1.KatoApplicationConfig) (*export.Result, error) {
 	ramExporter := export.New(export.DC, i.SourceDir, ram, i.DockerClient, logrus.StandardLogger())
 	return ramExporter.Export()
 }
 
-//Stop
+//Stop stop
 func (i *ExportApp) Stop() error {
 	return nil
 }
@@ -164,7 +164,7 @@ func (i *ExportApp) Name() string {
 	return "export_app"
 }
 
-//GetLogger
+//GetLogger GetLogger
 func (i *ExportApp) GetLogger() event.Logger {
 	return i.Logger
 }
@@ -173,20 +173,20 @@ func (i *ExportApp) GetLogger() event.Logger {
 func (i *ExportApp) isLatest() bool {
 	md5File := fmt.Sprintf("%s/metadata.json.md5", i.SourceDir)
 	if _, err := os.Stat(md5File); os.IsNotExist(err) {
-		logrus.Debug("The export app md5 file not found: ", md5File)
+		logrus.Debug("The export app md5 file is not found: ", md5File)
 		return false
 	}
 	err := exec.Command("md5sum", "-c", md5File).Run()
 	if err != nil {
 		tarFile := i.SourceDir + ".tar"
 		if _, err := os.Stat(tarFile); os.IsNotExist(err) {
-			logrus.Debug("The export app tar file not found. ")
+			logrus.Debug("The export app tar file is not found. ")
 			return false
 		}
-		logrus.Info("The export app tar file is not the latest.")
+		logrus.Info("The export app tar file is not latest.")
 		return false
 	}
-	logrus.Info("The export app tar file is the latest.")
+	logrus.Info("The export app tar file is latest.")
 	return true
 }
 

@@ -11,12 +11,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/gridworkz/kato/builder/parser/code"
-	"github.com/gridworkz/kato/cmd/builder/option"
-	"github.com/gridworkz/kato/event"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
+	jobc "github.com/gridworkz/kato/builder/job"
+	"github.com/gridworkz/kato/builder/parser/code"
+	"github.com/gridworkz/kato/builder/sources"
+	"github.com/gridworkz/kato/cmd/builder/option"
+	"github.com/gridworkz/kato/event"
 
 	etcdutil "github.com/gridworkz/kato/util/etcd"
 	k8sutil "github.com/gridworkz/kato/util/k8s"
@@ -37,7 +38,7 @@ func TestCreateJob(t *testing.T) {
 		EventLogServers: conf.EventLogServers,
 		DiscoverArgs:    &etcdutil.ClientArgs{Endpoints: conf.EtcdEndPoints},
 	})
-	restConfig, err := k8sutil.NewRestConfig("/Users/gridworkz/Documents/company/gridworkz/remote/192.168.2.206/admin.kubeconfig")
+	restConfig, err := k8sutil.NewRestConfig("/Users/gdevs/Documents/company/gridworkz/remote/192.168.2.206/admin.kubeconfig")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +97,7 @@ func Test1(t *testing.T) {
 			t.Fatal(err)
 			continue
 		}
-		// read file information
+		// Read file information
 		fi := hdr.FileInfo()
 
 		if !strings.HasPrefix(fi.Name(), "._") && strings.HasSuffix(fi.Name(), ".tgz") {
@@ -125,4 +126,47 @@ func TestDockerClient(t *testing.T) {
 	// for _, image := range images {
 	// 	t.Log("image is : ", image.ID)
 	// }
+}
+
+func TestBuildFromOSS(t *testing.T) {
+	restConfig, err := k8sutil.NewRestConfig("/Users/barnett/.kube/config")
+	if err != nil {
+		t.Fatal(err)
+	}
+	os.Setenv("IMAGE_PULL_SECRET", "rbd-hub-credentials")
+	clientset, err := kubernetes.NewForConfig(restConfig)
+	if err != nil {
+		t.Fatal(err)
+	}
+	stop := make(chan struct{})
+	if err := jobc.InitJobController("rbd-system", stop, clientset); err != nil {
+		t.Fatal(err)
+	}
+	logger := event.GetTestLogger()
+	req := &Request{
+		ServerType:    "oss",
+		RepositoryURL: "https://storage.googleapis.com/kato-files/artifactory/dev/java-war-demo-master.zip",
+		CodeSouceInfo: sources.CodeSourceInfo{
+			User:     "demo",
+			Password: "gr123465!",
+		},
+		KubeClient:    clientset,
+		Ctx:           context.Background(),
+		ServiceID:     "d9b8d718510dc53118af1e1219e36d3a",
+		DeployVersion: "123asdadsadsasdasd1",
+		TenantID:      "7c89455140284fd7b263038b44dc65bc",
+		Lang:          code.OSS,
+		Logger:        logger,
+		GRDataPVCName: "rbd-cpt-grdata",
+		CachePVCName:  "rbd-chaos-cache",
+	}
+	build, err := GetBuild(code.OSS)
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := build.Build(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(res.MediumPath)
 }

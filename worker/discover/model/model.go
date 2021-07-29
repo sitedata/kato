@@ -27,10 +27,10 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-//TaskType
+//TaskType task type
 type TaskType string
 
-//Task
+//Task task
 type Task struct {
 	Type       TaskType  `json:"type"`
 	Body       TaskBody  `json:"body"`
@@ -38,7 +38,7 @@ type Task struct {
 	User       string    `json:"user"`
 }
 
-//NewTask - create task from json bytes data
+//NewTask 从json bytes data create task
 func NewTask(data []byte) (*Task, error) {
 	taskType := gjson.GetBytes(data, "type").String()
 	body := CreateTaskBody(taskType)
@@ -52,7 +52,7 @@ func NewTask(data []byte) (*Task, error) {
 	return &task, err
 }
 
-//TransTask
+//TransTask transtask
 func TransTask(task *pb.TaskMessage) (*Task, error) {
 	timeT, _ := time.Parse(time.RFC3339, task.CreateTime)
 	return &Task{
@@ -63,18 +63,18 @@ func TransTask(task *pb.TaskMessage) (*Task, error) {
 	}, nil
 }
 
-//NewTaskBody
+//NewTaskBody new task body
 func NewTaskBody(taskType string, body []byte) TaskBody {
 	switch taskType {
 	case "start":
-		b := StartTaskBody{}
+		b := StartTaskBody {}
 		err := ffjson.Unmarshal(body, &b)
 		if err != nil {
 			return nil
 		}
 		return b
 	case "stop":
-		b := StopTaskBody{}
+		b := StopTaskBody {}
 		err := ffjson.Unmarshal(body, &b)
 		if err != nil {
 			return nil
@@ -170,7 +170,7 @@ func NewTaskBody(taskType string, body []byte) TaskBody {
 	}
 }
 
-//CreateTaskBody
+//CreateTaskBody creates an entity through the type string
 func CreateTaskBody(taskType string) TaskBody {
 	switch taskType {
 	case "start":
@@ -202,10 +202,10 @@ func CreateTaskBody(taskType string) TaskBody {
 	}
 }
 
-//TaskBody
+//TaskBody task body
 type TaskBody interface{}
 
-//StartTaskBody
+//StartTaskBody starts the operation task body
 type StartTaskBody struct {
 	TenantID      string            `json:"tenant_id"`
 	ServiceID     string            `json:"service_id"`
@@ -216,7 +216,7 @@ type StartTaskBody struct {
 	DepServiceIDInBootSeq []string `json:"dep_service_ids_in_boot_seq"`
 }
 
-//StopTaskBody
+//StopTaskBody stops the operation task body
 type StopTaskBody struct {
 	TenantID      string            `json:"tenant_id"`
 	ServiceID     string            `json:"service_id"`
@@ -225,7 +225,7 @@ type StopTaskBody struct {
 	Configs       map[string]string `json:"configs"`
 }
 
-//HorizontalScalingTaskBody
+//HorizontalScalingTaskBody Horizontal scaling operation task body
 type HorizontalScalingTaskBody struct {
 	TenantID  string `json:"tenant_id"`
 	ServiceID string `json:"service_id"`
@@ -234,16 +234,17 @@ type HorizontalScalingTaskBody struct {
 	Username  string `json:"username"`
 }
 
-//VerticalScalingTaskBody
+//VerticalScalingTaskBody vertical scaling operation task body
 type VerticalScalingTaskBody struct {
 	TenantID        string `json:"tenant_id"`
 	ServiceID       string `json:"service_id"`
-	ContainerCPU    int    `json:"container_cpu"`
-	ContainerMemory int    `json:"container_memory"`
+	ContainerCPU    *int   `json:"container_cpu"`
+	ContainerMemory *int   `json:"container_memory"`
+	ContainerGPU    *int   `json:"container_gpu"`
 	EventID         string `json:"event_id"`
 }
 
-//RestartTaskBody
+//RestartTaskBody restart operation task body
 type RestartTaskBody struct {
 	TenantID      string `json:"tenant_id"`
 	ServiceID     string `json:"service_id"`
@@ -256,19 +257,19 @@ type RestartTaskBody struct {
 	Configs  map[string]string `json:"configs"`
 }
 
-//StrategyIsValid - verify that the strategy is effective
+//StrategyIsValid verifies whether the strategy is valid
 //The strategy includes the following values:
-// prestart - start first and then close
-// prestop - turn off first
-// rollingupdate - rolling form
-// grayupdate - grayscale
-// bluegreenupdate - blue-green form
+// prestart starts first and then closes
+// prestop is closed first and then started
+// rollingupdate rolling form
+// grayupdate gray form
+// bluegreenupdate blue-green form
 //
 func StrategyIsValid(strategy []string, serviceDeployType string) bool {
 	return false
 }
 
-//RollingUpgradeTaskBody
+//RollingUpgradeTaskBody Upgrade operation task body
 type RollingUpgradeTaskBody struct {
 	TenantID         string            `json:"tenant_id"`
 	ServiceID        string            `json:"service_id"`
@@ -278,35 +279,34 @@ type RollingUpgradeTaskBody struct {
 	Configs          map[string]string `json:"configs"`
 }
 
-//RollBackTaskBody
+//RollBackTaskBody rollback operation task body
 type RollBackTaskBody struct {
 	TenantID  string `json:"tenant_id"`
 	ServiceID string `json:"service_id"`
 	//current version
 	CurrentDeployVersion string `json:"current_deploy_version"`
-	//roll back the target version
+	//Roll back the target version
 	OldDeployVersion string `json:"old_deploy_version"`
 	EventID          string `json:"event_id"`
-	//restart policy, this policy is not guaranteed to take effect
-	//for example, if the application is a stateful service, if this policy is configured to be started and then closed, this policy will not take effect
-	//stateless services are used by default to start and then close to ensure that the service is not affected
-	//if you need to use rolling upgrade and other strategies, use multiple strategies
+	//Restart policy, this policy is not guaranteed to take effect
+	//For example, if the application is a stateful service, if this policy is configured to be started and then closed, this policy will not take effect
+	//Stateless services are used by default to start and then close to ensure that the service is not affected
+	//If you need to use rolling upgrades and other strategies, use multiple strategies
 	Strategy []string `json:"strategy"`
 }
 
-//GroupStartTaskBody
+//GroupStartTaskBody group application start operation task body
 type GroupStartTaskBody struct {
 	Services    []StartTaskBody `json:"services"`
 	Dependences []Dependence    `json:"dependences"`
-	//group startup strategy
-	//sequential start, disorderly concurrent start
+	//Group startup strategy
+	//Sequential start, disorderly concurrent start
 	Strategy []string `json:"strategy"`
 }
 
 // ApplyRuleTaskBody contains information for ApplyRuleTask
 type ApplyRuleTaskBody struct {
 	ServiceID     string            `json:"service_id"`
-	DeployVersion string            `json:"deploy_version"`
 	EventID       string            `json:"event_id"`
 	ServiceKind   string            `json:"service_kind"`
 	Action        string            `json:"action"`
@@ -324,18 +324,18 @@ type ApplyPluginConfigTaskBody struct {
 	Action string `json:"action"`
 }
 
-//Dependence
+//Dependence dependency
 type Dependence struct {
 	CurrentServiceID string `json:"current_service_id"`
 	DependServiceID  string `json:"depend_service_id"`
 }
 
-//GroupStopTaskBody
+//GroupStopTaskBody group application stops operating the task body
 type GroupStopTaskBody struct {
 	Services    []StartTaskBody `json:"services"`
 	Dependences []Dependence    `json:"dependences"`
-	//group shutdown policy
-	//sequence relationship, unordered concurrent closure
+	//Group shutdown strategy
+	//Sequence relationship, unordered concurrent close
 	Strategy []string `json:"strategy"`
 }
 
@@ -358,5 +358,5 @@ type RefreshHPATaskBody struct {
 	EventID   string `json:"eventID"`
 }
 
-//DefaultTaskBody
+//DefaultTaskBody default operation task body
 type DefaultTaskBody map[string]interface{}

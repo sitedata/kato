@@ -30,9 +30,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gridworkz/kato/api/handler"
-	"github.com/gridworkz/kato/api/middleware"
+	"github.com/gridworkz/kato/api/model"
 	api_model "github.com/gridworkz/kato/api/model"
 	"github.com/gridworkz/kato/api/util/bcode"
+	ctxutil "github.com/gridworkz/kato/api/util/ctx"
 	"github.com/gridworkz/kato/cmd"
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/db/errors"
@@ -77,7 +78,7 @@ func (v2 *V2Routes) Show(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	w.Write([]byte(cmd.GetVersion()))
 }
 
@@ -108,11 +109,11 @@ func (v2 *V2Routes) Version(w http.ResponseWriter, r *http.Request) {
 
 //TenantStruct tenant struct
 type TenantStruct struct {
-	StatusCli *client.AppRuntimeSyncClient
-	MQClient  mqclient.MQClient
+	StatusCli * client.AppRuntimeSyncClient
+	MQClient mqclient.MQClient
 }
 
-//AllTenantResources GetResources
+// AllTenantResources GetResources
 func (t *TenantStruct) AllTenantResources(w http.ResponseWriter, r *http.Request) {
 	tenants, err := handler.GetTenantManager().GetTenants("")
 	if err != nil {
@@ -130,14 +131,14 @@ func (t *TenantStruct) AllTenantResources(w http.ResponseWriter, r *http.Request
 			}
 			httputil.Return(r, w, 500, msg)
 		}
-		statsInfo, _ := handler.GetTenantManager().StatsMemCPU(services)
+		statsInfo, _ := handler.GetTenantManager (). StatsMemCPU (services)
 		statsInfo.UUID = tenant.UUID
 		ts.Data = append(ts.Data, statsInfo)
 	}
 	httputil.ReturnSuccess(r, w, ts.Data)
 }
 
-//TenantResources TenantResources
+// TenantResources TenantResources
 func (t *TenantStruct) TenantResources(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/resources/tenants v2 tenantResources
 	//
@@ -154,14 +155,14 @@ func (t *TenantStruct) TenantResources(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	var tr api_model.TenantResources
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tr.Body, nil)
 	if !ok {
 		return
 	}
 
-	rep, err := handler.GetTenantManager().GetTenantsResources(&tr)
+	rep, err := handler.GetTenantManager().GetTenantsResources(r.Context(), &tr)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get resources error, %v", err))
 		return
@@ -176,7 +177,7 @@ func (t *TenantStruct) TenantResources(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-//ServiceResources ServiceResources
+// ServiceResources ServiceResources
 func (t *TenantStruct) ServiceResources(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/resources/services v2 serviceResources
 	//
@@ -193,7 +194,7 @@ func (t *TenantStruct) ServiceResources(w http.ResponseWriter, r *http.Request) 
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	var tr api_model.ServicesResources
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tr.Body, nil)
 	if !ok {
@@ -212,7 +213,7 @@ func (t *TenantStruct) ServiceResources(w http.ResponseWriter, r *http.Request) 
 func (t *TenantStruct) TenantsQuery(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/query/{tenant_name} v2 tenants
 	//
-	// Tenant get resource list
+	// Tenant brings resource list
 	//
 	// get tenant resources
 	//
@@ -233,11 +234,11 @@ func (t *TenantStruct) TenantsQuery(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
 	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
 
-	rep, err := handler.GetTenantManager().GetTenantsName()
+	rep, err := handler.GetTenantManager (). GetTenantsName ()
 	if err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get tenants names error, %v", err))
 		return
@@ -252,7 +253,7 @@ func (t *TenantStruct) TenantsQuery(w http.ResponseWriter, r *http.Request) {
 func (t *TenantStruct) TenantsGetByName(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/{tenant_name}/res v2 tenants
 	//
-	// Tenants bring a single resource
+	// The tenant brings a single resource
 	//
 	// get tenant resources
 	//
@@ -273,7 +274,7 @@ func (t *TenantStruct) TenantsGetByName(w http.ResponseWriter, r *http.Request) 
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
 	tenantName := strings.TrimSpace(chi.URLParam(r, "tenant_name"))
 
@@ -301,7 +302,7 @@ func (t *TenantStruct) TenantsGetByName(w http.ResponseWriter, r *http.Request) 
 func (t *TenantStruct) TenantsWithResource(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/resources/tenants/res/page/{curPage}/size/{pageLen} v2 PagedTenantResList
 	//
-	// Tenant bring resource list
+	// Tenant brings resource list
 	//
 	// get paged tenant resources
 	//
@@ -328,7 +329,7 @@ func (t *TenantStruct) TenantsWithResource(w http.ResponseWriter, r *http.Reques
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
 	pageLenStr := strings.TrimSpace(chi.URLParam(r, "pageLen"))
 	curPageStr := strings.TrimSpace(chi.URLParam(r, "curPage"))
@@ -355,7 +356,7 @@ func (t *TenantStruct) TenantsWithResource(w http.ResponseWriter, r *http.Reques
 	return
 }
 
-//SumTenants Count the number of tenants
+//SumTenants counts the number of tenants
 func (t *TenantStruct) SumTenants(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/resources/tenants/sum v2 sumTenants
 	//
@@ -372,7 +373,7 @@ func (t *TenantStruct) SumTenants(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
 	s, err := handler.GetTenantManager().TenantsSum()
 	if err != nil {
@@ -396,7 +397,7 @@ func (t *TenantStruct) Tenant(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//Tenants Tenant
+// Tenants Holding
 func (t *TenantStruct) Tenants(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "POST":
@@ -406,7 +407,7 @@ func (t *TenantStruct) Tenants(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//AddTenant AddTenant
+// AddTenant AddTenant
 func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/tenants v2 addTenant
 	//
@@ -427,7 +428,7 @@ func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	var ts api_model.AddTenantStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ts.Body, nil)
 	if !ok {
@@ -436,7 +437,7 @@ func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
 	var dbts dbmodel.Tenants
 	if ts.Body.Eid != "" {
 		//New interface
-		//TODO:Generate tenant_id and tenant_name
+		//TODO:生成tenant_id and tenant_name
 		id, name, errN := handler.GetServiceManager().CreateTenandIDAndName(ts.Body.Eid)
 		if errN != nil {
 			httputil.ReturnError(r, w, 500, fmt.Sprintf("create tenant error, %v", errN))
@@ -472,7 +473,7 @@ func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ts.Body.TenantID != "" && ts.Body.TenantName != "" {
-		//Compatible with old interfaces
+		//Compatible with the old interface
 		dbts.Name = ts.Body.TenantName
 		dbts.UUID = ts.Body.TenantID
 		if err := handler.GetServiceManager().CreateTenant(&dbts); err != nil {
@@ -494,7 +495,7 @@ func (t *TenantStruct) AddTenant(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-//GetTenants GetTenants
+// GetTenants GetTenants
 func (t *TenantStruct) GetTenants(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants v2 getTenants
 	//
@@ -515,7 +516,7 @@ func (t *TenantStruct) GetTenants(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	value := r.FormValue("eid")
 	page, _ := strconv.Atoi(r.FormValue("page"))
 	if page == 0 {
@@ -546,11 +547,11 @@ func (t *TenantStruct) GetTenants(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, re)
 }
 
-//DeleteTenant
+//DeleteTenant DeleteTenant
 func (t *TenantStruct) DeleteTenant(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 
-	if err := handler.GetTenantManager().DeleteTenant(tenantID); err != nil {
+	if err := handler.GetTenantManager().DeleteTenant(r.Context(), tenantID); err != nil {
 		if err == handler.ErrTenantStillHasServices || err == handler.ErrTenantStillHasPlugins {
 			httputil.ReturnError(r, w, 400, err.Error())
 			return
@@ -567,7 +568,7 @@ func (t *TenantStruct) DeleteTenant(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//UpdateTenant
+//UpdateTenant UpdateTenant
 //support update tenant limit memory
 func (t *TenantStruct) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 	var ts api_model.UpdateTenantStruct
@@ -575,7 +576,7 @@ func (t *TenantStruct) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	tenant := r.Context().Value(middleware.ContextKey("tenant")).(*dbmodel.Tenants)
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
 	tenant.LimitMemory = ts.Body.LimitMemory
 	if err := handler.GetTenantManager().UpdateTenant(tenant); err != nil {
 		httputil.ReturnError(r, w, 500, "update tenant error")
@@ -586,7 +587,7 @@ func (t *TenantStruct) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 
 //GetTenant get one tenant
 func (t *TenantStruct) GetTenant(w http.ResponseWriter, r *http.Request) {
-	tenant := r.Context().Value(middleware.ContextKey("tenant")).(*dbmodel.Tenants)
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
 	list := handler.GetTenantManager().BindTenantsResource([]*dbmodel.Tenants{tenant})
 	httputil.ReturnSuccess(r, w, list[0])
 }
@@ -632,8 +633,8 @@ func (t *TenantStruct) ServicesInfo(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	// description: unified return format
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	services, err := handler.GetServiceManager().GetService(tenantID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, "get tenant services error")
@@ -665,21 +666,24 @@ func (t *TenantStruct) CreateService(w http.ResponseWriter, r *http.Request) {
 	handler.GetEtcdHandler().CleanServiceCheckData(ss.EtcdKey)
 
 	values := url.Values{}
-	if ss.Endpoints != nil && strings.TrimSpace(ss.Endpoints.Static) != "" {
-		if strings.Contains(ss.Endpoints.Static, "127.0.0.1") {
-			values["ip"] = []string{"The ip field is can't contains '127.0.0.1'"}
+	if ss.Endpoints != nil {
+		for _, endpoint := range ss.Endpoints.Static {
+			if strings.Contains(endpoint, "127.0.0.1") {
+				values["ip"] = []string{"The ip field is can't contains '127.0.0.1'"}
+			}
+		}
+		if len(values) > 0 {
+			httputil.ReturnValidationError(r, w, values)
+			return
 		}
 	}
-	if len(values) > 0 {
-		httputil.ReturnValidationError(r, w, values)
-		return
-	}
 
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	ss.TenantID = tenantID
 	if err := handler.GetServiceManager().ServiceCreate(&ss); err != nil {
 		if strings.Contains(err.Error(), "is exist in tenant") {
 			httputil.ReturnError(r, w, 400, fmt.Sprintf("create service error, %v", err))
+			return
 		}
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("create service error, %v", err))
 		return
@@ -709,8 +713,8 @@ func (t *TenantStruct) UpdateService(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	// Currently provides three element modifications
+	// description: unified return format
+	//Currently provide three element modification
 	rules := validator.MapData{
 		"container_cmd":    []string{},
 		"image_name":       []string{},
@@ -723,7 +727,7 @@ func (t *TenantStruct) UpdateService(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	data["service_id"] = serviceID
 
 	// Check if the application ID exists
@@ -744,7 +748,7 @@ func (t *TenantStruct) UpdateService(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//SetLanguage SetLanguage
+// SetLanguage SetLanguage
 func (t *TenantStruct) SetLanguage(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST  /v2/tenants/{tenant_name}/services/{service_alias}/language v2 setLanguage
 	//
@@ -765,7 +769,7 @@ func (t *TenantStruct) SetLanguage(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	rules := validator.MapData{
 		"language": []string{"required"},
 	}
@@ -775,7 +779,7 @@ func (t *TenantStruct) SetLanguage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	langS.Language = data["language"].(string)
-	langS.ServiceID = r.Context().Value(middleware.ContextKey("service_id")).(string)
+	langS.ServiceID = r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().LanguageSet(langS); err != nil {
 		httputil.ReturnError(r, w, 500, "set language error.")
 		return
@@ -805,8 +809,8 @@ func (t *TenantStruct) StatusService(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	// description: unified return format
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	statusList, err := handler.GetServiceManager().GetStatus(serviceID)
 	if err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("get service list error,%v", err))
@@ -816,7 +820,7 @@ func (t *TenantStruct) StatusService(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-//PostStatusService PostStatusService
+// PostStatusService PostStatusService
 func (t *TenantStruct) PostStatusService(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("in status service serviceID")
 }
@@ -842,7 +846,7 @@ func (t *TenantStruct) StatusServiceList(w http.ResponseWriter, r *http.Request)
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 	var services api_model.StatusServiceListStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &services.Body, nil)
 	if !ok {
@@ -850,7 +854,7 @@ func (t *TenantStruct) StatusServiceList(w http.ResponseWriter, r *http.Request)
 	}
 	//logrus.Info(services.Body.ServiceIDs)
 	serviceList := services.Body.ServiceIDs
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	info := handler.GetServiceManager().GetServicesStatus(tenantID, serviceList)
 
 	httputil.ReturnSuccess(r, w, info)
@@ -897,7 +901,7 @@ func (t *TenantStruct) Label(w http.ResponseWriter, r *http.Request) {
 // AddLabel adds label
 func (t *TenantStruct) AddLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
 	logrus.Debugf("add label")
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().AddLabel(labels, serviceID); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("add label error, %v", err))
 		return
@@ -907,7 +911,7 @@ func (t *TenantStruct) AddLabel(w http.ResponseWriter, r *http.Request, labels *
 
 // DeleteLabel deletes labels
 func (t *TenantStruct) DeleteLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().DeleteLabel(labels, serviceID); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("delete node label failure, %v", err))
 		return
@@ -917,7 +921,7 @@ func (t *TenantStruct) DeleteLabel(w http.ResponseWriter, r *http.Request, label
 
 //UpdateLabel Update updates labels
 func (t *TenantStruct) UpdateLabel(w http.ResponseWriter, r *http.Request, labels *api_model.LabelsStruct) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().UpdateLabel(labels, serviceID); err != nil {
 		httputil.ReturnError(r, w, 500, fmt.Sprintf("error updating label: %v", err))
 		return
@@ -940,7 +944,7 @@ func (t *TenantStruct) SingleServiceInfo(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-//GetSingleServiceInfo GetSingleServiceInfo
+// GetSingleServiceInfo GetSingleServiceInfo
 func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias} v2 getService
 	//
@@ -961,12 +965,12 @@ func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Reque
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
-	serviceName := r.Context().Value(middleware.ContextKey("service_alias")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	serviceName := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
 	result := make(map[string]string)
 	result["tenantName"] = tenantName
 	result["serviceAlias"] = serviceName
@@ -978,7 +982,7 @@ func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Reque
 //DeleteSingleServiceInfo DeleteService
 // swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias} v2 deleteService
 //
-// Delete app
+// delete app
 //
 // delete service
 //
@@ -995,17 +999,17 @@ func (t *TenantStruct) GetSingleServiceInfo(w http.ResponseWriter, r *http.Reque
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) DeleteSingleServiceInfo(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	var req api_model.EtcdCleanReq
 	if httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil) {
 		logrus.Debugf("delete service etcd keys : %+v", req.Keys)
 		handler.GetEtcdHandler().CleanAllServiceData(req.Keys)
 	}
 
-	if err := handler.GetServiceManager().TransServieToDelete(tenantID, serviceID); err != nil {
+	if err := handler.GetServiceManager().TransServieToDelete(r.Context(), tenantID, serviceID); err != nil {
 		if err == handler.ErrServiceNotClosed {
 			httputil.ReturnError(r, w, 400, fmt.Sprintf("Service must be closed"))
 			return
@@ -1046,7 +1050,7 @@ func (t *TenantStruct) Dependency(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 	rules := validator.MapData{
 		"dep_service_id":   []string{"required"},
@@ -1058,8 +1062,8 @@ func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ds := &api_model.DependService{
-		TenantID:       r.Context().Value(middleware.ContextKey("tenant_id")).(string),
-		ServiceID:      r.Context().Value(middleware.ContextKey("service_id")).(string),
+		TenantID:       r.Context().Value(ctxutil.ContextKey("tenant_id")).(string),
+		ServiceID:      r.Context().Value(ctxutil.ContextKey("service_id")).(string),
 		DepServiceID:   data["dep_service_id"].(string),
 		DepServiceType: data["dep_service_type"].(string),
 	}
@@ -1073,7 +1077,7 @@ func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 //DeleteDependency DeleteDependency
 // swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/dependency v2 deleteDependency
 //
-// Remove application dependencies
+// Delete application dependencies
 //
 // delete dependency
 //
@@ -1090,7 +1094,7 @@ func (t *TenantStruct) AddDependency(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) DeleteDependency(w http.ResponseWriter, r *http.Request) {
 	logrus.Debugf("trans delete depend service ")
 	rules := validator.MapData{
@@ -1103,8 +1107,8 @@ func (t *TenantStruct) DeleteDependency(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	ds := &api_model.DependService{
-		TenantID:     r.Context().Value(middleware.ContextKey("tenant_id")).(string),
-		ServiceID:    r.Context().Value(middleware.ContextKey("service_id")).(string),
+		TenantID:     r.Context().Value(ctxutil.ContextKey("tenant_id")).(string),
+		ServiceID:    r.Context().Value(ctxutil.ContextKey("service_id")).(string),
 		DepServiceID: data["dep_service_id"].(string),
 	}
 	if err := handler.GetServiceManager().ServiceDepend("delete", ds); err != nil {
@@ -1129,7 +1133,7 @@ func (t *TenantStruct) Env(w http.ResponseWriter, r *http.Request) {
 //AddEnv AddEnv
 // swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/env v2 addEnv
 //
-// Increase environment variables
+// Add environment variables
 //
 // add env var
 //
@@ -1146,14 +1150,14 @@ func (t *TenantStruct) Env(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) AddEnv(w http.ResponseWriter, r *http.Request) {
 	var envM api_model.AddTenantServiceEnvVar
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &envM, nil) {
 		return
 	}
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var envD dbmodel.TenantServiceEnvVar
 	envD.AttrName = envM.AttrName
 	envD.AttrValue = envM.AttrValue
@@ -1195,14 +1199,14 @@ func (t *TenantStruct) AddEnv(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) UpdateEnv(w http.ResponseWriter, r *http.Request) {
 	var envM api_model.AddTenantServiceEnvVar
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &envM, nil) {
 		return
 	}
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var envD dbmodel.TenantServiceEnvVar
 	envD.AttrName = envM.AttrName
 	envD.AttrValue = envM.AttrValue
@@ -1240,14 +1244,14 @@ func (t *TenantStruct) UpdateEnv(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) DeleteEnv(w http.ResponseWriter, r *http.Request) {
 	var envM api_model.DelTenantServiceEnvVar
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &envM, nil) {
 		return
 	}
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	envM.TenantID = tenantID
 	envM.ServiceID = serviceID
 	var envD dbmodel.TenantServiceEnvVar
@@ -1271,7 +1275,7 @@ func (t *TenantStruct) DeleteEnv(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//Ports Application Port Controller
+//Ports application port controller
 func (t *TenantStruct) Ports(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "DELETE":
@@ -1283,7 +1287,7 @@ func (t *TenantStruct) Ports(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-//PutPorts PortVar
+// PutPorts PortVar
 // swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports v2 updatePort
 //
 // Update application port information (old)
@@ -1303,10 +1307,10 @@ func (t *TenantStruct) Ports(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var ports api_model.ServicePorts
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ports, nil); !ok {
 		return
@@ -1318,10 +1322,10 @@ func (t *TenantStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//AddPortVar PortVar
+// AddPortVar PortVar
 // swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/ports v2 addPort
 //
-// Increase the application port, the internal and external options are disabled by default, and the corresponding interface needs to be enabled
+// Add the application port, the internal and external options are disabled by default, and the corresponding interface needs to be enabled
 //
 // add port
 //
@@ -1338,10 +1342,10 @@ func (t *TenantStruct) PutPorts(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) addPortController(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var ports api_model.ServicePorts
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ports, nil); !ok {
 		return
@@ -1354,7 +1358,7 @@ func (t *TenantStruct) addPortController(w http.ResponseWriter, r *http.Request)
 	httputil.ReturnSuccess(r, w, ports.Port)
 }
 
-//UpdatePortVar PortVar
+// UpdatePortVar PortVar
 // swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port} v2 updatePort
 //
 // Update application port information
@@ -1374,10 +1378,10 @@ func (t *TenantStruct) addPortController(w http.ResponseWriter, r *http.Request)
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	portStr := chi.URLParam(r, "port")
 	oldPort, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -1396,10 +1400,10 @@ func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Reque
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//DeletePortVar PortVar
+// DeletePortVar PortVar
 // swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port} v2 deletePort
 //
-// Delete port variable
+// delete port variable
 //
 // delete port
 //
@@ -1416,10 +1420,10 @@ func (t *TenantStruct) updatePortController(w http.ResponseWriter, r *http.Reque
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	portStr := chi.URLParam(r, "port")
 	oldPort, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -1444,10 +1448,10 @@ func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Reque
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//PortOuterController Switch port external service
+//PortOuterController switch port external service
 // swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/outer v2 PortOuterController
 //
-// Switch ports for external services, the application will take effect automatically without restarting
+// Switch the port for external services, the application will take effect automatically without restarting
 //
 // add port
 //
@@ -1464,15 +1468,15 @@ func (t *TenantStruct) deletePortController(w http.ResponseWriter, r *http.Reque
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Request) {
 	var data api_model.ServicePortInnerOrOuter
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &(data.Body), nil) {
 		return
 	}
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	service := r.Context().Value(middleware.ContextKey("service")).(*dbmodel.TenantServices)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	service := r.Context().Value(ctxutil.ContextKey("service")).(*dbmodel.TenantServices)
 	if dbmodel.ServiceKind(service.Kind) == dbmodel.ServiceKindThirdParty {
 		endpoints, err := db.GetManager().EndpointsDao().List(serviceID)
 		if err != nil {
@@ -1489,7 +1493,7 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
 	portStr := chi.URLParam(r, "port")
 	containerPort, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -1524,7 +1528,7 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 		rc["port"] = fmt.Sprintf("%v", vsPort.Port)
 	}
 
-	if err := handler.GetGatewayHandler().SendTask(map[string]interface{}{
+	if err := handler.GetGatewayHandler().SendTaskDeprecated(map[string]interface{}{
 		"service_id": serviceID,
 		"action":     "port-" + data.Body.Operation,
 		"port":       containerPort,
@@ -1536,10 +1540,10 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 	httputil.ReturnSuccess(r, w, rc)
 }
 
-//PortInnerController Switch port internal service
+//PortInnerController switch port internal service
 // swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/ports/{port}/inner v2 PortInnerController
 //
-// Switch internal services, the application does not need to be restarted, it takes effect automatically
+// Switch internal services, the application does not need to be restarted, it will take effect automatically
 //
 // add port
 //
@@ -1556,14 +1560,14 @@ func (t *TenantStruct) PortOuterController(w http.ResponseWriter, r *http.Reques
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) PortInnerController(w http.ResponseWriter, r *http.Request) {
 	var data api_model.ServicePortInnerOrOuter
 	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &(data.Body), nil) {
 		return
 	}
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
 	portStr := chi.URLParam(r, "port")
 	containerPort, err := strconv.Atoi(portStr)
 	if err != nil {
@@ -1583,7 +1587,7 @@ func (t *TenantStruct) PortInnerController(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	if err := handler.GetGatewayHandler().SendTask(map[string]interface{}{
+	if err := handler.GetGatewayHandler().SendTaskDeprecated(map[string]interface{}{
 		"service_id": serviceID,
 		"action":     "port-" + data.Body.Operation,
 		"port":       containerPort,
@@ -1615,9 +1619,9 @@ func (t *TenantStruct) PortInnerController(w http.ResponseWriter, r *http.Reques
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) Pods(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	pods, err := handler.GetServiceManager().GetPods(serviceID)
 	if err != nil {
 		if err.Error() == gorm.ErrRecordNotFound.Error() {
@@ -1632,7 +1636,7 @@ func (t *TenantStruct) Pods(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, pods)
 }
 
-//Probe probe
+// Probe probe
 func (t *TenantStruct) Probe(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
@@ -1664,9 +1668,9 @@ func (t *TenantStruct) Probe(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var tsp api_model.ServiceProbe
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsp, nil); !ok {
 		return
@@ -1715,9 +1719,9 @@ func (t *TenantStruct) AddProbe(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) UpdateProbe(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var tsp api_model.ServiceProbe
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsp, nil); !ok {
 		return
@@ -1769,9 +1773,9 @@ func (t *TenantStruct) UpdateProbe(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) DeleteProbe(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	var tsp api_model.ServiceProbe
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsp, nil); !ok {
 		return
@@ -1791,7 +1795,7 @@ func (t *TenantStruct) DeleteProbe(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//Port Port
+// Port Port
 func (t *TenantStruct) Port(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case "PUT":
@@ -1818,7 +1822,7 @@ func (t *TenantStruct) UpdatePort(w http.ResponseWriter, r *http.Request) {
 //SingleTenantResources SingleTenantResources
 // swagger:operation GET /v2/tenants/{tenant_name}/resources v2 singletenantResources
 //
-// Specified tenant resource usage
+// Specify tenant resource usage
 //
 // get tenant resources
 //
@@ -1837,9 +1841,9 @@ func (t *TenantStruct) UpdatePort(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	//11ms
 	services, err := handler.GetServiceManager().GetService(tenantID)
 	if err != nil {
@@ -1848,8 +1852,8 @@ func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Requ
 		}
 		httputil.Return(r, w, 500, msg)
 	}
-	//19ms
-	statsInfo, _ := handler.GetTenantManager().StatsMemCPU(services)
+	// 19ms
+	statsInfo, _ := handler.GetTenantManager (). StatsMemCPU (services)
 	//900ms
 	statsInfo.UUID = tenantID
 	httputil.ReturnSuccess(r, w, statsInfo)
@@ -1878,7 +1882,7 @@ func (t *TenantStruct) SingleTenantResources(w http.ResponseWriter, r *http.Requ
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Request) {
 	rps, err := handler.GetTenantManager().GetProtocols()
 	if err != nil {
@@ -1889,10 +1893,10 @@ func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Reques
 	return
 }
 
-//TransPlugins transPlugins
+// TransPlugins transPlugins
 // swagger:operation POST /v2/tenants/{tenant_name}/transplugins v2 transPlugins
 //
-// Install Gridworkz default plugins
+// Install the default plugins of Yunbang
 //
 // trans plugins
 //
@@ -1911,15 +1915,15 @@ func (t *TenantStruct) GetSupportProtocols(w http.ResponseWriter, r *http.Reques
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) TransPlugins(w http.ResponseWriter, r *http.Request) {
 	var tps api_model.TransPlugins
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tps.Body, nil)
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
 	rc := make(map[string]string)
 	err := handler.GetTenantManager().TransPlugins(tenantID, tenantName, tps.Body.FromTenantName, tps.Body.PluginsID)
 	if err != nil {
@@ -1928,5 +1932,22 @@ func (t *TenantStruct) TransPlugins(w http.ResponseWriter, r *http.Request) {
 	}
 	rc["result"] = "success"
 	httputil.ReturnSuccess(r, w, rc)
-	return
+}
+
+// CheckResourceName checks the resource name.
+func (t *TenantStruct) CheckResourceName(w http.ResponseWriter, r *http.Request) {
+	var req model.CheckResourceNameReq
+	if !httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil) {
+		return
+	}
+
+	tenant := r.Context().Value(ctxutil.ContextKey("tenant")).(*dbmodel.Tenants)
+
+	res, err := handler.GetTenantManager().CheckResourceName(r.Context(), tenant.UUID, &req)
+	if err != nil {
+		httputil.ReturnBcodeError(r, w, err)
+		return
+	}
+
+	httputil.ReturnSuccess(r, w, res)
 }

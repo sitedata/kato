@@ -79,12 +79,8 @@ func (r *RuntimeServer) GetPodDetail(ctx context.Context, req *pb.GetPodDetailRe
 	return podDetail, nil
 }
 
-func (r *RuntimeServer) getPodByName(sid, name string) (*corev1.Pod, error) {
-	app := r.store.GetAppService(sid)
-	if app == nil {
-		return nil, ErrAppServiceNotFound
-	}
-	return app.GetPodsByName(name), nil
+func (r *RuntimeServer) getPodByName(namespace, name string) (*corev1.Pod, error) {
+	return r.store.GetPod(namespace, name)
 }
 
 // GetPodEvents -
@@ -114,7 +110,7 @@ func (r RuntimeServer) listPodEventsByName(name, namespace string) []*pb.PodEven
 	eventsInterface := r.clientset.CoreV1().Events(namespace)
 	selector := eventsInterface.GetFieldSelector(&name, &namespace, nil, nil)
 	options := metav1.ListOptions{FieldSelector: selector.String()}
-	events, err := eventsInterface.List(options)
+	events, err := eventsInterface.List(context.Background(), options)
 	if err == nil && len(events.Items) > 0 {
 		podEvents := DescribeEvents(events)
 		return podEvents

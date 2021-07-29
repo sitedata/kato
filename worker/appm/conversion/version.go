@@ -38,6 +38,7 @@ import (
 	"github.com/jinzhu/gorm"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -70,7 +71,7 @@ func TenantServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 	}
 	nodeSelector := createNodeSelector(as, dbmanager)
 	tolerations := createToleration(nodeSelector)
-	podtmpSpec: = corev1.PodTemplateSpec {
+	podtmpSpec := corev1.PodTemplateSpec{
 		ObjectMeta: metav1.ObjectMeta{
 			Labels: as.GetCommonLabels(map[string]string{
 				"name":    as.ServiceAlias,
@@ -80,7 +81,7 @@ func TenantServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 			Name:        as.ServiceID + "-pod-spec",
 		},
 		Spec: corev1.PodSpec{
-			ImagePullSecrets: setImagePullSecrets (),
+			ImagePullSecrets: setImagePullSecrets(),
 			Volumes:          dv.GetVolumes(),
 			Containers:       []corev1.Container{*container},
 			NodeSelector:     nodeSelector,
@@ -99,7 +100,7 @@ func TenantServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 				}
 				return ""
 			}(),
-			HostNetwork: func () bool {
+			HostNetwork: func() bool {
 				if _, ok := as.ExtensionSet["hostnetwork"]; ok {
 					return true
 				}
@@ -124,17 +125,16 @@ func TenantServiceVersion(as *v1.AppService, dbmanager db.Manager) error {
 
 func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volume.Define, envs []corev1.EnvVar, envVarSecrets []*corev1.Secret, dbmanager db.Manager) (*corev1.Container, error) {
 	// secret as container environment variables
-	was envFromSecrets [] corev1.EnvFromSource
+	var envFromSecrets []corev1.EnvFromSource
 	for _, secret := range envVarSecrets {
 		envFromSecrets = append(envFromSecrets, corev1.EnvFromSource{
 			SecretRef: &corev1.SecretEnvSource{
-				LocalObjectReference: corev1.LocalObjectReference {
+				LocalObjectReference: corev1.LocalObjectReference{
 					Name: secret.Name,
 				},
 			},
 		})
 	}
-
 	args := createArgs(version, envs)
 	resources := createResources(as)
 	ports := createPorts(as, dbmanager)
@@ -152,7 +152,7 @@ func getMainContainer(as *v1.AppService, version *dbmodel.VersionInfo, dv *volum
 		Image:          imagename,
 		Args:           args,
 		Ports:          ports,
-		Env: envs,
+		Env:            envs,
 		EnvFrom:        envFromSecrets,
 		VolumeMounts:   dv.GetVolumeMounts(),
 		LivenessProbe:  createProbe(as, dbmanager, "liveness"),
@@ -188,8 +188,8 @@ func createArgs(version *dbmodel.VersionInfo, envs []corev1.EnvVar) (args []stri
 
 //createEnv create service container env
 func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.Secret) ([]corev1.EnvVar, error) {
-	var envs [] corev1.EnvVar
-	var envsAll [] * dbmodel.TenantServiceEnvVar
+	var envs []corev1.EnvVar
+	var envsAll []*dbmodel.TenantServiceEnvVar
 	//set logger env
 	//todo: user define and set logger config
 	envs = append(envs, corev1.EnvVar{
@@ -276,16 +276,20 @@ func createEnv(as *v1.AppService, dbmanager db.Manager, envVarSecrets []*corev1.
 	}
 	if len(ports) > 0 {
 		var portStr string
-		for i, port := range ports {
-			if i == 0 {
-				envs = append(envs, corev1.EnvVar{Name: "PORT", Value: strconv.Itoa(ports[0].ContainerPort)})
-				envs = append(envs, corev1.EnvVar{Name: "PROTOCOL", Value: ports[0].Protocol})
+		var minPort int
+		var protocol string
+		for _, port := range ports {
+			if minPort == 0 || minPort > port.ContainerPort {
+				minPort = port.ContainerPort
+				protocol = port.Protocol
 			}
 			if portStr != "" {
 				portStr += ":"
 			}
 			portStr += fmt.Sprintf("%d", port.ContainerPort)
 		}
+		envs = append(envs, corev1.EnvVar{Name: "PORT", Value: strconv.Itoa(minPort)})
+		envs = append(envs, corev1.EnvVar{Name: "PROTOCOL", Value: protocol})
 		menvs := convertRulesToEnvs(as, dbmanager, ports)
 		if len(envs) > 0 {
 			envs = append(envs, menvs...)
@@ -374,7 +378,7 @@ func convertRulesToEnvs(as *v1.AppService, dbmanager db.Manager, ports []*dbmode
 			}(),
 		})
 	}
-	var portInts [] int
+	var portInts []int
 	for _, port := range ports {
 		if *port.IsOuterService {
 			portInts = append(portInts, port.ContainerPort)
@@ -485,7 +489,7 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 	if limit, ok := as.ExtensionSet["cpulimit"]; ok {
 		limitint, _ := strconv.Atoi(limit)
 		if limitint > 0 {
-			cpuLimit = int64 (limitint)
+			cpuLimit = int64(limitint)
 		}
 	}
 	if request, ok := as.ExtensionSet["cpurequest"]; ok {
@@ -494,7 +498,24 @@ func createResources(as *v1.AppService) corev1.ResourceRequirements {
 			cpuRequest = int64(requestint)
 		}
 	}
-	return createResourcesByDefaultCPU(as.ContainerMemory, cpuRequest, cpuLimit)
+	rr := createResourcesByDefaultCPU(as.ContainerMemory, cpuRequest, cpuLimit)
+	// support set gpu, support application of single GPU video memory.
+	if as.ContainerGPU > 0 {
+		gpuLimit, err := resource.ParseQuantity(fmt.Sprintf("%d", as.ContainerGPU))
+		if err != nil {
+			logrus.Errorf("gpu request is invalid")
+		} else {
+			rr.Limits[getGPULableKey()] = gpuLimit
+		}
+	}
+	return rr
+}
+
+func getGPULableKey() corev1.ResourceName {
+	if os.Getenv("GPU_LABLE_KEY") != "" {
+		return corev1.ResourceName(os.Getenv("GPU_LABLE_KEY"))
+	}
+	return "kato.com/gpu-mem"
 }
 
 func checkUpstreamPluginRelation(serviceID string, dbmanager db.Manager) (bool, error) {
@@ -547,7 +568,7 @@ func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.Contai
 			ps, err = createUpstreamPluginMappingPort(ps, pluginPorts)
 		}
 		for i := range ps {
-			p: = ps [i]
+			p := ps[i]
 			ports = append(ports, corev1.ContainerPort{
 				ContainerPort: int32(p.ContainerPort),
 				// Must be UDP, TCP, or SCTP.
@@ -561,7 +582,7 @@ func createPorts(as *v1.AppService, dbmanager db.Manager) (ports []corev1.Contai
 func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.Probe {
 	probe, err := dbmanager.ServiceProbeDao().GetServiceUsedProbe(as.ServiceID, mode)
 	if err == nil && probe != nil {
-		if mode == "liveness" && probe.SuccessThreshold < 1 {
+		if mode == "liveness" {
 			probe.SuccessThreshold = 1
 		}
 		if mode == "readiness" && probe.FailureThreshold < 1 {
@@ -593,7 +614,7 @@ func createProbe(as *v1.AppService, dbmanager db.Manager, mode string) *corev1.P
 							Value: "",
 						}
 						headers = append(headers, header)
-					} else if len (kv) == 2 {
+					} else if len(kv) == 2 {
 						header := corev1.HTTPHeader{
 							Name:  kv[0],
 							Value: kv[1],
@@ -642,7 +663,8 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	nsr := make([]corev1.NodeSelectorRequirement, 0)
 	podAffinity := make([]corev1.PodAffinityTerm, 0)
 	podAntAffinity := make([]corev1.PodAffinityTerm, 0)
-	osWindowsSelect: = false
+	osWindowsSelect := false
+	enableGPU := as.ContainerGPU > 0
 	labels, err := dbmanager.TenantServiceLabelDao().GetTenantServiceAffinityLabel(as.ServiceID)
 	if err == nil && labels != nil && len(labels) > 0 {
 		for _, l := range labels {
@@ -655,7 +677,7 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 			if l.LabelKey == dbmodel.LabelKeyNodeAffinity {
 				if l.LabelValue == "windows" {
 					nsr = append(nsr, corev1.NodeSelectorRequirement{
-						Key: client.LabelOS,
+						Key:      client.LabelOS,
 						Operator: corev1.NodeSelectorOpIn,
 						Values:   []string{l.LabelValue},
 					})
@@ -698,16 +720,36 @@ func createAffinity(as *v1.AppService, dbmanager db.Manager) *corev1.Affinity {
 	}
 	if !osWindowsSelect {
 		nsr = append(nsr, corev1.NodeSelectorRequirement{
-			Key: client.LabelOS,
+			Key:      client.LabelOS,
 			Operator: corev1.NodeSelectorOpNotIn,
 			Values:   []string{"windows"},
+		})
+	}
+	if !enableGPU {
+		nsr = append(nsr, corev1.NodeSelectorRequirement{
+			Key:      client.LabelGPU,
+			Values:   []string{"true"},
+			Operator: corev1.NodeSelectorOpNotIn,
+		})
+	} else {
+		nsr = append(nsr, corev1.NodeSelectorRequirement{
+			Key:      client.LabelGPU,
+			Values:   []string{"true"},
+			Operator: corev1.NodeSelectorOpIn,
+		})
+	}
+	if hostname, ok := as.ExtensionSet["selecthost"]; ok {
+		nsr = append(nsr, corev1.NodeSelectorRequirement{
+			Key:      "kubernetes.io/hostname",
+			Values:   []string{hostname},
+			Operator: corev1.NodeSelectorOpIn,
 		})
 	}
 	if len(nsr) > 0 {
 		affinity.NodeAffinity = &corev1.NodeAffinity{
 			RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
 				NodeSelectorTerms: []corev1.NodeSelectorTerm{
-					corev1.NodeSelectorTerm{MatchExpressions: nsr},
+					{MatchExpressions: nsr},
 				},
 			},
 		}
@@ -737,7 +779,7 @@ func createPodAnnotations(as *v1.AppService) map[string]string {
 	return annotations
 }
 
-func setImagePullSecrets () [] corev1.LocalObjectReference {
+func setImagePullSecrets() []corev1.LocalObjectReference {
 	imagePullSecretName := os.Getenv("IMAGE_PULL_SECRET")
 	if imagePullSecretName == "" {
 		return nil
@@ -749,7 +791,7 @@ func setImagePullSecrets () [] corev1.LocalObjectReference {
 }
 
 func createToleration(nodeSelector map[string]string) []corev1.Toleration {
-	var tolerations [] corev1.Toleration
+	var tolerations []corev1.Toleration
 	if value, exist := nodeSelector["type"]; exist && value == "virtual-kubelet" {
 		tolerations = append(tolerations, corev1.Toleration{
 			Key:      "virtual-kubelet.io/provider",
@@ -772,7 +814,7 @@ func createHostAliases(as *v1.AppService) []corev1.HostAlias {
 			}
 		}
 	}
-	var re [] corev1.HostAlias
+	var re []corev1.HostAlias
 	for k := range cache {
 		re = append(re, *cache[k])
 	}

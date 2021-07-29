@@ -40,9 +40,8 @@ import (
 	"github.com/gridworkz/kato/util"
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
-	"github.com/tidwall/gjson" //"github.com/docker/docker/api/types"
+	"github.com/tidwall/gjson"
 	"k8s.io/client-go/kubernetes"
-	//"github.com/docker/docker/client"
 )
 
 //SourceCodeBuildItem SouceCodeBuildItem
@@ -59,8 +58,7 @@ type SourceCodeBuildItem struct {
 	Logger        event.Logger `json:"logger"`
 	EventID       string       `json:"event_id"`
 	CacheDir      string       `json:"cache_dir"`
-	//SourceDir     string       `json:"source_dir"`
-	TGZDir        string `json:"tgz_dir"`
+	TGZDir        string       `json:"tgz_dir"`
 	DockerClient  *client.Client
 	KubeClient    kubernetes.Interface
 	RbdNamespace  string
@@ -133,13 +131,13 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 	// 4.upload image /upload slug
 	rbi, err := sources.CreateRepostoryBuildInfo(i.CodeSouceInfo.RepositoryURL, i.CodeSouceInfo.ServerType, i.CodeSouceInfo.Branch, i.TenantID, i.ServiceID)
 	if err != nil {
-		i.Logger.Error("Git project warehouse address format error", map[string]string{"step": "parse"})
+		i.Logger.Error("Git project repository address format error", map[string]string{"step": "parse"})
 		return err
 	}
 	i.RepoInfo = rbi
 	if err := i.prepare(); err != nil {
 		logrus.Errorf("prepare build code error: %s", err.Error())
-		i.Logger.Error(fmt.Sprintf("failed to prepare source code build"), map[string]string{"step": "builder-exector", "status": "failure"})
+		i.Logger.Error("Failed to prepare source code to build", map[string]string{"step": "builder-exector", "status": "failure"})
 		return err
 	}
 	i.CodeSouceInfo.RepositoryURL = rbi.RepostoryURL
@@ -155,7 +153,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 		}
 		if rs.Logs == nil || len(rs.Logs.CommitEntrys) < 1 {
 			logrus.Errorf("get code commit info error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("failed to prepare source code build"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("Failed to read code version information"), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.commit = Commit{
@@ -163,19 +161,21 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 			Message: rs.Logs.CommitEntrys[0].Msg,
 			Author:  rs.Logs.CommitEntrys[0].Author,
 		}
+	case "oss":
+		i.commit = Commit{}
 	default:
 		//default git
 		rs, err := sources.GitCloneOrPull(i.CodeSouceInfo, rbi.GetCodeHome(), i.Logger, 5)
 		if err != nil {
 			logrus.Errorf("pull git code error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("failed to pull the code, please make sure the code can be downloaded normally"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("Failed to pull the code, please make sure the code can be downloaded normally", map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		//get last commit
 		commit, err := sources.GetLastCommit(rs)
 		if err != nil || commit == nil {
 			logrus.Errorf("get code commit info error: %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("failed to read code version information"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error("Failed to read code version information", map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.commit = Commit{
@@ -201,7 +201,7 @@ func (i *SourceCodeBuildItem) Run(timeout time.Duration) error {
 		_, lang, err := parser.ReadRbdConfigAndLang(rbi)
 		if err != nil {
 			logrus.Errorf("reparse code lange error %s", err.Error())
-			i.Logger.Error(fmt.Sprintf("reparse code language error"), map[string]string{"step": "builder-exector", "status": "failure"})
+			i.Logger.Error(fmt.Sprintf("Re-parse code language error"), map[string]string{"step": "builder-exector", "status": "failure"})
 			return err
 		}
 		i.Lang = string(lang)
@@ -241,6 +241,7 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 		CacheDir:      i.CacheDir,
 		TGZDir:        i.TGZDir,
 		RepositoryURL: i.RepoInfo.RepostoryURL,
+		CodeSouceInfo: i.CodeSouceInfo,
 		ServiceAlias:  i.ServiceAlias,
 		ServiceID:     i.ServiceID,
 		TenantID:      i.TenantID,
@@ -265,28 +266,13 @@ func (i *SourceCodeBuildItem) codeBuild() (*build.Response, error) {
 	return res, err
 }
 
-func (i *SourceCodeBuildItem) getExtraHosts() (extraHosts []string, err error) {
-	endpoints, err := i.KubeClient.CoreV1().Endpoints(i.RbdNamespace).Get(i.RbdRepoName, metav1.GetOptions{})
-	if err != nil {
-		logrus.Errorf("do not found ep by name: %s in namespace: %s", i.RbdRepoName, i.Namespace)
-		return nil, err
-	}
-	for _, subset := range endpoints.Subsets {
-		for _, addr := range subset.Addresses {
-			extraHosts = append(extraHosts, fmt.Sprintf("maven.gridworkz:%s", addr.IP))
-			extraHosts = append(extraHosts, fmt.Sprintf("lang.gridworkz:%s", addr.IP))
-		}
-	}
-	return
-}
-
 func (i *SourceCodeBuildItem) getHostAlias() (hostAliasList []build.HostAlias, err error) {
-	endpoints, err := i.KubeClient.CoreV1().Endpoints(i.RbdNamespace).Get(i.RbdRepoName, metav1.GetOptions{})
+	endpoints, err := i.KubeClient.CoreV1().Endpoints(i.RbdNamespace).Get(context.Background(), i.RbdRepoName, metav1.GetOptions{})
 	if err != nil {
 		logrus.Errorf("do not found ep by name: %s in namespace: %s", i.RbdRepoName, i.Namespace)
 		return nil, err
 	}
-	hostNames := []string{"maven.gridworkz", "lang.gridworkz"}
+	hostNames := []string{"maven.gridworkz.me", "lang.gridworkz.me"}
 	for _, subset := range endpoints.Subsets {
 		for _, addr := range subset.Addresses {
 			hostAliasList = append(hostAliasList, build.HostAlias{IP: addr.IP, Hostnames: hostNames})

@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
 
+	katov1alpha1 "github.com/gridworkz/kato-operator/api/v1alpha1"
 	"github.com/gridworkz/kato/api/region"
 	"github.com/gridworkz/kato/builder/sources"
 	"github.com/gridworkz/kato/cmd/grctl/option"
@@ -14,6 +16,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 var pemDirPath = ".rbd/ssl"
@@ -52,13 +55,15 @@ func NewCmdInstall() cli.Command {
 			fmt.Println("Start install, please waiting!")
 			CommonWithoutRegion(c)
 			namespace := c.String("namespace")
-			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get("rbd-api-client-cert", metav1.GetOptions{})
+			apiClientSecrit, err := clients.K8SClient.CoreV1().Secrets(namespace).Get(context.Background(), "rbd-api-client-cert", metav1.GetOptions{})
 			if err != nil {
 				showError(fmt.Sprintf("get region api tls secret failure %s", err.Error()))
 			}
 			regionAPIIP := c.StringSlice("gateway-ip")
 			if len(regionAPIIP) == 0 {
-				cluster, err := clients.KatoKubeClient.KatoV1alpha1().KatoClusters(namespace).Get("katocluster", metav1.GetOptions{})
+				var cluster katov1alpha1.KatoCluster
+				err := clients.KatoKubeClient.Get(context.Background(),
+					types.NamespacedName{Namespace: namespace, Name: "katocluster"}, &cluster)
 				if err != nil {
 					showError(fmt.Sprintf("get kato cluster config failure %s", err.Error()))
 				}

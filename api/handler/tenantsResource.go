@@ -1,13 +1,16 @@
 package handler
 
 import (
+	"context"
+
 	dbmodel "github.com/gridworkz/kato/db/model"
+	"github.com/gridworkz/kato/util"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // CheckTenantResource check tenant's resource is support action or not
-func CheckTenantResource(tenant *dbmodel.Tenants, needMemory int) error {
+func CheckTenantResource(ctx context.Context, tenant *dbmodel.Tenants, needMemory int) error {
 	ts, err := GetServiceManager().GetTenantRes(tenant.UUID)
 	if err != nil {
 		return err
@@ -20,17 +23,29 @@ func CheckTenantResource(tenant *dbmodel.Tenants, needMemory int) error {
 			return errors.New("tenant_lack_of_memory")
 		}
 	}
-	clusterInfo, err := GetTenantManager().GetAllocatableResources()
+
+	allcm, err := ClusterAllocMemory(ctx)
 	if err != nil {
-		logrus.Errorf("get cluster resources failure for check tenant resource: %v", err.Error())
+		return err
 	}
-	if clusterInfo != nil {
-		clusterAvailMemory := clusterInfo.AllMemory - clusterInfo.RequestMemory
-		logrus.Debugf("cluster allocatedMemory: %v, availmemory %d tenantsUsedMemory; %v", clusterInfo.RequestMemory, clusterAvailMemory, clusterInfo.RequestMemory)
-		if int64(needMemory) > clusterAvailMemory {
-			logrus.Errorf("cluster available memory is %d, To apply for %d, not enough", clusterAvailMemory, needMemory)
-			return errors.New("cluster_lack_of_memory")
-		}
+
+	if int64(needMemory) > allcm {
+		logrus.Errorf("cluster available memory is %d, To apply for %d, not enough", allcm, needMemory)
+		return errors.New("cluster_lack_of_memory")
 	}
+
 	return nil
+}
+
+// ClusterAllocMemory returns the allocatable memory of the cluster.
+func ClusterAllocMemory(ctx context.Context) (int64, error) {
+	if logrus.IsLevelEnabled(logrus.DebugLevel) {
+		defer util.Elapsed("ClusterAllocMemory")()
+	}
+
+	clusterInfo, err := GetTenantManager().GetAllocatableResources(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return clusterInfo.AllMemory - clusterInfo.RequestMemory, nil
 }

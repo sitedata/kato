@@ -35,6 +35,7 @@ import (
 
 //LabelOS - node label about os
 var LabelOS = "beta.kubernetes.io/os"
+var LabelGPU = "beta.kato.com/gpushare"
 
 //APIHostNode
 type APIHostNode struct {

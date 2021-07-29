@@ -64,9 +64,9 @@ var ErrServiceNotClosed = errors.New("Service has not been closed")
 
 //ServiceAction service act
 type ServiceAction struct {
-	MQClient gclient.MQClient
-	EtcdCli * clientv3.Client
-	statusCli * client.AppRuntimeSyncClient
+	MQClient       gclient.MQClient
+	EtcdCli        *clientv3.Client
+	statusCli      *client.AppRuntimeSyncClient
 	prometheusCli  prometheus.Interface
 	conf           option.Config
 	katoClient versioned.Interface
@@ -83,16 +83,16 @@ type dCfg struct {
 //CreateManager create Manger
 func CreateManager(conf option.Config,
 	mqClient gclient.MQClient,
-	etcdCli * clientv3.Client,
-	statusCli * client.AppRuntimeSyncClient,
+	etcdCli *clientv3.Client,
+	statusCli *client.AppRuntimeSyncClient,
 	prometheusCli prometheus.Interface,
 	katoClient versioned.Interface) *ServiceAction {
 	return &ServiceAction{
-		MQClient: mqClient,
+		MQClient:       mqClient,
 		EtcdCli:        etcdCli,
 		statusCli:      statusCli,
-		conf: conf,
-		prometheusCli: prometheusCli,
+		conf:           conf,
+		prometheusCli:  prometheusCli,
 		katoClient: katoClient,
 	}
 }
@@ -265,11 +265,11 @@ func (s *ServiceAction) AddLabel(l *api_model.LabelsStruct, serviceID string) er
 			tx.Rollback()
 		}
 	}()
-	//V5.2: do not support service type label
+	//V5.2: does not support service type label
 	for _, label := range l.Labels {
 		labelModel := dbmodel.TenantServiceLable{
 			ServiceID:  serviceID,
-			LabelKey: label.LabelKey,
+			LabelKey:   label.LabelKey,
 			LabelValue: label.LabelValue,
 		}
 		if err := db.GetManager().TenantServiceLabelDaoTransactions(tx).AddModel(&labelModel); err != nil {
@@ -296,17 +296,17 @@ func (s *ServiceAction) UpdateLabel(l *api_model.LabelsStruct, serviceID string)
 	for _, label := range l.Labels {
 		// delete old labels
 		err := db.GetManager().TenantServiceLabelDaoTransactions(tx).
-			DelTenantServiceLabelsByServiceIDKey (serviceID, label.LabelKey)
+			DelTenantServiceLabelsByServiceIDKey(serviceID, label.LabelKey)
 		if err != nil {
 			logrus.Errorf("error deleting old labels: %v", err)
 			tx.Rollback()
 			return err
 		}
-		// V5.2 do not support service type label
+		// V5.2 does not support service type label
 		// add new labels
 		labelModel := dbmodel.TenantServiceLable{
 			ServiceID:  serviceID,
-			LabelKey: label.LabelKey,
+			LabelKey:   label.LabelKey,
 			LabelValue: label.LabelValue,
 		}
 		if err := db.GetManager().TenantServiceLabelDaoTransactions(tx).AddModel(&labelModel); err != nil {
@@ -334,7 +334,7 @@ func (s *ServiceAction) DeleteLabel(l *api_model.LabelsStruct, serviceID string)
 	}()
 	for _, label := range l.Labels {
 		err := db.GetManager().TenantServiceLabelDaoTransactions(tx).
-			DelTenantServiceLabelsByServiceIDKeyValue (serviceID, label.LabelKey, label.LabelValue)
+			DelTenantServiceLabelsByServiceIDKeyValue(serviceID, label.LabelKey, label.LabelValue)
 		if err != nil {
 			logrus.Errorf("error deleting label: %v", err)
 			tx.Rollback()
@@ -367,7 +367,7 @@ func (s *ServiceAction) StartStopService(sss *api_model.StartStopStruct) error {
 		Topic:    gclient.WorkerTopic,
 	})
 	if err != nil {
-		logrus.Errorf("equque mq error, %v", err)
+		logrus.Errorf("equeue mq error, %v", err)
 		return err
 	}
 	logrus.Debugf("equeue mq startstop task success")
@@ -544,9 +544,9 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 		ts.ContainerGPU = 0
 	}
 	ts.UpdateTime = time.Now()
-	where (
+	var (
 		ports         = sc.PortsInfo
-		envs = sc.EnvsInfo
+		envs          = sc.EnvsInfo
 		volumns       = sc.VolumesInfo
 		dependVolumes = sc.DepVolumesInfo
 		dependIds     = sc.DependIDs
@@ -589,7 +589,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	if len(ports) > 0 {
 		var batchPorts []*dbmodel.TenantServicesPort
 		for _, port := range ports {
-			port: = port
+			port := port
 			port.ServiceID = ts.ServiceID
 			port.TenantID = ts.TenantID
 			batchPorts = append(batchPorts, &port)
@@ -623,15 +623,15 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				VolumeCapacity: volumn.VolumeCapacity,
 				// AccessMode Read and write mode（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
 				AccessMode: volumn.AccessMode,
-				// SharePolicy sharing mode
+				// SharePolicy Sharing mode
 				SharePolicy: volumn.SharePolicy,
-				// BackupPolicy backup policy
+				// BackupPolicy Backup strategy
 				BackupPolicy: volumn.BackupPolicy,
-				// ReclaimPolicy recycling strategy
+				// ReclaimPolicy Recycling strategy
 				ReclaimPolicy: volumn.ReclaimPolicy,
-				// Whether AllowExpansion supports expansion
+				// AllowExpansion Whether to support expansion
 				AllowExpansion: volumn.AllowExpansion,
-				// The storage driver alias used by VolumeProviderName
+				// VolumeProviderName Storage driver alias used
 				VolumeProviderName: volumn.VolumeProviderName,
 			}
 			v.ServiceID = ts.ServiceID
@@ -639,7 +639,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 				v.VolumeType = dbmodel.ShareFileVolumeType.String()
 			}
 			if volumn.HostPath == "" {
-				//step 1 set the host directory
+				//step 1 Set up the host directory
 				switch volumn.VolumeType {
 				//Shared file storage
 				case dbmodel.ShareFileVolumeType.String():
@@ -713,7 +713,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	if sc.OSType == "windows" {
 		if err := db.GetManager().TenantServiceLabelDaoTransactions(tx).AddModel(&dbmodel.TenantServiceLable{
 			ServiceID:  ts.ServiceID,
-			LabelKey: core_model.LabelKeyNodeSelector,
+			LabelKey:   core_model.LabelKeyNodeSelector,
 			LabelValue: sc.OSType,
 		}); err != nil {
 			logrus.Errorf("add label %s=%s  %v error, %v", core_model.LabelKeyNodeSelector, sc.OSType, ts.ServiceID, err)
@@ -831,7 +831,7 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	}
 	labelModel := dbmodel.TenantServiceLable{
 		ServiceID:  ts.ServiceID,
-		LabelKey: dbmodel.LabelKeyServiceType,
+		LabelKey:   dbmodel.LabelKeyServiceType,
 		LabelValue: core_util.StatelessServiceType,
 	}
 	if ts.IsState() {
@@ -1047,9 +1047,9 @@ func (s *ServiceAction) GetTenantRes(uuid string) (*api_model.TenantResource, er
 	var AllocatedCPU, AllocatedMEM int
 	for _, ser := range services {
 		if serviceIDs == "" {
-			serviceIDs + = ser.ServiceID
+			serviceIDs += ser.ServiceID
 		} else {
-			serviceIDs + = "," + ser.ServiceID
+			serviceIDs += "," + ser.ServiceID
 		}
 		AllocatedCPU += ser.ContainerCPU * ser.Replicas
 		AllocatedMEM += ser.ContainerMemory * ser.Replicas
@@ -1152,7 +1152,7 @@ func (s *ServiceAction) ServiceDepend(action string, ds *api_model.DependService
 			ServiceID:         ds.ServiceID,
 			DependServiceID:   ds.DepServiceID,
 			DependServiceType: ds.DepServiceType,
-			DependOrder: 1,
+			DependOrder:       1,
 		}
 		if err := db.GetManager().TenantServiceRelationDao().AddModel(tsr); err != nil {
 			logrus.Errorf("add depend error, %v", err)
@@ -1260,7 +1260,7 @@ func (s *ServiceAction) deletePorts(componentID string, ports *api_model.Service
 
 // SyncComponentPorts -
 func (s *ServiceAction) SyncComponentPorts(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		ports        []*dbmodel.TenantServicesPort
 	)
@@ -1279,7 +1279,7 @@ func (s *ServiceAction) SyncComponentPorts(tx *gorm.DB, app *dbmodel.Application
 	return db.GetManager().TenantServicesPortDaoTransactions(tx).CreateOrUpdatePortsInBatch(ports)
 }
 
-// PortVar port var
+//PortVar port var
 func (s *ServiceAction) PortVar(action, tenantID, serviceID string, vps *api_model.ServicePorts, oldPort int) error {
 	crt, err := db.GetManager().TenantServicePluginRelationDao().CheckSomeModelPluginByServiceID(
 		serviceID,
@@ -1300,7 +1300,7 @@ func (s *ServiceAction) PortVar(action, tenantID, serviceID string, vps *api_mod
 			}
 		}()
 		for _, vp := range vps.Port {
-			//port update a single request
+			//port Update a single request
 			if oldPort == 0 {
 				oldPort = vp.ContainerPort
 			}
@@ -1371,7 +1371,7 @@ func (s *ServiceAction) PortVar(action, tenantID, serviceID string, vps *api_mod
 	return nil
 }
 
-//PortOuter port external service operation
+//PortOuter Port external service operation
 func (s *ServiceAction) PortOuter(tenantName, serviceID string, containerPort int,
 	servicePort *api_model.ServicePortInnerOrOuter) (*dbmodel.TenantServiceLBMappingPort, string, error) {
 	p, err := db.GetManager().TenantServicesPortDao().GetPort(serviceID, containerPort)
@@ -1389,12 +1389,12 @@ func (s *ServiceAction) PortOuter(tenantName, serviceID string, containerPort in
 	if err != nil {
 		return nil, "", fmt.Errorf("get plugin relations error: %s", err.Error())
 	}
-	//if stream create vs port
+	//if stream Create vs port
 	vsPort := &dbmodel.TenantServiceLBMappingPort{}
 	switch servicePort.Body.Operation {
 	case "close":
-		if *p.IsOuterService {//If the port has been opened to the outside world
-			falsev: = false
+		if *p.IsOuterService { //If the port has been opened to the outside
+			falsev := false
 			p.IsOuterService = &falsev
 			tx := db.GetManager().Begin()
 			defer func() {
@@ -1498,7 +1498,7 @@ func (s *ServiceAction) PortOuter(tenantName, serviceID string, containerPort in
 	return vsPort, p.Protocol, nil
 }
 
-//PortInner port internal service operation
+//PortInner Port internal service operation
 //TODO: send task to worker
 func (s *ServiceAction) PortInner(tenantName, serviceID, operation string, port int) error {
 	p, err := db.GetManager().TenantServicesPortDao().GetPort(serviceID, port)
@@ -1525,8 +1525,8 @@ func (s *ServiceAction) PortInner(tenantName, serviceID, operation string, port 
 	}()
 	switch operation {
 	case "close":
-		if *p.IsInnerService {//If the port has been opened internally
-			falsev: = false
+		if *p.IsInnerService { //If the port has been opened internally
+			falsev := false
 			p.IsInnerService = &falsev
 			if err = db.GetManager().TenantServicesPortDaoTransactions(tx).UpdateModel(p); err != nil {
 				tx.Rollback()
@@ -1603,7 +1603,7 @@ func (s *ServiceAction) PortInner(tenantName, serviceID, operation string, port 
 				return fmt.Errorf("inner, in setting plugin mapping port, get plugin mapping port error:(%s)", err)
 			}
 			logrus.Debugf("inner, plugin mapping port is already exist, %d->%d", pluginPort.ContainerPort, pluginPort.PluginPort)
-		INNER OPEN PASS:
+		INNEROPENPASS:
 			logrus.Debugf("inner, set plugin mapping port %d->%d", port, pPort)
 		}
 	}
@@ -1628,7 +1628,7 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantServiceVolume, tenantID, fi
 	switch action {
 	case "add":
 		if tsv.HostPath == "" {
-			//step 1 set the host directory
+			//step 1 Set up the host directory
 			switch tsv.VolumeType {
 			//Shared file storage
 			case dbmodel.ShareFileVolumeType.String():
@@ -1646,7 +1646,7 @@ func (s *ServiceAction) VolumnVar(tsv *dbmodel.TenantServiceVolume, tenantID, fi
 				tsv.HostPath = fmt.Sprintf("%s/tenant/%s/service/%s%s", localPath, tenantID, tsv.ServiceID, tsv.VolumePath)
 			}
 		}
-		util.SetVolumeDefaultValue (tsv)
+		util.SetVolumeDefaultValue(tsv)
 		// begin transaction
 		tx := db.GetManager().Begin()
 		defer func() {
@@ -1765,7 +1765,7 @@ func (s *ServiceAction) UpdVolume(sid string, req *api_model.UpdVolumeReq) error
 	return nil
 }
 
-//GetVolumes Get all the storage of the application
+//GetVolumes Get all application storage
 func (s *ServiceAction) GetVolumes(serviceID string) ([]*api_model.VolumeWithStatusStruct, *util.APIHandleError) {
 	volumeWithStatusList := make([]*api_model.VolumeWithStatusStruct, 0)
 	vs, err := db.GetManager().TenantServiceVolumeDao().GetTenantServiceVolumesByServiceID(serviceID)
@@ -1833,11 +1833,11 @@ func (s *ServiceAction) VolumeDependency(tsr *dbmodel.TenantServiceMountRelation
 		}
 	case "delete":
 		if tsr.VolumeName != "" {
-			if err: = db.GetManager (). TenantServiceMountRelationDao (). DElTenantServiceMountRelationByServiceAndName (tsr.ServiceID, tsr.VolumeName); err! = nil {
+			if err := db.GetManager().TenantServiceMountRelationDao().DElTenantServiceMountRelationByServiceAndName(tsr.ServiceID, tsr.VolumeName); err != nil {
 				return util.CreateAPIHandleErrorFromDBError("delete mount relation", err)
 			}
 		} else {
-			if err: = db.GetManager (). TenantServiceMountRelationDao (). DElTenantServiceMountRelationByDepService (tsr.ServiceID, tsr.DependServiceID); err! = nil {
+			if err := db.GetManager().TenantServiceMountRelationDao().DElTenantServiceMountRelationByDepService(tsr.ServiceID, tsr.DependServiceID); err != nil {
 				return util.CreateAPIHandleErrorFromDBError("delete mount relation", err)
 			}
 		}
@@ -1937,7 +1937,7 @@ func (s *ServiceAction) GetStatus(serviceID string) (*api_model.StatusList, erro
 	return sl, nil
 }
 
-//GetServicesStatus Get a set of application status, if serviceIDs is empty, get all application status of the tenant
+//GetServicesStatus  Get a set of application status, if serviceIDs is empty, get all application status of the tenant
 func (s *ServiceAction) GetServicesStatus(tenantID string, serviceIDs []string) []map[string]interface{} {
 	if serviceIDs == nil || len(serviceIDs) == 0 {
 		services, _ := db.GetManager().TenantServiceDao().GetServicesByTenantID(tenantID)
@@ -1986,7 +1986,7 @@ func (s *ServiceAction) GetEnterpriseRunningServices(enterpriseID string) ([]str
 	retServices := make([]string, 0, 10)
 	for service, status := range statusList {
 		if status == typesv1.RUNNING {
-			retServices = append (retServices, service)
+			retServices = append(retServices, service)
 		}
 	}
 	return retServices, nil
@@ -2026,7 +2026,7 @@ func (s *ServiceAction) CreateTenandIDAndName(eid string) (string, string, error
 	return uid, name, nil
 }
 
-// K8sPodInfos -
+//K8sPodInfos -
 type K8sPodInfos struct {
 	NewPods []*K8sPodInfo `json:"new_pods"`
 	OldPods []*K8sPodInfo `json:"old_pods"`
@@ -2053,7 +2053,7 @@ func (s *ServiceAction) GetPods(serviceID string) (*K8sPodInfos, error) {
 		return nil, nil
 	}
 	convpod := func(pods []*pb.ServiceAppPod) []*K8sPodInfo {
-		var podsInfoList [] * K8sPodInfo
+		var podsInfoList []*K8sPodInfo
 		var podNames []string
 		for _, v := range pods {
 			var podInfo K8sPodInfo
@@ -2069,7 +2069,7 @@ func (s *ServiceAction) GetPods(serviceID string) (*K8sPodInfos, error) {
 				}
 			}
 			podInfo.Container = containerInfos
-			podNames = append (podNames, v.PodName)
+			podNames = append(podNames, v.PodName)
 			podsInfoList = append(podsInfoList, &podInfo)
 		}
 		containerMemInfo, _ := s.GetPodContainerMemory(podNames)
@@ -2102,7 +2102,7 @@ func (s *ServiceAction) GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, 
 		return nil, nil
 	}
 	convpod := func(serviceID string, pods []*pb.ServiceAppPod) []*K8sPodInfo {
-		var podsInfoList [] * K8sPodInfo
+		var podsInfoList []*K8sPodInfo
 		var podNames []string
 		for _, v := range pods {
 			var podInfo K8sPodInfo
@@ -2110,7 +2110,7 @@ func (s *ServiceAction) GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, 
 			podInfo.PodIP = v.PodIp
 			podInfo.PodStatus = v.PodStatus
 			podInfo.ServiceID = serviceID
-			podNames = append (podNames, v.PodName)
+			podNames = append(podNames, v.PodName)
 			podsInfoList = append(podsInfoList, &podInfo)
 		}
 		return podsInfoList
@@ -2214,7 +2214,7 @@ func (s *ServiceAction) isServiceClosed(serviceID string) error {
 }
 
 func (s *ServiceAction) deleteComponent(tx *gorm.DB, service *dbmodel.TenantServices) error {
-	delService: = service.ChangeDelete ()
+	delService := service.ChangeDelete()
 	delService.ID = 0
 	if err := db.GetManager().TenantServiceDeleteDaoTransactions(tx).AddModel(delService); err != nil {
 		return err
@@ -2228,7 +2228,7 @@ func (s *ServiceAction) deleteComponent(tx *gorm.DB, service *dbmodel.TenantServ
 		db.GetManager().TenantServiceDaoTransactions(tx).DeleteServiceByServiceID,
 		db.GetManager().TenantServicesPortDaoTransactions(tx).DELPortsByServiceID,
 		db.GetManager().TenantServiceRelationDaoTransactions(tx).DELRelationsByServiceID,
-		db.GetManager (). TenantServiceMountRelationDaoTransactions (tx) .DELTenantServiceMountRelationByServiceID,
+		db.GetManager().TenantServiceMountRelationDaoTransactions(tx).DELTenantServiceMountRelationByServiceID,
 		db.GetManager().TenantServiceVolumeDaoTransactions(tx).DeleteTenantServiceVolumesByServiceID,
 		db.GetManager().TenantServiceConfigFileDaoTransactions(tx).DelByServiceID,
 		db.GetManager().EndpointsDaoTransactions(tx).DeleteByServiceID,
@@ -2320,7 +2320,7 @@ func (s *ServiceAction) gcTaskBody(tenantID, serviceID string) (map[string]inter
 	if err != nil {
 		logrus.Errorf("list events based on serviceID: %v", err)
 	}
-	was eventIDs [] string
+	var eventIDs []string
 	for _, event := range events {
 		eventIDs = append(eventIDs, event.EventID)
 	}
@@ -2357,7 +2357,7 @@ func (s *ServiceAction) ListVersionInfo(serviceID string) (*api_model.BuildListR
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling version infos: %v", err)
 	}
-	var bversions [] * api_model.BuildVersion
+	var bversions []*api_model.BuildVersion
 	if err := json.Unmarshal(b, &bversions); err != nil {
 		return nil, fmt.Errorf("error unmarshaling version infos: %v", err)
 	}
@@ -2366,7 +2366,7 @@ func (s *ServiceAction) ListVersionInfo(serviceID string) (*api_model.BuildListR
 		if bv.Kind == "build_from_image" || bv.Kind == "build_from_market_image" {
 			image := parser.ParseImageName(bv.RepoURL)
 			bv.ImageDomain = image.GetDomain()
-			eg ImageRepo = image.GetRepostory ()
+			bv.ImageRepo = image.GetRepostory()
 			bv.ImageTag = image.GetTag()
 		}
 	}
@@ -2500,7 +2500,7 @@ func (s *ServiceAction) ListScalingRecords(serviceID string, page, pageSize int)
 
 // SyncComponentBase -
 func (s *ServiceAction) SyncComponentBase(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		dbComponents []*dbmodel.TenantServices
 	)
@@ -2530,7 +2530,7 @@ func (s *ServiceAction) SyncComponentBase(tx *gorm.DB, app *dbmodel.Application,
 
 // SyncComponentRelations -
 func (s *ServiceAction) SyncComponentRelations(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		relations    []*dbmodel.TenantServiceRelation
 	)
@@ -2551,7 +2551,7 @@ func (s *ServiceAction) SyncComponentRelations(tx *gorm.DB, app *dbmodel.Applica
 
 // SyncComponentEnvs -
 func (s *ServiceAction) SyncComponentEnvs(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		envs         []*dbmodel.TenantServiceEnvVar
 	)
@@ -2572,7 +2572,7 @@ func (s *ServiceAction) SyncComponentEnvs(tx *gorm.DB, app *dbmodel.Application,
 
 // SyncComponentVolumeRels -
 func (s *ServiceAction) SyncComponentVolumeRels(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		volRels      []*dbmodel.TenantServiceMountRelation
 	)
@@ -2581,7 +2581,7 @@ func (s *ServiceAction) SyncComponentVolumeRels(tx *gorm.DB, app *dbmodel.Applic
 	if err != nil {
 		return err
 	}
-	var appComponentIDs [] string
+	var appComponentIDs []string
 	for _, ac := range appComponents {
 		appComponentIDs = append(appComponentIDs, ac.ServiceID)
 	}
@@ -2623,7 +2623,7 @@ func (s *ServiceAction) SyncComponentVolumeRels(tx *gorm.DB, app *dbmodel.Applic
 
 // SyncComponentVolumes -
 func (s *ServiceAction) SyncComponentVolumes(tx *gorm.DB, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		volumes      []*dbmodel.TenantServiceVolume
 	)
@@ -2685,7 +2685,7 @@ func (s *ServiceAction) getDeleteVolumeIDs(existVolumes map[string]*dbmodel.Tena
 
 // SyncComponentConfigFiles -
 func (s *ServiceAction) SyncComponentConfigFiles(tx *gorm.DB, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		configFiles  []*dbmodel.TenantServiceConfigFile
 	)
@@ -2706,7 +2706,7 @@ func (s *ServiceAction) SyncComponentConfigFiles(tx *gorm.DB, components []*api_
 
 // SyncComponentProbes -
 func (s *ServiceAction) SyncComponentProbes(tx *gorm.DB, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		probes       []*dbmodel.TenantServiceProbe
 	)
@@ -2730,7 +2730,7 @@ func (s *ServiceAction) SyncComponentProbes(tx *gorm.DB, components []*api_model
 
 // SyncComponentLabels -
 func (s *ServiceAction) SyncComponentLabels(tx *gorm.DB, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs []string
 		labels       []*dbmodel.TenantServiceLable
 	)
@@ -2749,9 +2749,9 @@ func (s *ServiceAction) SyncComponentLabels(tx *gorm.DB, components []*api_model
 	return db.GetManager().TenantServiceLabelDaoTransactions(tx).CreateOrUpdateLabelsInBatch(labels)
 }
 
-//SyncComponentPlugins -
+// SyncComponentPlugins -
 func (s *ServiceAction) SyncComponentPlugins(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs           []string
 		portConfigComponentIDs []string
 		envComponentIDs        []string
@@ -2825,19 +2825,19 @@ func (s *ServiceAction) handlePluginMappingPort(tenantID, componentID, pluginMod
 		existPorts[port.Port] = struct{}{}
 	}
 
-	minPort: = 65301
+	minPort := 65301
 	var newPorts []*dbmodel.TenantServicesStreamPluginPort
 	for _, port := range ports {
 		newPort := &dbmodel.TenantServicesStreamPluginPort{
 			TenantID:      tenantID,
 			ServiceID:     componentID,
-			PluginModel: pluginModel,
+			PluginModel:   pluginModel,
 			ContainerPort: port.Port,
 		}
 		if _, ok := existPorts[minPort]; ok {
 			minPort = minPort + 1
 		}
-		newPluginPort: = minPort
+		newPluginPort := minPort
 		if _, ok := existPorts[newPluginPort]; ok {
 			minPort = minPort + 1
 			newPluginPort = minPort
@@ -2853,7 +2853,7 @@ func (s *ServiceAction) handlePluginMappingPort(tenantID, componentID, pluginMod
 
 // SyncComponentScaleRules -
 func (s *ServiceAction) SyncComponentScaleRules(tx *gorm.DB, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs         []string
 		autoScaleRuleIDs     []string
 		autoScaleRules       []*dbmodel.TenantServiceAutoscalerRules
@@ -2882,7 +2882,7 @@ func (s *ServiceAction) SyncComponentScaleRules(tx *gorm.DB, components []*api_m
 
 // SyncComponentEndpoints -
 func (s *ServiceAction) SyncComponentEndpoints(tx *gorm.DB, components []*api_model.Component) error {
-	where (
+	var (
 		componentIDs               []string
 		thirdPartySvcDiscoveryCfgs []*dbmodel.ThirdPartySvcDiscoveryCfg
 	)
@@ -2908,23 +2908,23 @@ func TransStatus(eStatus string) string {
 	case "starting":
 		return "Starting"
 	case "abnormal":
-		return "running abnormal"
+		return "Abnormal Operation"
 	case "upgrade":
-		return "Upgrading"
+		return "Upgrade"
 	case "closed":
-		return "closed"
-	case "stopping":
 		return "Closed"
+	case "stopping":
+		return "Closing"
 	case "checking":
-		return "Testing"
+		return "Checking"
 	case "unusual":
-		return "running abnormal"
+		return "Abnormal Operation"
 	case "running":
-		return "running"
+		return "Running"
 	case "failure":
-		return "unknown"
+		return "Unkown"
 	case "undeploy":
-		return "not deployed"
+		return "Undeploy"
 	case "deployed":
 		return "Deployed"
 	}

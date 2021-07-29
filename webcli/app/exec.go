@@ -24,7 +24,7 @@ import (
 	"syscall"
 	"unsafe"
 
-	"github.com/gridworkz/gotty/server"
+	"github.com/barnettZQG/gotty/server"
 	"github.com/kr/pty"
 	"github.com/sirupsen/logrus"
 	restclient "k8s.io/client-go/rest"

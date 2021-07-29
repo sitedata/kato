@@ -146,7 +146,7 @@ func CreateHTTPRateLimit(option RateLimitOptions) *http_rate_limit.RateLimit {
 	httpRateLimit := &http_rate_limit.RateLimit{
 		Domain: option.Domain,
 		Stage:  option.Stage,
-		RateLimitService: & configratelimit.RateLimitServiceConfig {
+		RateLimitService: &configratelimit.RateLimitServiceConfig{
 			GrpcService: &core.GrpcService{
 				TargetSpecifier: &core.GrpcService_EnvoyGrpc_{
 					EnvoyGrpc: &core.GrpcService_EnvoyGrpc{
@@ -526,7 +526,7 @@ func GetServiceAliasByService(service *corev1.Service) string {
 
 //CreateDNSLoadAssignment create dns loadAssignment
 func CreateDNSLoadAssignment(serviceAlias, namespace, domain string, service *corev1.Service) *apiv2.ClusterLoadAssignment {
-	destServiceAlias: = GetServiceAliasByService (service)
+	destServiceAlias := GetServiceAliasByService(service)
 	if destServiceAlias == "" {
 		logrus.Errorf("service alias is empty in k8s service %s", service.Name)
 		return nil

@@ -19,12 +19,14 @@
 package kubecache
 
 import (
+	"context"
 	"fmt"
-	"github.com/eapache/channels"
-	"k8s.io/apimachinery/pkg/labels"
 	"math"
 	"strings"
 	"time"
+
+	"github.com/eapache/channels"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/pquerna/ffjson/ffjson"
 
@@ -78,7 +80,7 @@ func (l l) contains(k, v string) bool {
 	return true
 }
 
-//KubeClient
+//KubeClient KubeClient
 type KubeClient interface {
 	UpK8sNode(*client.HostNode) (*v1.Node, error)
 	DownK8sNode(nodename string) error
@@ -98,7 +100,7 @@ type KubeClient interface {
 	Stop()
 }
 
-//NewKubeClient
+//NewKubeClient NewKubeClient
 func NewKubeClient(cfg *conf.Conf, clientset kubernetes.Interface) (KubeClient, error) {
 	stop := make(chan struct{})
 	sharedInformers := informers.NewSharedInformerFactoryWithOptions(clientset, cfg.MinResyncPeriod)
@@ -129,7 +131,7 @@ func (k *kubeClient) Stop() {
 	}
 }
 
-//GetNodeByName
+//GetNodeByName get node
 func (k *kubeClient) GetNodeByName(nodename string) (*v1.Node, error) {
 	return k.sharedInformers.Core().V1().Nodes().Lister().Get(nodename)
 }
@@ -138,21 +140,21 @@ func (k *kubeClient) GetNodeByName(nodename string) (*v1.Node, error) {
 // drain:true can't scheduler ,false can scheduler
 func (k *kubeClient) CordonOrUnCordon(nodeName string, drain bool) (*v1.Node, error) {
 	data := fmt.Sprintf(`{"spec":{"unschedulable":%t}}`, drain)
-	node, err := k.kubeclient.CoreV1().Nodes().Patch(nodeName, types.StrategicMergePatchType, []byte(data))
+	node, err := k.kubeclient.CoreV1().Nodes().Patch(context.Background(), nodeName, types.StrategicMergePatchType, []byte(data), metav1.PatchOptions{})
 	if err != nil {
 		return node, err
 	}
 	return node, nil
 }
 
-//UpdateLabels
+//UpdateLabels update lables
 func (k *kubeClient) UpdateLabels(nodeName string, labels map[string]string) (*v1.Node, error) {
 	labelStr, err := ffjson.Marshal(labels)
 	if err != nil {
 		return nil, err
 	}
 	data := fmt.Sprintf(`{"metadata":{"labels":%s}}`, string(labelStr))
-	node, err := k.kubeclient.CoreV1().Nodes().Patch(nodeName, types.StrategicMergePatchType, []byte(data))
+	node, err := k.kubeclient.CoreV1().Nodes().Patch(context.Background(), nodeName, types.StrategicMergePatchType, []byte(data), metav1.PatchOptions{})
 	if err != nil {
 		return node, err
 	}
@@ -179,7 +181,7 @@ func (k *kubeClient) DeleteOrEvictPodsSimple(nodeName string) error {
 	return nil
 }
 func (k *kubeClient) GetPodsByNodes(nodeName string) (pods []v1.Pod, err error) {
-	podList, err := k.kubeclient.CoreV1().Pods(metav1.NamespaceAll).List(metav1.ListOptions{
+	podList, err := k.kubeclient.CoreV1().Pods(metav1.NamespaceAll).List(context.Background(), metav1.ListOptions{
 		FieldSelector: fields.SelectorFromSet(fields.Set{"spec.nodeName": nodeName}).String()})
 	if err != nil {
 		return pods, err
@@ -190,7 +192,7 @@ func (k *kubeClient) GetPodsByNodes(nodeName string) (pods []v1.Pod, err error) 
 	return pods, nil
 }
 
-//evictPod
+//evictPod Evict POD
 func (k *kubeClient) evictPod(pod v1.Pod, policyGroupVersion string) error {
 	deleteOptions := &metav1.DeleteOptions{}
 	eviction := &v1beta1.Eviction{
@@ -205,7 +207,7 @@ func (k *kubeClient) evictPod(pod v1.Pod, policyGroupVersion string) error {
 		DeleteOptions: deleteOptions,
 	}
 	// Remember to change change the URL manipulation func when Evction's version change
-	return k.kubeclient.PolicyV1beta1().Evictions(eviction.Namespace).Evict(eviction)
+	return k.kubeclient.PolicyV1beta1().Evictions(eviction.Namespace).Evict(context.Background(), eviction)
 }
 
 // deleteOrEvictPods deletes or evicts the pods on the api server
@@ -218,7 +220,7 @@ func (k *kubeClient) deleteOrEvictPods(pods []v1.Pod) error {
 		return err
 	}
 	getPodFn := func(namespace, name string) (*v1.Pod, error) {
-		return k.kubeclient.CoreV1().Pods(namespace).Get(name, metav1.GetOptions{})
+		return k.kubeclient.CoreV1().Pods(namespace).Get(context.Background(), name, metav1.GetOptions{})
 	}
 
 	return k.evictPods(pods, policyGroupVersion, getPodFn)
@@ -271,7 +273,7 @@ func waitForDelete(pods []v1.Pod, interval, timeout time.Duration, usingEviction
 	return pods, err
 }
 func (k *kubeClient) deletePod(pod v1.Pod) error {
-	deleteOptions := &metav1.DeleteOptions{}
+	deleteOptions := metav1.DeleteOptions{}
 	//if GracePeriodSeconds >= 0 {
 	//if 1 >= 0 {
 	//	//gracePeriodSeconds := int64(GracePeriodSeconds)
@@ -280,7 +282,7 @@ func (k *kubeClient) deletePod(pod v1.Pod) error {
 	//}
 	gracePeriodSeconds := int64(1)
 	deleteOptions.GracePeriodSeconds = &gracePeriodSeconds
-	return k.kubeclient.CoreV1().Pods(pod.Namespace).Delete(pod.Name, deleteOptions)
+	return k.kubeclient.CoreV1().Pods(pod.Namespace).Delete(context.Background(), pod.Name, deleteOptions)
 }
 
 func (k *kubeClient) evictPods(pods []v1.Pod, policyGroupVersion string, getPodFn func(namespace, name string) (*v1.Pod, error)) error {
@@ -372,7 +374,7 @@ func (k *kubeClient) SupportEviction() (string, error) {
 	return "", nil
 }
 
-//GetAllPods
+//GetAllPods get all pods
 func (k *kubeClient) GetAllPods() (pods []*v1.Pod, err error) {
 	podList, err := k.sharedInformers.Core().V1().Pods().Lister().List(labels.Everything())
 	if err != nil {
@@ -381,7 +383,7 @@ func (k *kubeClient) GetAllPods() (pods []*v1.Pod, err error) {
 	return podList, nil
 }
 
-//GetAllPods
+//GetAllPods get all pods
 func (k *kubeClient) GetPods(namespace string) (pods []*v1.Pod, err error) {
 	podList, err := k.sharedInformers.Core().V1().Pods().Lister().Pods(namespace).List(labels.Everything())
 	if err != nil {
@@ -390,7 +392,7 @@ func (k *kubeClient) GetPods(namespace string) (pods []*v1.Pod, err error) {
 	return podList, nil
 }
 
-//DeleteNode
+//DeleteNode  k8s node goes offline
 func (k *kubeClient) DownK8sNode(nodename string) error {
 	_, err := k.GetNodeByName(nodename)
 	if err != nil {
@@ -419,8 +421,8 @@ func (k *kubeClient) DownK8sNode(nodename string) error {
 }
 
 func (k *kubeClient) deleteNodeWithoutPods(name string) error {
-	opt := &metav1.DeleteOptions{}
-	err := k.kubeclient.CoreV1().Nodes().Delete(name, opt)
+	opt := metav1.DeleteOptions{}
+	err := k.kubeclient.CoreV1().Nodes().Delete(context.Background(), name, opt)
 	if err != nil {
 		return err
 	}
@@ -452,9 +454,9 @@ func (k *kubeClient) UpK8sNode(katoNode *client.HostNode) (*v1.Node, error) {
 			},
 		},
 	}
-	//set kato creator label
+	//set kato creator lable
 	node.Labels["creator"] = "Kato"
-	savedNode, err := k.kubeclient.CoreV1().Nodes().Create(node)
+	savedNode, err := k.kubeclient.CoreV1().Nodes().Create(context.Background(), node, metav1.CreateOptions{})
 	if err != nil {
 		return nil, err
 	}
@@ -479,7 +481,7 @@ func (k *kubeClient) GetNodes() ([]*v1.Node, error) {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		list, err := k.kubeclient.CoreV1().Nodes().List(metav1.ListOptions{})
+		list, err := k.kubeclient.CoreV1().Nodes().List(context.Background(), metav1.ListOptions{})
 		if err != nil {
 			return nil, err
 		}

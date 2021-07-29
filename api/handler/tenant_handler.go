@@ -19,6 +19,9 @@
 package handler
 
 import (
+	"context"
+
+	"github.com/gridworkz/kato/api/model"
 	api_model "github.com/gridworkz/kato/api/model"
 	"github.com/gridworkz/kato/api/util"
 	dbmodel "github.com/gridworkz/kato/db/model"
@@ -33,9 +36,9 @@ type TenantHandler interface {
 	GetTenantsName() ([]string, error)
 	StatsMemCPU(services []*dbmodel.TenantServices) (*api_model.StatsInfo, error)
 	TotalMemCPU(services []*dbmodel.TenantServices) (*api_model.StatsInfo, error)
-	GetTenantsResources(tr *api_model.TenantResources) (map[string]map[string]interface{}, error)
+	GetTenantsResources(ctx context.Context, tr *api_model.TenantResources) (map[string]map[string]interface{}, error)
 	GetTenantResource(tenantID string) (TenantResourceStats, error)
-	GetAllocatableResources() (*ClusterResourceStats, error)
+	GetAllocatableResources(ctx context.Context) (*ClusterResourceStats, error)
 	GetServicesResources(tr *api_model.ServicesResources) (map[string]map[string]interface{}, error)
 	TenantsSum() (int, error)
 	GetProtocols() ([]*dbmodel.RegionProcotols, *util.APIHandleError)
@@ -44,6 +47,7 @@ type TenantHandler interface {
 	IsClosedStatus(status string) bool
 	BindTenantsResource(source []*dbmodel.Tenants) api_model.TenantList
 	UpdateTenant(*dbmodel.Tenants) error
-	DeleteTenant(tenantID string) error
-	GetClusterResource() *ClusterResourceStats
+	DeleteTenant(ctx context.Context, tenantID string) error
+	GetClusterResource(ctx context.Context) *ClusterResourceStats
+	CheckResourceName(ctx context.Context, namespace string, req *model.CheckResourceNameReq) (*model.CheckResourceNameResp, error)
 }

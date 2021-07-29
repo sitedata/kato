@@ -3,16 +3,16 @@ package conversion
 import (
 	"time"
 
-	mv1 "github.com/coreos/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/gridworkz/kato/db"
 	v1 "github.com/gridworkz/kato/worker/appm/types/v1"
 	"github.com/jinzhu/gorm"
+	mv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-//TenantServiceMonitor
+//TenantServiceMonitor tenant service monitor
 func TenantServiceMonitor(as *v1.AppService, dbmanager db.Manager) error {
 	sms := createServiceMonitor(as, dbmanager)
 	if sms != nil {

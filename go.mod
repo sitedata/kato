@@ -10,13 +10,12 @@ require (
 	github.com/aliyun/aliyun-oss-go-sdk v2.1.5+incompatible
 	github.com/atcdot/gorm-bulk-upsert v1.0.0
 	github.com/aws/aws-sdk-go v1.36.15
-	github.com/barnettZQG/gotty v1.0.1-0.20200904091006-a0a1f7d747dc // indirect
+	github.com/barnettZQG/gotty v1.0.1-0.20200904091006-a0a1f7d747dc
 	github.com/beorn7/perks v1.0.1
 	github.com/bitly/go-simplejson v0.5.0
 	github.com/bluebreezecf/opentsdb-goclient v0.0.0-20190921120552-796138372df3
 	github.com/cockroachdb/cmux v0.0.0-20170110192607-30d10be49292 // indirect
 	github.com/coreos/etcd v3.3.17+incompatible
-	github.com/coreos/prometheus-operator v0.41.1
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/crossplane/crossplane-runtime v0.10.0
 	github.com/docker/cli v20.10.3+incompatible
@@ -45,12 +44,12 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/golang/mock v1.4.4
 	github.com/golang/protobuf v1.4.3
+	github.com/gridworkz/kato-oam v1.0.0
+	github.com/gridworkz/kato-operator v2.0.1
 	github.com/google/go-cmp v0.5.4 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
 	github.com/gorilla/websocket v1.4.2
 	github.com/gosuri/uitable v0.0.4
-	github.com/gridworkz/kato-oam v1.0.0
-	github.com/gridworkz/kato-operator v0.0.0-20210725203637-bca9e27943ad // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/howeyc/fsnotify v0.9.0
 	github.com/imdario/mergo v0.3.11
@@ -59,6 +58,7 @@ require (
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/kr/pty v1.1.8
 	github.com/mattn/go-runewidth v0.0.6
+	github.com/melbahja/got v0.5.0
 	github.com/mitchellh/go-ps v1.0.0
 	github.com/mitchellh/go-wordwrap v1.0.0
 	github.com/mitchellh/mapstructure v1.3.3
@@ -100,6 +100,7 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20201201144952-b05cb90ed32e // indirect
 	google.golang.org/grpc v1.33.2
+	google.golang.org/protobuf v1.25.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/src-d/go-git.v4 v4.13.1
 	gopkg.in/yaml.v2 v2.4.0
@@ -111,14 +112,13 @@ require (
 	k8s.io/cli-runtime v0.20.4
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/code-generator v0.20.4
-	k8s.io/kubernetes v1.13.0
 	sigs.k8s.io/controller-runtime v0.7.0
 	sigs.k8s.io/yaml v1.2.0
 )
 
 // Pinned to kubernetes-1.20.0
 replace (
-	github.com/atcdot/gorm-bulk-upsert => github.com/goodrain/gorm-bulk-upsert v1.0.1-0.20210608013724-7e7870d16357
+	github.com/atcdot/gorm-bulk-upsert => github.com/gridworkz/gorm-bulk-upsert v1.0.1-0.20210608013724-7e7870d16357
 	github.com/coreos/etcd => github.com/coreos/etcd v3.2.31+incompatible
 	github.com/docker/distribution => github.com/docker/distribution v0.0.0-20191216044856-a8371794149d
 	github.com/docker/docker => github.com/docker/docker v17.12.0-ce-rc1.0.20200916142827-bd33bbf0497b+incompatible

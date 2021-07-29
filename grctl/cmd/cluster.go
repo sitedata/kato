@@ -19,19 +19,22 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"strconv"
 	"strings"
 
-	"github.com/ghodss/yaml"
+	katov1alpha1 "github.com/gridworkz/kato-operator/api/v1alpha1"
 	"github.com/gridworkz/kato/grctl/clients"
+	"github.com/gridworkz/kato/grctl/cluster"
 	"github.com/gridworkz/kato/node/nodem/client"
 	"github.com/gridworkz/kato/util/termtables"
 	"github.com/gosuri/uitable"
 	"github.com/urfave/cli"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 //NewCmdCluster cmd for cluster
@@ -40,7 +43,7 @@ func NewCmdCluster() cli.Command {
 		Name:  "cluster",
 		Usage: "show curren cluster datacenter info",
 		Subcommands: []cli.Command{
-			cli.Command{
+			{
 				Name:  "config",
 				Usage: "prints the current cluster configuration",
 				Flags: []cli.Flag{
@@ -53,6 +56,30 @@ func NewCmdCluster() cli.Command {
 				Action: func(c *cli.Context) error {
 					Common(c)
 					return printConfig(c)
+				},
+			},
+			{
+				Name:  "upgrade",
+				Usage: "upgrade cluster",
+				Flags: []cli.Flag{
+					cli.StringFlag{
+						Name:  "namespace, ns",
+						Usage: "kato default namespace",
+						Value: "rbd-system",
+					},
+					cli.StringFlag{
+						Name:     "new-version",
+						Usage:    "the new version of kato cluster",
+						Required: true,
+					},
+				},
+				Action: func(c *cli.Context) error {
+					Common(c)
+					cluster, err := cluster.NewCluster(c.String("namespace"), c.String("new-version"))
+					if err != nil {
+						return err
+					}
+					return cluster.Upgrade()
 				},
 			},
 		},
@@ -256,8 +283,9 @@ func printComponentStatus(namespace string) {
 }
 
 func printConfig(c *cli.Context) error {
-	namespace := c.String("namespace")
-	config, err := clients.KatoKubeClient.KatoV1alpha1().KatoClusters(namespace).Get("katocluster", metav1.GetOptions{})
+	var config katov1alpha1.KatoCluster
+	err := clients.KatoKubeClient.Get(context.Background(),
+		types.NamespacedName{Namespace: c.String("namespace"), Name: "katocluster"}, &config)
 	if err != nil {
 		showError(err.Error())
 	}

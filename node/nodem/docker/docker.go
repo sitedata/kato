@@ -1,6 +1,7 @@
 package docker
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -13,7 +14,7 @@ import (
 )
 
 var defaultFileName = "server.crt"
-var defaultFilePath = "/etc/docker/certs.d/gridworkz"
+var defaultFilePath = "/etc/docker/certs.d/gridworkz.me"
 
 // SyncDockerCertFromSecret sync docker cert from secret
 func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretName string) error {
@@ -22,11 +23,11 @@ func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretN
 	if namespace == "" || secretName == "" {
 		return nil
 	}
-	secretInfo, err := clientset.CoreV1().Secrets(namespace).Get(secretName, metav1.GetOptions{})
+	secretInfo, err := clientset.CoreV1().Secrets(namespace).Get(context.Background(), secretName, metav1.GetOptions{})
 	if err != nil {
 		return err
 	}
-	if certInfo, ok := secretInfo.Data["cert"]; ok { // TODO gridworkz key name
+	if certInfo, ok := secretInfo.Data["cert"]; ok { // TODO gdevs key name
 		if err := saveORUpdateFile(certInfo); err != nil {
 			return err
 		}
@@ -37,7 +38,7 @@ func SyncDockerCertFromSecret(clientset kubernetes.Interface, namespace, secretN
 	return nil
 }
 
-// sync as file saved int /etc/docker/gridworkz/server.crt
+// sync as file saved int /etc/docker/gridworkz.me/server.crt
 func saveORUpdateFile(content []byte) error {
 	// If path is already a directory, MkdirAll does nothing and returns nil
 	if err := os.MkdirAll(defaultFilePath, 0666); err != nil {

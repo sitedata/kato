@@ -56,7 +56,7 @@ var MetricErrorTaskNum float64
 //MetricBackTaskNum back task number
 var MetricBackTaskNum float64
 
-//Manager task execution manager
+//Manager Task execution manager
 type Manager interface {
 	GetMaxConcurrentTask() float64
 	GetCurrentConcurrentTask() float64
@@ -88,7 +88,7 @@ func NewManager(conf option.Config, mqc mqclient.MQClient) (Manager, error) {
 	}
 	etcdClientArgs := &etcdutil.ClientArgs{
 		Endpoints: conf.EtcdEndPoints,
-		CaFile: conf.EtcdCaFile,
+		CaFile:    conf.EtcdCaFile,
 		CertFile:  conf.EtcdCertFile,
 		KeyFile:   conf.EtcdKeyFile,
 	}
@@ -112,25 +112,25 @@ func NewManager(conf option.Config, mqc mqclient.MQClient) (Manager, error) {
 	logrus.Infof("The maximum number of concurrent build tasks supported by the current node is %d", maxConcurrentTask)
 	return &exectorManager{
 		DockerClient:      dockerClient,
-		KubeClient: kubeClient,
+		KubeClient:        kubeClient,
 		EtcdCli:           etcdCli,
-		mqClient: mqc;
+		mqClient:          mqc,
 		tasks:             make(chan *pb.TaskMessage, maxConcurrentTask),
 		maxConcurrentTask: maxConcurrentTask,
 		ctx:               ctx,
 		cancel:            cancel,
-		cfg: conf,
+		cfg:               conf,
 	}, nil
 }
 
 type exectorManager struct {
-	DockerClient * client.Client
-	KubeClient kubernetes.Interface
-	EtcdCli * clientv3.Client
+	DockerClient      *client.Client
+	KubeClient        kubernetes.Interface
+	EtcdCli           *clientv3.Client
 	tasks             chan *pb.TaskMessage
 	callback          func(*pb.TaskMessage)
 	maxConcurrentTask int
-	mqClient mqclient.MQClient
+	mqClient          mqclient.MQClient
 	ctx               context.Context
 	cancel            context.CancelFunc
 	runningTask       sync.Map
@@ -287,7 +287,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 	}()
 	start := time.Now()
 	defer func() {
-		logrus.Debugf("complete build from source code, consuming time %s", time.Now().Sub(start).String())
+		logrus.Debugf("complete build from source code, consuming time %s", time.Since(start).String())
 	}()
 	for n := 0; n < 2; n++ {
 		err := i.Run(time.Minute * 30)
@@ -297,7 +297,7 @@ func (e *exectorManager) buildFromImage(task *pb.TaskMessage) {
 				i.Logger.Error("The application task to build from the mirror failed to execute，will try", map[string]string{"step": "build-exector", "status": "failure"})
 			} else {
 				MetricErrorTaskNum++
-				i.Logger.Error(util.Translation("Check for log location image source errors"), map[string]string{"step": "callback", "status": "failure"})
+				i.Logger.Error(util.Translation("Check for log location imgae source errors"), map[string]string{"step": "callback", "status": "failure"})
 				if err := i.UpdateVersionInfo("failure"); err != nil {
 					logrus.Debugf("update version Info error: %s", err.Error())
 				}
@@ -353,7 +353,7 @@ func (e *exectorManager) buildFromSourceCode(task *pb.TaskMessage) {
 		vi := &dbmodel.VersionInfo{
 			FinalStatus: "failure",
 			EventID:     i.EventID,
-			CodeBranch: i.CodeSouceInfo.Branch,
+			CodeBranch:  i.CodeSouceInfo.Branch,
 			CodeVersion: i.commit.Hash,
 			CommitMsg:   i.commit.Message,
 			Author:      i.commit.Author,
@@ -451,7 +451,7 @@ func (e *exectorManager) sendAction(tenantID, serviceID, eventID, newVersion, ac
 			Target:    "service",
 			TargetID:  serviceID,
 			UserName:  "",
-			SynType: dbmodel.ASYNEVENTTYPE,
+			SynType:   dbmodel.ASYNEVENTTYPE,
 		}
 		if err := db.GetManager().ServiceEventDao().AddModel(event); err != nil {
 			logrus.Errorf("create upgrade event failure %s, service %s do not auto upgrade", err.Error(), serviceID)
@@ -466,7 +466,7 @@ func (e *exectorManager) sendAction(tenantID, serviceID, eventID, newVersion, ac
 		}
 		if err := e.mqClient.SendBuilderTopic(mqclient.TaskStruct{
 			Topic:    mqclient.WorkerTopic,
-			TaskType: "rolling_upgrade", // TODO(gdevs 20190816): Separate from build
+			TaskType: "rolling_upgrade", // TODO(gdevs 20200816): Separate from build
 			TaskBody: body,
 		}); err != nil {
 			return err
@@ -484,7 +484,7 @@ func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 		logrus.Error("create share image task error.", err.Error())
 		return
 	}
-	i.Logger.Info("Start sharing app", map[string]string{"step": "builder-exector", "status": "starting"})
+	i.Logger.Info("开始分享应用", map[string]string{"step": "builder-exector", "status": "starting"})
 	status := "success"
 	go func() {
 		defer event.GetManager().ReleaseLogger(i.Logger)
@@ -492,7 +492,7 @@ func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 			if r := recover(); r != nil {
 				fmt.Println(r)
 				debug.PrintStack()
-				i.Logger.Error("The back-end service is down, please try again or contact customer service", map[string]string{"step": "callback", "status": "failure"})
+				i.Logger.Error("Back-end service is out of business, please try again or contact customer service", map[string]string{"step": "callback", "status": "failure"})
 			}
 		}()
 		for n := 0; n < 2; n++ {
@@ -500,10 +500,10 @@ func (e *exectorManager) slugShare(task *pb.TaskMessage) {
 			if err != nil {
 				logrus.Errorf("image share error: %s", err.Error())
 				if n < 1 {
-					i.Logger.Error("Application sharing failed, start to retry", map[string]string{"step": "builder-exector", "status": "failure"})
+					i.Logger.Error("App sharing failed, start to try again", map[string]string{"step": "builder-exector", "status": "failure"})
 				} else {
 					MetricErrorTaskNum++
-					i.Logger.Error("Share application task execution failed", map[string]string{"step": "builder-exector", "status": "failure"})
+					i.Logger.Error("Failed to execute sharing application task", map[string]string{"step": "builder-exector", "status": "failure"})
 					status = "failure"
 				}
 			} else {
@@ -531,7 +531,7 @@ func (e *exectorManager) imageShare(task *pb.TaskMessage) {
 	defer func() {
 		if r := recover(); r != nil {
 			debug.PrintStack()
-			i.Logger.Error("The back-end service is out of business, please try again or contact customer service", map[string]string{"step": "callback", "status": "failure"})
+			i.Logger.Error("Back-end service is out of business, please try again or contact customer service", map[string]string{"step": "callback", "status": "failure"})
 		}
 	}()
 	for n := 0; n < 2; n++ {
@@ -539,10 +539,10 @@ func (e *exectorManager) imageShare(task *pb.TaskMessage) {
 		if err != nil {
 			logrus.Errorf("image share error: %s", err.Error())
 			if n < 1 {
-				i.Logger.Error("Application sharing failed, start to retry", map[string]string{"step": "builder-exector", "status": "failure"})
+				i.Logger.Error("App sharing failed, start to try again", map[string]string{"step": "builder-exector", "status": "failure"})
 			} else {
 				MetricErrorTaskNum++
-				i.Logger.Error("Share application task execution failed", map[string]string{"step": "builder-exector", "status": "failure"})
+				i.Logger.Error("Failed to execute sharing application task", map[string]string{"step": "builder-exector", "status": "failure"})
 				status = "failure"
 			}
 		} else {
@@ -563,9 +563,9 @@ func (e *exectorManager) garbageCollection(task *pb.TaskMessage) {
 
 	go func() {
 		// delete docker log file and event log file
-		gci.delLogFile ()
+		gci.delLogFile()
 		// volume data
-		gci.delVolumeData ()
+		gci.delVolumeData()
 	}()
 }
 
