@@ -40,7 +40,7 @@ venv/
 # OSX leaves these everywhere on SMB shares
 ._*
 
-# build for rainbond
+# build for kato
 
 .release/
 _output/
