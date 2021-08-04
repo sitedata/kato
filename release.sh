@@ -4,7 +4,7 @@ set -o errexit
 # define package name
 WORK_DIR=/go/src/github.com/gridworkz/kato
 BASE_NAME=kato
-IMAGE_BASE_NAME=${BUILD_IMAGE_BASE_NAME:-'kato'}
+IMAGE_BASE_NAME=${BUILD_IMAGE_BASE_NAME:-'gridworkz'}
 DOMESTIC_NAMESPACE=${DOMESTIC_NAMESPACE:-'gridworkz'}
 
 GO_VERSION=1.13
@@ -54,8 +54,8 @@ build::binary() {
 	fi
 	CGO_ENABLED=1
 	if [ "$1" = "eventlog" ]; then
-		docker build -t gridworkz.me/event-build:v1 "${DOCKER_PATH}/build"
-		build_image="gridworkz.me/event-build:v1"
+		docker build -t gridworkz/event-build:v1 "${DOCKER_PATH}/build"
+		build_image="gridworkz/event-build:v1"
 	elif [ "$1" = "chaos" ]; then
 		build_dir="./cmd/builder"
 	elif [ "$1" = "gateway" ]; then

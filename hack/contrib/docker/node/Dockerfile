@@ -1,4 +1,4 @@
-FROM gridworkzapps/alpine:3.4
+FROM gridworkz/alpine:3.9
 ARG RELEASE_DESC
 ADD . /run
 ENV RELEASE_DESC=${RELEASE_DESC}

@@ -1,4 +1,4 @@
-FROM gridworkzapps/alpine:3.4
+FROM gridworkz/alpine:3.9
 ARG RELEASE_DESC
 COPY . /run/
 RUN chmod 655 /run/kato-init-probe /run/entrypoint.sh

@@ -1,4 +1,4 @@
-FROM gridworkzapps/alpine:3.4
+FROM gridworkz/alpine:3.9
 ARG RELEASE_DESC
 COPY kato-mq /run/kato-mq
 ADD entrypoint.sh /run/entrypoint.sh

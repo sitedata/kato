@@ -1,4 +1,4 @@
-FROM kato/prometheus:v2.20.0
+FROM gridworkz/prometheus:v2.20.0
 ARG RELEASE_DESC
 USER root
 VOLUME ["/prometheusdata"]

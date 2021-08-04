@@ -1,4 +1,4 @@
-FROM gridworkzapps/alpine:3.4
+FROM gridworkz/alpine:3.9
 ARG RELEASE_DESC
 RUN apk --no-cache add libstdc++ ca-certificates openssl openssl-dev
 

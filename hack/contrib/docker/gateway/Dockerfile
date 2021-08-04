@@ -1,4 +1,4 @@
-FROM kato/openresty:1.15.8.2
+FROM gridworkz/openresty:1.15.8.2
 ARG RELEASE_DESC
 RUN apk add --no-cache bash net-tools curl tzdata && \
         cp /usr/share/zoneinfo/America/Toronto /etc/localtime && \
