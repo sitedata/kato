@@ -1,6 +1,6 @@
 FROM  envoyproxy/envoy:v1.13.1
 ARG RELEASE_DESC
-LABEL "author"="devs@gridworkz.com"
+LABEL "author"="gdevs@gridworkz.com"
 RUN apt-get update && apt-get install -y bash curl net-tools wget vim && \
     wget https://github.com/gridworkz/env2file/releases/download/0.1.1/env2file-linux -O /usr/bin/env2file    
 ADD . /root/

@@ -159,7 +159,7 @@ func CreateCertInformation() CertInformation {
 		Country:            []string{"CN"},
 		Organization:       []string{"Gridworkz"},
 		OrganizationalUnit: []string{"gridworkz kato"},
-		EmailAddress:       []string{"devs@gridworkz.com"},
+		EmailAddress:       []string{"gdevs@gridworkz.com"},
 		Locality:           []string{"Toronto"},
 		Province:           []string{"Ontario"},
 		CommonName:         "kato",
