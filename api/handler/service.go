@@ -22,6 +22,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -29,14 +31,20 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gridworkz/kato/api/client/prometheus"
+	api_model "github.com/gridworkz/kato/api/model"
 	"github.com/gridworkz/kato/api/util"
 	"github.com/gridworkz/kato/api/util/bcode"
 	"github.com/gridworkz/kato/api/util/license"
 	"github.com/gridworkz/kato/builder/parser"
 	"github.com/gridworkz/kato/cmd/api/option"
 	"github.com/gridworkz/kato/db"
+	dberr "github.com/gridworkz/kato/db/errors"
+	dbmodel "github.com/gridworkz/kato/db/model"
 	"github.com/gridworkz/kato/event"
+	gclient "github.com/gridworkz/kato/mq/client"
 	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
+	core_util "github.com/gridworkz/kato/util"
+	typesv1 "github.com/gridworkz/kato/worker/appm/types/v1"
 	"github.com/gridworkz/kato/worker/client"
 	"github.com/gridworkz/kato/worker/discover/model"
 	"github.com/gridworkz/kato/worker/server"
@@ -46,17 +54,11 @@ import (
 	"github.com/pquerna/ffjson/ffjson"
 	"github.com/sirupsen/logrus"
 	"github.com/twinj/uuid"
+	corev1 "k8s.io/api/core/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
-	api_model "github.com/gridworkz/kato/api/model"
-	dberr "github.com/gridworkz/kato/db/errors"
-	core_model "github.com/gridworkz/kato/db/model"
-	dbmodel "github.com/gridworkz/kato/db/model"
-	eventutil "github.com/gridworkz/kato/eventlog/util"
-	gclient "github.com/gridworkz/kato/mq/client"
-	core_util "github.com/gridworkz/kato/util"
-	typesv1 "github.com/gridworkz/kato/worker/appm/types/v1"
+	"k8s.io/apiserver/pkg/util/flushwriter"
+	"k8s.io/client-go/kubernetes"
 )
 
 // ErrServiceNotClosed -
@@ -69,7 +71,8 @@ type ServiceAction struct {
 	statusCli      *client.AppRuntimeSyncClient
 	prometheusCli  prometheus.Interface
 	conf           option.Config
-	katoClient versioned.Interface
+	katoClient     versioned.Interface
+	kubeClient     kubernetes.Interface
 }
 
 type dCfg struct {
@@ -86,14 +89,16 @@ func CreateManager(conf option.Config,
 	etcdCli *clientv3.Client,
 	statusCli *client.AppRuntimeSyncClient,
 	prometheusCli prometheus.Interface,
-	katoClient versioned.Interface) *ServiceAction {
+	katoClient versioned.Interface,
+	kubeClient kubernetes.Interface) *ServiceAction {
 	return &ServiceAction{
 		MQClient:       mqClient,
 		EtcdCli:        etcdCli,
 		statusCli:      statusCli,
 		conf:           conf,
 		prometheusCli:  prometheusCli,
-		katoClient: katoClient,
+		katoClient:     katoClient,
+		kubeClient:     kubeClient,
 	}
 }
 
@@ -265,7 +270,7 @@ func (s *ServiceAction) AddLabel(l *api_model.LabelsStruct, serviceID string) er
 			tx.Rollback()
 		}
 	}()
-	//V5.2: does not support service type label
+	//V5.2: do not support service type label
 	for _, label := range l.Labels {
 		labelModel := dbmodel.TenantServiceLable{
 			ServiceID:  serviceID,
@@ -302,7 +307,7 @@ func (s *ServiceAction) UpdateLabel(l *api_model.LabelsStruct, serviceID string)
 			tx.Rollback()
 			return err
 		}
-		// V5.2 does not support service type label
+		// V5.2 do not support service type label
 		// add new labels
 		labelModel := dbmodel.TenantServiceLable{
 			ServiceID:  serviceID,
@@ -367,7 +372,7 @@ func (s *ServiceAction) StartStopService(sss *api_model.StartStopStruct) error {
 		Topic:    gclient.WorkerTopic,
 	})
 	if err != nil {
-		logrus.Errorf("equeue mq error, %v", err)
+		logrus.Errorf("equque mq error, %v", err)
 		return err
 	}
 	logrus.Debugf("equeue mq startstop task success")
@@ -713,10 +718,10 @@ func (s *ServiceAction) ServiceCreate(sc *api_model.ServiceStruct) error {
 	if sc.OSType == "windows" {
 		if err := db.GetManager().TenantServiceLabelDaoTransactions(tx).AddModel(&dbmodel.TenantServiceLable{
 			ServiceID:  ts.ServiceID,
-			LabelKey:   core_model.LabelKeyNodeSelector,
+			LabelKey:   dbmodel.LabelKeyNodeSelector,
 			LabelValue: sc.OSType,
 		}); err != nil {
-			logrus.Errorf("add label %s=%s  %v error, %v", core_model.LabelKeyNodeSelector, sc.OSType, ts.ServiceID, err)
+			logrus.Errorf("add label %s=%s  %v error, %v", dbmodel.LabelKeyNodeSelector, sc.OSType, ts.ServiceID, err)
 			tx.Rollback()
 			return err
 		}
@@ -1300,7 +1305,7 @@ func (s *ServiceAction) PortVar(action, tenantID, serviceID string, vps *api_mod
 			}
 		}()
 		for _, vp := range vps.Port {
-			//port Update a single request
+			//port update single request
 			if oldPort == 0 {
 				oldPort = vp.ContainerPort
 			}
@@ -1745,6 +1750,7 @@ func (s *ServiceAction) UpdVolume(sid string, req *api_model.UpdVolumeReq) error
 		return err
 	}
 	v.VolumePath = req.VolumePath
+	v.Mode = req.Mode
 	if err := db.GetManager().TenantServiceVolumeDaoTransactions(tx).UpdateModel(v); err != nil {
 		tx.Rollback()
 		return err
@@ -1939,7 +1945,7 @@ func (s *ServiceAction) GetStatus(serviceID string) (*api_model.StatusList, erro
 
 //GetServicesStatus  Get a set of application status, if serviceIDs is empty, get all application status of the tenant
 func (s *ServiceAction) GetServicesStatus(tenantID string, serviceIDs []string) []map[string]interface{} {
-	if serviceIDs == nil || len(serviceIDs) == 0 {
+	if len(serviceIDs) == 0 {
 		services, _ := db.GetManager().TenantServiceDao().GetServicesByTenantID(tenantID)
 		for _, s := range services {
 			serviceIDs = append(serviceIDs, s.ServiceID)
@@ -1950,11 +1956,9 @@ func (s *ServiceAction) GetServicesStatus(tenantID string, serviceIDs []string) 
 	}
 	statusList := s.statusCli.GetStatuss(strings.Join(serviceIDs, ","))
 	var info = make([]map[string]interface{}, 0)
-	if statusList != nil {
-		for k, v := range statusList {
-			serviceInfo := map[string]interface{}{"service_id": k, "status": v, "status_cn": TransStatus(v), "used_mem": 0}
-			info = append(info, serviceInfo)
-		}
+	for k, v := range statusList {
+		serviceInfo := map[string]interface{}{"service_id": k, "status": v, "status_cn": TransStatus(v), "used_mem": 0}
+		info = append(info, serviceInfo)
 	}
 	return info
 }
@@ -2019,7 +2023,7 @@ func (s *ServiceAction) CreateTenant(t *dbmodel.Tenants) error {
 
 //CreateTenandIDAndName create tenant_id and tenant_name
 func (s *ServiceAction) CreateTenandIDAndName(eid string) (string, string, error) {
-	id := fmt.Sprintf("%s", uuid.NewV4())
+	id := uuid.NewV4().String()
 	uid := strings.Replace(id, "-", "", -1)
 	name := strings.Split(id, "-")[0]
 	logrus.Debugf("uuid is %v, name is %v", uid, name)
@@ -2103,14 +2107,12 @@ func (s *ServiceAction) GetMultiServicePods(serviceIDs []string) (*K8sPodInfos, 
 	}
 	convpod := func(serviceID string, pods []*pb.ServiceAppPod) []*K8sPodInfo {
 		var podsInfoList []*K8sPodInfo
-		var podNames []string
 		for _, v := range pods {
 			var podInfo K8sPodInfo
 			podInfo.PodName = v.PodName
 			podInfo.PodIP = v.PodIp
 			podInfo.PodStatus = v.PodStatus
 			podInfo.ServiceID = serviceID
-			podNames = append(podNames, v.PodName)
 			podsInfoList = append(podsInfoList, &podInfo)
 		}
 		return podsInfoList
@@ -2168,7 +2170,7 @@ func (s *ServiceAction) GetPodContainerMemory(podNames []string) (map[string]map
 func (s *ServiceAction) TransServieToDelete(ctx context.Context, tenantID, serviceID string) error {
 	_, err := db.GetManager().TenantServiceDao().GetServiceByID(serviceID)
 	if err != nil && gorm.ErrRecordNotFound == err {
-		logrus.Infof("service[%s] of tenant[%s] do not exist, ignore it", serviceID, tenantID)
+		logrus.Infof("service[%s] of tenant[%s] does not exist, ignore it", serviceID, tenantID)
 		return nil
 	}
 	if err := s.isServiceClosed(serviceID); err != nil {
@@ -2298,23 +2300,6 @@ func (s *ServiceAction) deleteThirdComponent(ctx context.Context, component *dbm
 	return nil
 }
 
-// delLogFile deletes persistent data related to the service based on serviceID.
-func (s *ServiceAction) delLogFile(serviceID string, eventIDs []string) {
-	// log generated during service running
-	dockerLogPath := eventutil.DockerLogFilePath(s.conf.LogPath, serviceID)
-	if err := os.RemoveAll(dockerLogPath); err != nil {
-		logrus.Warningf("remove docker log files: %v", err)
-	}
-	// log generated by the service event
-	eventLogPath := eventutil.EventLogFilePath(s.conf.LogPath)
-	for _, eventID := range eventIDs {
-		eventLogFileName := eventutil.EventLogFileName(eventLogPath, eventID)
-		if err := os.RemoveAll(eventLogFileName); err != nil {
-			logrus.Warningf("file: %s; remove event log file: %v", eventLogFileName, err)
-		}
-	}
-}
-
 func (s *ServiceAction) gcTaskBody(tenantID, serviceID string) (map[string]interface{}, error) {
 	events, err := db.GetManager().ServiceEventDao().ListByTargetID(serviceID)
 	if err != nil {
@@ -2355,11 +2340,11 @@ func (s *ServiceAction) ListVersionInfo(serviceID string) (*api_model.BuildListR
 	}
 	b, err := json.Marshal(versionInfos)
 	if err != nil {
-		return nil, fmt.Errorf("error marshaling version infos: %v", err)
+		return nil, fmt.Errorf("error marshaling version info: %v", err)
 	}
 	var bversions []*api_model.BuildVersion
 	if err := json.Unmarshal(b, &bversions); err != nil {
-		return nil, fmt.Errorf("error unmarshaling version infos: %v", err)
+		return nil, fmt.Errorf("error unmarshaling version info: %v", err)
 	}
 	for idx := range bversions {
 		bv := bversions[idx]
@@ -2421,7 +2406,7 @@ func (s *ServiceAction) AddAutoscalerRule(req *api_model.AutoscalerRuleReq) erro
 		logrus.Errorf("send 'refreshhpa' task: %v", err)
 		return err
 	}
-	logrus.Infof("rule id: %s; successfully send 'refreshhpa' task.", r.RuleID)
+	logrus.Infof("rule id: %s; successfully sent 'refreshhpa' task.", r.RuleID)
 
 	return tx.Commit().Error
 }
@@ -2902,6 +2887,49 @@ func (s *ServiceAction) SyncComponentEndpoints(tx *gorm.DB, components []*api_mo
 	return db.GetManager().ThirdPartySvcDiscoveryCfgDaoTransactions(tx).CreateOrUpdate3rdSvcDiscoveryCfgInBatch(thirdPartySvcDiscoveryCfgs)
 }
 
+// Log returns the logs reader for a container in a pod, a pod or a component.
+func (s *ServiceAction) Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantServices, podName, containerName string, follow bool) error {
+	// If podName and containerName is missing, return the logs reader for the component
+	// If containerName is missing, return the logs reader for the pod.
+	if podName == "" || containerName == "" {
+		// Only support return the logs reader for a container now.
+		return errors.WithStack(bcode.NewBadRequest("the field 'podName' and 'containerName' is required"))
+	}
+
+	request := s.kubeClient.CoreV1().Pods(component.TenantID).GetLogs(podName, &corev1.PodLogOptions{
+		Container: containerName,
+		Follow:    follow,
+	})
+
+	out, err := request.Stream(context.TODO())
+	if err != nil {
+		if k8sErrors.IsNotFound(err) {
+			return errors.Wrap(bcode.ErrPodNotFound, "get pod log")
+		}
+		return errors.Wrap(err, "get stream from request")
+	}
+	defer out.Close()
+
+	w.Header().Set("Transfer-Encoding", "chunked")
+	w.WriteHeader(http.StatusOK)
+
+	// Flush headers, if possible
+	if flusher, ok := w.(http.Flusher); ok {
+		flusher.Flush()
+	}
+
+	writer := flushwriter.Wrap(w)
+
+	_, err = io.Copy(writer, out)
+	if err != nil {
+		if strings.HasSuffix(err.Error(), "write: broken pipe") {
+			return nil
+		}
+		logrus.Warningf("write stream to response: %v", err)
+	}
+	return nil
+}
+
 //TransStatus trans service status
 func TransStatus(eStatus string) string {
 	switch eStatus {
@@ -2910,7 +2938,7 @@ func TransStatus(eStatus string) string {
 	case "abnormal":
 		return "Abnormal Operation"
 	case "upgrade":
-		return "Upgrade"
+		return "Upgraded"
 	case "closed":
 		return "Closed"
 	case "stopping":
@@ -2922,33 +2950,11 @@ func TransStatus(eStatus string) string {
 	case "running":
 		return "Running"
 	case "failure":
-		return "Unkown"
+		return "Unknown"
 	case "undeploy":
-		return "Undeploy"
+		return "Undeployed"
 	case "deployed":
 		return "Deployed"
 	}
 	return ""
-}
-
-//CheckLabel check label
-func CheckLabel(serviceID string) bool {
-	//true for v2, false for v1
-	serviceLabel, err := db.GetManager().TenantServiceLabelDao().GetTenantServiceLabel(serviceID)
-	if err != nil {
-		return false
-	}
-	if serviceLabel != nil && len(serviceLabel) > 0 {
-		return true
-	}
-	return false
-}
-
-//CheckMapKey CheckMapKey
-func CheckMapKey(rebody map[string]interface{}, key string, defaultValue interface{}) map[string]interface{} {
-	if _, ok := rebody[key]; ok {
-		return rebody
-	}
-	rebody[key] = defaultValue
-	return rebody
 }

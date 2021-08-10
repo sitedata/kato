@@ -20,7 +20,7 @@ package handler
 
 import (
 	"context"
-	"github.com/jinzhu/gorm"
+	"net/http"
 
 	api_model "github.com/gridworkz/kato/api/model"
 	"github.com/gridworkz/kato/api/util"
@@ -28,6 +28,7 @@ import (
 	dbmodel "github.com/gridworkz/kato/db/model"
 	"github.com/gridworkz/kato/worker/discover/model"
 	"github.com/gridworkz/kato/worker/server/pb"
+	"github.com/jinzhu/gorm"
 )
 
 //ServiceHandler service handler
@@ -90,16 +91,18 @@ type ServiceHandler interface {
 	AddServiceMonitor(tenantID, serviceID string, add api_model.AddServiceMonitorRequestStruct) (*dbmodel.TenantServiceMonitor, error)
 
 	SyncComponentBase(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
-	SyncComponentMonitors(tx *gorm.DB,app *dbmodel.Application, components []*api_model.Component) error
+	SyncComponentMonitors(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
 	SyncComponentPorts(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
 	SyncComponentRelations(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
 	SyncComponentEnvs(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
 	SyncComponentVolumeRels(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
-	SyncComponentVolumes(tx *gorm.DB,  components []*api_model.Component) error
-	SyncComponentConfigFiles(tx *gorm.DB,  components []*api_model.Component) error
-	SyncComponentProbes(tx *gorm.DB,  components []*api_model.Component) error
-	SyncComponentLabels(tx *gorm.DB,  components []*api_model.Component) error
+	SyncComponentVolumes(tx *gorm.DB, components []*api_model.Component) error
+	SyncComponentConfigFiles(tx *gorm.DB, components []*api_model.Component) error
+	SyncComponentProbes(tx *gorm.DB, components []*api_model.Component) error
+	SyncComponentLabels(tx *gorm.DB, components []*api_model.Component) error
 	SyncComponentPlugins(tx *gorm.DB, app *dbmodel.Application, components []*api_model.Component) error
-	SyncComponentScaleRules(tx *gorm.DB,  components []*api_model.Component) error
+	SyncComponentScaleRules(tx *gorm.DB, components []*api_model.Component) error
 	SyncComponentEndpoints(tx *gorm.DB, components []*api_model.Component) error
+
+	Log(w http.ResponseWriter, r *http.Request, component *dbmodel.TenantServices, podName, containerName string, follow bool) error
 }

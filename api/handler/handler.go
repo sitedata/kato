@@ -60,7 +60,7 @@ func InitHandle(conf option.Config,
 		return err
 	}
 	dbmanager := db.GetManager()
-	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, katoClient)
+	defaultServieHandler = CreateManager(conf, mqClient, etcdcli, statusCli, prometheusCli, katoClient, kubeClient)
 	defaultPluginHandler = CreatePluginManager(mqClient)
 	defaultAppHandler = CreateAppManager(mqClient)
 	defaultTenantHandler = CreateTenManager(mqClient, statusCli, &conf, kubeClient, prometheusCli, k8sClient)
