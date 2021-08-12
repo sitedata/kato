@@ -32,7 +32,6 @@ import (
 	"github.com/gridworkz/kato/pkg/generated/clientset/versioned"
 	etcdutil "github.com/gridworkz/kato/util/etcd"
 	k8sutil "github.com/gridworkz/kato/util/k8s"
-	"github.com/gridworkz/kato/worker/appm"
 	"github.com/gridworkz/kato/worker/appm/componentdefinition"
 	"github.com/gridworkz/kato/worker/appm/controller"
 	"github.com/gridworkz/kato/worker/appm/store"
@@ -98,15 +97,8 @@ func Run(s *option.Worker) error {
 	componentdefinition.NewComponentDefinitionBuilder(s.Config.RBDNamespace)
 
 	//step 4: create component resource store
-	startCh := channels.NewRingChannel(1024)
 	updateCh := channels.NewRingChannel(1024)
-	probeCh := channels.NewRingChannel(1024)
-	cachestore := store.NewStore(restConfig, clientset, katoClient, db.GetManager(), s.Config, startCh, probeCh)
-	appmController := appm.NewAPPMController(clientset, cachestore, startCh, updateCh, probeCh)
-	if err := appmController.Start(); err != nil {
-		logrus.Errorf("error starting appm controller: %v", err)
-	}
-	defer appmController.Stop()
+	cachestore := store.NewStore(restConfig, clientset, katoClient, db.GetManager(), s.Config)
 	if err := cachestore.Start(); err != nil {
 		logrus.Error("start kube cache store error", err)
 		return err
@@ -128,7 +120,7 @@ func Run(s *option.Worker) error {
 
 	//step 7 : create discover module
 	garbageCollector := gc.NewGarbageCollector(clientset)
-	taskManager := discover.NewTaskManager(s.Config, cachestore, controllerManager, garbageCollector, startCh)
+	taskManager := discover.NewTaskManager(s.Config, cachestore, controllerManager, garbageCollector)
 	if err := taskManager.Start(); err != nil {
 		return err
 	}
@@ -145,7 +137,7 @@ func Run(s *option.Worker) error {
 	}
 	defer exporterManager.Stop()
 
-	logrus.Info("worker begins running...")
+	logrus.Info("worker begin running...")
 
 	//step finally: listen Signal
 	term := make(chan os.Signal, 1)

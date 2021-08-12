@@ -24,20 +24,19 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/gridworkz/kato/builder"
+	"github.com/gridworkz/kato/db/model"
 	dbmodel "github.com/gridworkz/kato/db/model"
+	"github.com/gridworkz/kato/event"
 	monitorv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/sirupsen/logrus"
 	v1 "k8s.io/api/apps/v1"
 	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
 	corev1 "k8s.io/api/core/v1"
-	extensions "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-
-	"github.com/gridworkz/kato/builder"
-	"github.com/gridworkz/kato/db/model"
-	"github.com/gridworkz/kato/event"
 )
 
 // EventType type of event
@@ -102,9 +101,9 @@ type AppServiceBase struct {
 	IsWindowsService bool
 	CreaterID        string
 	//depend all service id
-	Dependces        []string
-	ExtensionSet     map[string]string
-	GovernanceMode   string
+	Dependces      []string
+	ExtensionSet   map[string]string
+	GovernanceMode string
 }
 
 //GetComponentDefinitionName get component definition name by component kind
@@ -112,26 +111,29 @@ func (a AppServiceBase) GetComponentDefinitionName() string {
 	if strings.HasPrefix(a.ServiceKind.String(), dbmodel.ServiceKindCustom.String()) {
 		return strings.Replace(a.ServiceKind.String(), dbmodel.ServiceKindCustom.String(), "", 1)
 	}
-	if a.discoveryCfg != nil && a.discoveryCfg.Type == dbmodel.DiscorveryTypeKubernetes.String() {
+	if a.ServiceKind == model.ServiceKindThirdParty {
 		return "core-thirdcomponent"
 	}
 	return ""
 }
 
+// IsCustomComponent -
 func (a AppServiceBase) IsCustomComponent() bool {
 	if strings.HasPrefix(a.ServiceKind.String(), dbmodel.ServiceKindCustom.String()) {
 		return true
 	}
-	if a.discoveryCfg != nil && a.discoveryCfg.Type == dbmodel.DiscorveryTypeKubernetes.String() {
+	if a.ServiceKind == model.ServiceKindThirdParty {
 		return true
 	}
 	return false
 }
 
+// IsThirdComponent -
 func (a AppServiceBase) IsThirdComponent() bool {
 	return a.ServiceKind.String() == dbmodel.ServiceKindThirdParty.String()
 }
 
+// SetDiscoveryCfg -
 func (a *AppServiceBase) SetDiscoveryCfg(discoveryCfg *dbmodel.ThirdPartySvcDiscoveryCfg) {
 	a.discoveryCfg = discoveryCfg
 }
@@ -144,14 +146,14 @@ type AppService struct {
 	deployment     *v1.Deployment
 	workload       runtime.Object
 	hpas           []*autoscalingv2.HorizontalPodAutoscaler
-	delHPAs [] * autoscalingv2.HorizontalPodAutoscaler
+	delHPAs        []*autoscalingv2.HorizontalPodAutoscaler
 	replicasets    []*v1.ReplicaSet
 	services       []*corev1.Service
-	delServices [] * corev1.Service
+	delServices    []*corev1.Service
 	endpoints      []*corev1.Endpoints
 	configMaps     []*corev1.ConfigMap
-	ingresses      []*extensions.Ingress
-	delIngs        []*extensions.Ingress // ingresses which need to be deleted
+	ingresses      []*networkingv1.Ingress
+	delIngs        []*networkingv1.Ingress // ingresses which need to be deleted
 	secrets        []*corev1.Secret
 	delSecrets     []*corev1.Secret // secrets which need to be deleted
 	pods           []*corev1.Pod
@@ -221,7 +223,7 @@ func (a *AppService) SetStatefulSet(d *v1.StatefulSet) {
 	a.calculateComponentMemoryRequest()
 }
 
-// SetReplicaSets set kubernetes replicaset
+//SetReplicaSets set kubernetes replicaset
 func (a *AppService) SetReplicaSets(d *v1.ReplicaSet) {
 	if len(a.replicasets) > 0 {
 		for i, replicaset := range a.replicasets {
@@ -244,8 +246,8 @@ func (a *AppService) DeleteReplicaSet(d *v1.ReplicaSet) {
 	}
 }
 
-// GetReplicaSets get replicaset
-func (a * AppService) GetReplicaSets () [] * v1.ReplicaSet {
+//GetReplicaSets get replicaset
+func (a *AppService) GetReplicaSets() []*v1.ReplicaSet {
 	return a.replicasets
 }
 
@@ -263,8 +265,8 @@ func (a *AppService) GetNewestReplicaSet() (newest *v1.ReplicaSet) {
 	return
 }
 
-// GetReplicaSetVersion get rs version
-func GetReplicaSetVersion (rs * v1.ReplicaSet) int {
+//GetReplicaSetVersion get rs version
+func GetReplicaSetVersion(rs *v1.ReplicaSet) int {
 	if version, ok := rs.Annotations["deployment.kubernetes.io/revision"]; ok {
 		v, _ := strconv.Atoi(version)
 		return v
@@ -406,9 +408,9 @@ func (a *AppService) DelEndpoints(ep *corev1.Endpoints) {
 }
 
 //GetIngress get ingress
-func (a *AppService) GetIngress(canCopy bool) []*extensions.Ingress {
+func (a *AppService) GetIngress(canCopy bool) []*networkingv1.Ingress {
 	if canCopy {
-		cr := make([]*extensions.Ingress, len(a.ingresses))
+		cr := make([]*networkingv1.Ingress, len(a.ingresses))
 		copy(cr, a.ingresses[0:])
 		return cr
 	}
@@ -416,12 +418,12 @@ func (a *AppService) GetIngress(canCopy bool) []*extensions.Ingress {
 }
 
 //GetDelIngs gets delIngs which need to be deleted
-func (a *AppService) GetDelIngs() []*extensions.Ingress {
+func (a *AppService) GetDelIngs() []*networkingv1.Ingress {
 	return a.delIngs
 }
 
-// SetIngress set kubernetes ingress model
-func (a *AppService) SetIngress(d *extensions.Ingress) {
+//SetIngress set kubernetes ingress model
+func (a *AppService) SetIngress(d *networkingv1.Ingress) {
 	if len(a.ingresses) > 0 {
 		for i, ingress := range a.ingresses {
 			if ingress.GetName() == d.GetName() {
@@ -434,12 +436,12 @@ func (a *AppService) SetIngress(d *extensions.Ingress) {
 }
 
 // SetIngresses sets k8s ingress list
-func (a *AppService) SetIngresses(i []*extensions.Ingress) {
+func (a *AppService) SetIngresses(i []*networkingv1.Ingress) {
 	a.ingresses = i
 }
 
 //DeleteIngress delete kubernetes ingress model
-func (a *AppService) DeleteIngress(d *extensions.Ingress) {
+func (a *AppService) DeleteIngress(d *networkingv1.Ingress) {
 	for i, c := range a.ingresses {
 		if c.GetName() == d.GetName() {
 			a.ingresses = append(a.ingresses[0:i], a.ingresses[i+1:]...)
@@ -467,7 +469,7 @@ func (a *AppService) calculateComponentMemoryRequest() {
 }
 
 //SetPodTemplate set pod template spec
-func (a * AppService) SetPodTemplate (d corev1.PodTemplateSpec) {
+func (a *AppService) SetPodTemplate(d corev1.PodTemplateSpec) {
 	if a.statefulset != nil {
 		a.statefulset.Spec.Template = d
 	}
@@ -478,7 +480,7 @@ func (a * AppService) SetPodTemplate (d corev1.PodTemplateSpec) {
 }
 
 //GetPodTemplate get pod template
-func (a * AppService) GetPodTemplate () * corev1.PodTemplateSpec {
+func (a *AppService) GetPodTemplate() *corev1.PodTemplateSpec {
 	if a.statefulset != nil {
 		return &a.statefulset.Spec.Template
 	}
@@ -563,7 +565,7 @@ func (a *AppService) SetPods(d *corev1.Pod) {
 	a.pods = append(a.pods, d)
 }
 
-// DeletePods delete pod
+//DeletePods delete pod
 func (a *AppService) DeletePods(d *corev1.Pod) {
 	for i, c := range a.pods {
 		if c.GetName() == d.GetName() {
@@ -641,7 +643,7 @@ func (a *AppService) SetDeletedResources(old *AppService) {
 			}
 		}
 		if del {
-			a.delServices = append (a.delServices, o)
+			a.delServices = append(a.delServices, o)
 		}
 	}
 	for _, o := range old.GetHPAs() {
@@ -804,7 +806,7 @@ func (a *AppService) SetStorageClass(sc *storagev1.StorageClass) {
 	a.storageClasses = append(a.storageClasses, sc)
 }
 
-// DeleteStorageClass delete storageclass
+// DeleteStorageClass deelete storageclass
 func (a *AppService) DeleteStorageClass(sc *storagev1.StorageClass) {
 	if len(a.storageClasses) == 0 {
 		return
@@ -838,7 +840,7 @@ func (a *AppService) GetManifests() []*unstructured.Unstructured {
 	return a.manifests
 }
 
-//GetManifests get component custom manifest
+//SetManifests get component custom manifest
 func (a *AppService) SetManifests(manifests []*unstructured.Unstructured) {
 	a.manifests = manifests
 }
@@ -864,7 +866,7 @@ func (a *AppService) String() string {
 	App:%s
 	DeployVersion:%s
 	Statefulset %+v
-	Deployment% + v
+	Deployment %+v
 	Pod %d
 	ingresses %s
 	service %s
@@ -876,7 +878,7 @@ func (a *AppService) String() string {
 		a.statefulset,
 		a.deployment,
 		len(a.pods),
-		func(ing []*extensions.Ingress) string {
+		func(ing []*networkingv1.Ingress) string {
 			result := ""
 			for _, i := range ing {
 				result += i.Name + ","
@@ -911,7 +913,7 @@ type TenantResource struct {
 type K8sResources struct {
 	Services  []*corev1.Service
 	Secrets   []*corev1.Secret
-	Ingresses []*extensions.Ingress
+	Ingresses []*networkingv1.Ingress
 }
 
 //GetTCPMeshImageName get tcp mesh image name
@@ -931,7 +933,7 @@ func GetProbeMeshImageName() string {
 }
 
 //CalculatePodResource calculate pod resource
-func CalculatePodResource (pod *corev1.Pod) *PodResource {
+func CalculatePodResource(pod *corev1.Pod) *PodResource {
 	for _, con := range pod.Status.Conditions {
 		if con.Type == corev1.PodScheduled && con.Status == corev1.ConditionFalse {
 			return &PodResource{}

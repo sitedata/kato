@@ -24,7 +24,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/eapache/channels"
 	"github.com/gridworkz/kato/cmd/worker/option"
 	"github.com/gridworkz/kato/mq/api/grpc/pb"
 	"github.com/gridworkz/kato/mq/client"
@@ -59,11 +58,10 @@ type TaskManager struct {
 func NewTaskManager(cfg option.Config,
 	store store.Storer,
 	controllermanager *controller.Manager,
-	garbageCollector *gc.GarbageCollector,
-	startCh *channels.RingChannel) *TaskManager {
+	garbageCollector *gc.GarbageCollector) *TaskManager {
 
 	ctx, cancel := context.WithCancel(context.Background())
-	handleManager := handle.NewManager(ctx, cfg, store, controllermanager, garbageCollector, startCh)
+	handleManager := handle.NewManager(ctx, cfg, store, controllermanager, garbageCollector)
 	healthStatus["status"] = "health"
 	healthStatus["info"] = "worker service health"
 	return &TaskManager{
@@ -74,7 +72,7 @@ func NewTaskManager(cfg option.Config,
 	}
 }
 
-//Start
+//Start start
 func (t *TaskManager) Start() error {
 	etcdClientArgs := &etcdutil.ClientArgs{
 		Endpoints: t.config.EtcdEndPoints,
@@ -95,7 +93,7 @@ func (t *TaskManager) Start() error {
 	return nil
 }
 
-//Do
+//Do do
 func (t *TaskManager) Do() {
 	logrus.Info("start receive task from mq")
 	hostname, _ := os.Hostname()
@@ -104,9 +102,7 @@ func (t *TaskManager) Do() {
 		case <-t.ctx.Done():
 			return
 		default:
-			ctx, cancel := context.WithCancel(t.ctx)
-			data, err := t.client.Dequeue(ctx, &pb.DequeueRequest{Topic: client.WorkerTopic, ClientHost: hostname + "-worker"})
-			cancel()
+			data, err := t.client.Dequeue(t.ctx, &pb.DequeueRequest{Topic: client.WorkerTopic, ClientHost: hostname + "-worker"})
 			if err != nil {
 				if grpc1.ErrorDesc(err) == context.DeadlineExceeded.Error() {
 					continue
@@ -156,7 +152,7 @@ func (t *TaskManager) Do() {
 	}
 }
 
-//Stop
+//Stop stop
 func (t *TaskManager) Stop() error {
 	logrus.Info("discover manager is stoping.")
 	t.cancel()
@@ -166,7 +162,7 @@ func (t *TaskManager) Stop() error {
 	return nil
 }
 
-//HealthCheck
+//HealthCheck health check
 func HealthCheck() map[string]string {
 	return healthStatus
 }

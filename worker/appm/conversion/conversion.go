@@ -25,25 +25,22 @@ import (
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/db/model"
 	"github.com/gridworkz/kato/util"
+	"github.com/gridworkz/kato/worker/appm/componentdefinition"
 	v1 "github.com/gridworkz/kato/worker/appm/types/v1"
+	"github.com/sirupsen/logrus"
 )
 
 func init() {
-	//first conv service source
-	RegistConversion("ServiceSource", ServiceSource)
-	//step2 conv service base
-	RegistConversion("TenantServiceBase", TenantServiceBase)
+	// core component conversion
 	// convert config group to env secrets
 	RegistConversion("TenantServiceConfigGroup", TenantServiceConfigGroup)
-	//step3 conv service pod base info
+	//step1 conv service pod base info
 	RegistConversion("TenantServiceVersion", TenantServiceVersion)
-	//step4 conv service plugin
+	//step2 conv service plugin
 	RegistConversion("TenantServicePlugin", TenantServicePlugin)
-	//step5 conv service inner and outer regist
-	RegistConversion("TenantServiceRegist", TenantServiceRegist)
-	//step6 -
+	//step3 -
 	RegistConversion("TenantServiceAutoscaler", TenantServiceAutoscaler)
-	//step7 conv service monitor
+	//step4 conv service monitor
 	RegistConversion("TenantServiceMonitor", TenantServiceMonitor)
 }
 
@@ -57,7 +54,7 @@ type CacheConversion struct {
 	Conversion Conversion
 }
 
-//ConversionList conversion function list
+//conversionList conversion function list
 var conversionList []CacheConversion
 
 //RegistConversion regist conversion function list
@@ -88,7 +85,22 @@ func InitAppService(dbmanager db.Manager, serviceID string, configs map[string]s
 	if app != nil {
 		appService.AppServiceBase.GovernanceMode = app.GovernanceMode
 	}
-
+	if err := TenantServiceBase(appService, dbmanager); err != nil {
+		logrus.Errorf("init component base config failure %s", err.Error())
+		return nil, err
+	}
+	// all component can regist server.
+	if err := TenantServiceRegist(appService, dbmanager); err != nil {
+		logrus.Errorf("init component server regist config failure %s", err.Error())
+		return nil, err
+	}
+	if appService.IsCustomComponent() {
+		if err := componentdefinition.GetComponentDefinitionBuilder().BuildWorkloadResource(appService, dbmanager); err != nil {
+			logrus.Errorf("init component by component definition build failure %s", err.Error())
+			return nil, err
+		}
+		return appService, nil
+	}
 	for _, c := range conversionList {
 		if len(enableConversionList) == 0 || util.StringArrayContains(enableConversionList, c.Name) {
 			if err := c.Conversion(appService, dbmanager); err != nil {
@@ -100,7 +112,7 @@ func InitAppService(dbmanager db.Manager, serviceID string, configs map[string]s
 }
 
 //InitCacheAppService init cache app service.
-//If store manager receives a kube model belonging to a service and the model is not found in a store, one will be will be created
+//if store manager receive a kube model belong with service and not find in store,will create
 func InitCacheAppService(dbm db.Manager, serviceID, creatorID string) (*v1.AppService, error) {
 	appService := &v1.AppService{
 		AppServiceBase: v1.AppServiceBase{
@@ -115,7 +127,7 @@ func InitCacheAppService(dbm db.Manager, serviceID, creatorID string) (*v1.AppSe
 	// setup governance mode
 	app, err := dbm.ApplicationDao().GetByServiceID(serviceID)
 	if err != nil && err != bcode.ErrApplicationNotFound {
-		return nil, fmt.Errorf("get app based on service id (%s)", serviceID)
+		return nil, fmt.Errorf("get app based on service id(%s)", serviceID)
 	}
 	if app != nil {
 		appService.AppServiceBase.GovernanceMode = app.GovernanceMode
