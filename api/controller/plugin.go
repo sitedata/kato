@@ -25,10 +25,10 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/gridworkz/kato/api/handler"
-	"github.com/gridworkz/kato/api/middleware"
 	"github.com/gridworkz/kato/util"
 
 	api_model "github.com/gridworkz/kato/api/model"
+	ctxutil "github.com/gridworkz/kato/api/util/ctx"
 	httputil "github.com/gridworkz/kato/util/http"
 )
 
@@ -67,9 +67,9 @@ func (t *TenantStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
+	// description: unified return format
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
 	var cps api_model.CreatePluginStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &cps.Body, nil); !ok {
 		return
@@ -87,7 +87,7 @@ func (t *TenantStruct) CreatePlugin(w http.ResponseWriter, r *http.Request) {
 func (t *TenantStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation PUT /v2/tenants/{tenant_name}/plugin/{plugin_id} v2 updatePlugin
 	//
-	// Plugin update Full update, but pluginID and tenant do not provide modification
+	// The plugin is updated in full, but the pluginID and the tenant do not provide modification
 	//
 	// update plugin
 	//
@@ -104,10 +104,10 @@ func (t *TenantStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	var ups api_model.UpdatePluginStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &ups.Body, nil); !ok {
 		return
@@ -123,7 +123,7 @@ func (t *TenantStruct) UpdatePlugin(w http.ResponseWriter, r *http.Request) {
 func (t *TenantStruct) DeletePlugin(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation DELETE /v2/tenants/{tenant_name}/plugin/{plugin_id} v2 deletePlugin
 	//
-	// Delete plugin
+	// plugin delete
 	//
 	// delete plugin
 	//
@@ -140,9 +140,9 @@ func (t *TenantStruct) DeletePlugin(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	// description: unified return format
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	if err := handler.GetPluginManager().DeletePluginAct(pluginID, tenantID); err != nil {
 		err.Handle(r, w)
 		return
@@ -171,8 +171,8 @@ func (t *TenantStruct) GetPlugins(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	// description: unified return format
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	plugins, err := handler.GetPluginManager().GetPlugins(tenantID)
 	if err != nil {
 		err.Handle(r, w)
@@ -193,9 +193,9 @@ func (t *TenantStruct) PluginDefaultENV(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
-//AddDefatultENV AddDefatultENV
+// AddDefatultENV AddDefatultENV
 func (t *TenantStruct) AddDefatultENV(w http.ResponseWriter, r *http.Request) {
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	var est api_model.ENVStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &est.Body, nil); !ok {
@@ -211,7 +211,7 @@ func (t *TenantStruct) AddDefatultENV(w http.ResponseWriter, r *http.Request) {
 
 //DeleteDefaultENV DeleteDefaultENV
 func (t *TenantStruct) DeleteDefaultENV(w http.ResponseWriter, r *http.Request) {
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	envName := chi.URLParam(r, "env_name")
 	versionID := chi.URLParam(r, "version_id")
 	if err := handler.GetPluginManager().DeleteDefaultEnv(pluginID, versionID, envName); err != nil {
@@ -223,7 +223,7 @@ func (t *TenantStruct) DeleteDefaultENV(w http.ResponseWriter, r *http.Request) 
 //UpdateDefaultENV UpdateDefaultENV
 func (t *TenantStruct) UpdateDefaultENV(w http.ResponseWriter, r *http.Request) {
 
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	var est api_model.ENVStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &est.Body, nil); !ok {
@@ -239,7 +239,7 @@ func (t *TenantStruct) UpdateDefaultENV(w http.ResponseWriter, r *http.Request) 
 
 //GetPluginDefaultEnvs GetPluginDefaultEnvs
 func (t *TenantStruct) GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Request) {
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	envs, err := handler.GetPluginManager().GetDefaultEnv(pluginID, versionID)
 	if err != nil {
@@ -269,16 +269,16 @@ func (t *TenantStruct) GetPluginDefaultEnvs(w http.ResponseWriter, r *http.Reque
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 	var build api_model.BuildPluginStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &build.Body, nil)
 	if !ok {
 		return
 	}
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	build.TenantName = tenantName
 	build.PluginID = pluginID
 	build.Body.TenantID = tenantID
@@ -290,7 +290,7 @@ func (t *TenantStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, pbv)
 }
 
-//GetAllPluginBuildVersions Get all the build versions of the plugin
+//GetAllPluginBuildVersions Get all the build versions of the plug-in
 // swagger:operation GET /v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version v2 allPluginVersions
 //
 // Get all build version information
@@ -310,10 +310,10 @@ func (t *TenantStruct) PluginBuild(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.Request) {
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
-	versions, err := handler.GetPluginManager().GetAllPluginBuildVersions(pluginID)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
+	versions, err := handler.GetPluginManager().GetAllPluginBuildVersions (pluginID)
 	if err != nil {
 		err.Handle(r, w)
 		return
@@ -321,7 +321,7 @@ func (t *TenantStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.
 	httputil.ReturnSuccess(r, w, versions)
 }
 
-//GetPluginBuildVersion Get information about a build version
+//GetPluginBuildVersion to obtain a build version information
 // swagger:operation GET /v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version/{version_id} v2 pluginVersion
 //
 // Get information about a build version
@@ -341,9 +341,9 @@ func (t *TenantStruct) GetAllPluginBuildVersions(w http.ResponseWriter, r *http.
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Request) {
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	version, err := handler.GetPluginManager().GetPluginBuildVersion(pluginID, versionID)
 	if err != nil {
@@ -356,7 +356,7 @@ func (t *TenantStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Requ
 //DeletePluginBuildVersion DeletePluginBuildVersion
 // swagger:operation DELETE /v2/tenants/{tenant_name}/plugin/{plugin_id}/build-version/{version_id} v2 deletePluginVersion
 //
-// Delete a build version information
+// Delete a certain build version information
 //
 // delete plugin version
 //
@@ -373,9 +373,9 @@ func (t *TenantStruct) GetPluginBuildVersion(w http.ResponseWriter, r *http.Requ
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) DeletePluginBuildVersion(w http.ResponseWriter, r *http.Request) {
-	pluginID := r.Context().Value(middleware.ContextKey("plugin_id")).(string)
+	pluginID := r.Context().Value(ctxutil.ContextKey("plugin_id")).(string)
 	versionID := chi.URLParam(r, "version_id")
 	err := handler.GetPluginManager().DeletePluginBuildVersion(pluginID, versionID)
 	if err != nil {
@@ -416,14 +416,14 @@ func (t *TenantStruct) PluginSet(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) updatePluginSet(w http.ResponseWriter, r *http.Request) {
 	var pss api_model.PluginSetStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &pss.Body, nil)
 	if !ok {
 		return
 	}
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	relation, err := handler.GetServiceManager().UpdateTenantServicePluginRelation(serviceID, &pss)
 	if err != nil {
 		err.Handle(r, w)
@@ -451,17 +451,17 @@ func (t *TenantStruct) updatePluginSet(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
 	var pss api_model.PluginSetStruct
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &pss.Body, nil)
 	if !ok {
 		return
 	}
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
-	serviceAlias := r.Context().Value(middleware.ContextKey("service_alias")).(string)
-	tenantName := r.Context().Value(middleware.ContextKey("tenant_name")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
+	tenantName := r.Context().Value(ctxutil.ContextKey("tenant_name")).(string)
 	pss.ServiceAlias = serviceAlias
 	pss.TenantName = tenantName
 	re, err := handler.GetServiceManager().SetTenantServicePluginRelation(tenantID, serviceID, &pss)
@@ -474,7 +474,7 @@ func (t *TenantStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
 
 // swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/plugin v2 getPluginSet
 //
-// Get plugin settings
+// Get plug-in settings
 //
 // get plugin setting
 //
@@ -491,9 +491,9 @@ func (t *TenantStruct) addPluginSet(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) getPluginSet(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	gps, err := handler.GetServiceManager().GetTenantServicePluginRelation(serviceID)
 	if err != nil {
 		err.Handle(r, w)
@@ -523,11 +523,11 @@ func (t *TenantStruct) getPluginSet(w http.ResponseWriter, r *http.Request) {
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) DeletePluginRelation(w http.ResponseWriter, r *http.Request) {
 	pluginID := chi.URLParam(r, "plugin_id")
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	if err := handler.GetServiceManager().TenantServiceDeletePluginRelation(tenantID, serviceID, pluginID); err != nil {
 		err.Handle(r, w)
 		return
@@ -555,9 +555,9 @@ func (t *TenantStruct) DeletePluginRelation(w http.ResponseWriter, r *http.Reque
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.Request) {
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	pluginID := chi.URLParam(r, "plugin_id")
 	envs, err := handler.GetPluginManager().GetEnvsWhichCanBeSet(serviceID, pluginID)
 	if err != nil {
@@ -570,7 +570,7 @@ func (t *TenantStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.R
 //UpdateVersionEnv UpdateVersionEnv
 // swagger:operation PUT /v2/tenants/{tenant_name}/services/{service_alias}/plugin/{plugin_id}/upenv v2 updateVersionEnv
 //
-// modify the app plugin config info.
+// modify the app plugin config info. it will Thermal effect
 //
 // update version env
 //
@@ -587,16 +587,16 @@ func (t *TenantStruct) GePluginEnvWhichCanBeSet(w http.ResponseWriter, r *http.R
 //   default:
 //     schema:
 //       "$ref": "#/responses/commandResponse"
-//     description: Unified return format
+// description: unified return format
 func (t *TenantStruct) UpdateVersionEnv(w http.ResponseWriter, r *http.Request) {
 	var uve api_model.SetVersionEnv
 	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &uve.Body, nil)
 	if !ok {
 		return
 	}
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	serviceAlias := r.Context().Value(middleware.ContextKey("service_alias")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	serviceAlias := r.Context().Value(ctxutil.ContextKey("service_alias")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	pluginID := chi.URLParam(r, "plugin_id")
 	uve.PluginID = pluginID
 	uve.Body.TenantID = tenantID
@@ -616,7 +616,7 @@ func (t *TenantStruct) SharePlugin(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	sp.TenantID = tenantID
 	sp.PluginID = chi.URLParam(r, "plugin_id")
 	if sp.Body.EventID == "" {
@@ -639,4 +639,34 @@ func (t *TenantStruct) SharePluginResult(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	httputil.ReturnSuccess(r, w, res)
+}
+
+//BatchInstallPlugins -
+func (t *TenantStruct) BatchInstallPlugins(w http.ResponseWriter, r *http.Request) {
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	var req api_model.BatchCreatePlugins
+	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &req, nil); !ok {
+		return
+	}
+	if err := handler.GetPluginManager().BatchCreatePlugins(tenantID, req.Plugins); err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
+}
+
+// BatchBuildPlugins -
+func (t *TenantStruct) BatchBuildPlugins(w http.ResponseWriter, r *http.Request) {
+	var builds api_model.BatchBuildPlugins
+	ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &builds, nil)
+	if !ok {
+		return
+	}
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
+	err := handler.GetPluginManager().BatchBuildPlugins(&builds, tenantID)
+	if err != nil {
+		err.Handle(r, w)
+		return
+	}
+	httputil.ReturnSuccess(r, w, nil)
 }

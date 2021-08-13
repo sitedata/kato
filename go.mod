@@ -20,9 +20,9 @@ require (
 	github.com/creack/pty v1.1.11 // indirect
 	github.com/crossplane/crossplane-runtime v0.10.0
 	github.com/docker/cli v20.10.3+incompatible
-	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82
 	github.com/docker/distribution v2.7.1+incompatible
 	github.com/docker/docker v20.10.2+incompatible
+	github.com/docker/go-metrics v0.0.0-20181218153428-b84716841b82
 	github.com/docker/go-units v0.4.0
 	github.com/docker/libcompose v0.4.1-0.20190808084053-143e0f3f1ab9
 	github.com/eapache/channels v1.1.0

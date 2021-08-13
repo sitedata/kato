@@ -19,22 +19,19 @@
 package cookie
 
 import (
-	"github.com/gridworkz/kato/gateway/annotations/parser"
 	api "k8s.io/api/core/v1"
-	extensions "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"reflect"
-	"testing"
 )
 
-func buildIngress() *extensions.Ingress {
+func buildIngress() *networkingv1.Ingress {
 	defaultBackend := extensions.IngressBackend{
 		ServiceName: "default-backend",
 		ServicePort: intstr.FromInt(80),
 	}
 
-	return &extensions.Ingress{
+	return &networkingv1.Ingress{
 		ObjectMeta: meta_v1.ObjectMeta{
 			Name:      "foo",
 			Namespace: api.NamespaceDefault,
@@ -60,27 +57,5 @@ func buildIngress() *extensions.Ingress {
 				},
 			},
 		},
-	}
-}
-
-func TestHeader_Parse(t *testing.T) {
-	ing := buildIngress()
-
-	data := map[string]string{}
-	data[parser.GetAnnotationWithPrefix("cookie")] = "hkey1:hval1;hkey2:hval2"
-	ing.SetAnnotations(data)
-
-	hmap := transform(data[parser.GetAnnotationWithPrefix("cookie")])
-
-	i, err := NewParser(cookie{}).Parse(ing)
-	if err != nil {
-		t.Errorf("Uxpected error with ingress: %v", err)
-		return
-	}
-
-	cfg := i.(*Config)
-	cookie := cfg.Cookie
-	if !reflect.DeepEqual(hmap, cookie) {
-		t.Errorf("hmap should equal allowHeaders")
 	}
 }

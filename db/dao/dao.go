@@ -75,7 +75,7 @@ type ApplicationDao interface {
 	GetAppByID(appID string) (*model.Application, error)
 	DeleteApp(appID string) error
 	GetByServiceID(sid string) (*model.Application, error)
-	ListByAppIDs(appIDs []string) ([]*model.Application, error)
+	ListByAppIDs (appIDs [] string) ([] * model.Application, error)
 }
 
 //AppConfigGroupDao Application config group Dao
@@ -152,7 +152,7 @@ type TenantServiceDao interface {
 	ListThirdPartyServices() ([]*model.TenantServices, error)
 	ListServicesByTenantID(tenantID string) ([]*model.TenantServices, error)
 	GetServiceTypeByID(serviceID string) (*model.TenantServices, error)
-	ListByAppID(appID string) ([]*model.TenantServices, error)
+	ListByAppID (appID string) ([] * model.TenantServices, error)
 	BindAppByServiceIDs(appID string, serviceIDs []string) error
 	CreateOrUpdateComponentsInBatch(components []*model.TenantServices) error
 	DeleteByComponentIDs(tenantID, appID string, componentIDs []string) error
@@ -505,6 +505,7 @@ type RuleExtensionDao interface {
 	GetRuleExtensionByRuleID(ruleID string) ([]*model.RuleExtension, error)
 	DeleteRuleExtensionByRuleID(ruleID string) error
 	DeleteByRuleIDs(ruleIDs []string) error
+	CreateOrUpdateRuleExtensionsInBatch(exts []*model.RuleExtension) error
 }
 
 // HTTPRuleDao -
@@ -521,6 +522,7 @@ type HTTPRuleDao interface {
 	DeleteByComponentPort(componentID string, port int) error
 	DeleteByComponentIDs(componentIDs []string) error
 	CreateOrUpdateHTTPRuleInBatch(httpRules []*model.HTTPRule) error
+	ListByComponentIDs(componentIDs []string) ([]*model.HTTPRule, error)
 }
 
 // TCPRuleDao -
@@ -566,6 +568,7 @@ type GwRuleConfigDao interface {
 	DeleteByRuleID(rid string) error
 	ListByRuleID(rid string) ([]*model.GwRuleConfig, error)
 	DeleteByRuleIDs(ruleIDs []string) error
+	CreateOrUpdateGwRuleConfigsInBatch(ruleConfigs []*model.GwRuleConfig) error
 }
 
 // TenantServceAutoscalerRulesDao -

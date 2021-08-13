@@ -18,7 +18,7 @@
 
 package model
 
-// TenantServiceVolumeType
+// TenantServiceVolumeType tenant service volume type
 type TenantServiceVolumeType struct {
 	Model
 	VolumeType         string `gorm:"column:volume_type; size:64" json:"volume_type"`
@@ -35,7 +35,7 @@ type TenantServiceVolumeType struct {
 	Enable             bool   `gorm:"enable" json:"enable"`
 }
 
-// TableName
+// TableName Table Name
 func (t *TenantServiceVolumeType) TableName() string {
 	return "tenant_services_volume_type"
 }

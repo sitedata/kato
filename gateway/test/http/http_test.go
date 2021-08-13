@@ -19,12 +19,15 @@
 package http
 
 import (
+	"context"
+
 	"github.com/gridworkz/kato/gateway/annotations/parser"
 	"github.com/gridworkz/kato/gateway/controller"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	extensions "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
+
 	api_meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -35,7 +38,7 @@ import (
 )
 
 func TestHttpDefault(t *testing.T) {
-	clientSet, err := controller.NewClientSet("/Users/abe/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
+	clientSet, err := controller.NewClientSet("/Users/gdevs/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
 	if err != nil {
 		t.Errorf("can't create Kubernetes's client: %v", err)
 	}
@@ -123,23 +126,27 @@ func TestHttpDefault(t *testing.T) {
 	_ = ensureService(service, clientSet, t)
 	time.Sleep(3 * time.Second)
 
-	ingress := &extensions.Ingress{
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "default-ing",
 			Namespace: ns.Name,
 		},
-		Spec: extensions.IngressSpec{
-			Rules: []extensions.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
 				{
 					Host: "www.http-router.com",
-					IngressRuleValue: extensions.IngressRuleValue{
-						HTTP: &extensions.HTTPIngressRuleValue{
-							Paths: []extensions.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
 								{
 									Path: "/http-router",
-									Backend: extensions.IngressBackend{
-										ServiceName: "default-svc",
-										ServicePort: intstr.FromInt(80),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: "default-svc",
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -153,7 +160,7 @@ func TestHttpDefault(t *testing.T) {
 }
 
 func TestHttpCookie(t *testing.T) {
-	clientSet, err := controller.NewClientSet("/Users/abe/Documents/admin.kubeconfig")
+	clientSet, err := controller.NewClientSet("/Users/gdevs/Documents/admin.kubeconfig")
 	if err != nil {
 		t.Errorf("can't create Kubernetes's client: %v", err)
 	}
@@ -226,7 +233,7 @@ func TestHttpCookie(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	ingress := &extensions.Ingress{
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "router-cookie-ing",
 			Namespace: ns.Name,
@@ -234,18 +241,22 @@ func TestHttpCookie(t *testing.T) {
 				parser.GetAnnotationWithPrefix("cookie"): "ck1:cv1;ck2:cv2;",
 			},
 		},
-		Spec: extensions.IngressSpec{
-			Rules: []extensions.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
 				{
 					Host: "www.http-router.com",
-					IngressRuleValue: extensions.IngressRuleValue{
-						HTTP: &extensions.HTTPIngressRuleValue{
-							Paths: []extensions.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
 								{
 									Path: "/http-router",
-									Backend: extensions.IngressBackend{
-										ServiceName: "router-cookie-svc",
-										ServicePort: intstr.FromInt(80),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: "router-cookie-svc",
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -259,7 +270,7 @@ func TestHttpCookie(t *testing.T) {
 }
 
 func TestHttpHeader(t *testing.T) {
-	clientSet, err := controller.NewClientSet("/Users/abe/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
+	clientSet, err := controller.NewClientSet("/Users/gdevs/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
 	if err != nil {
 		t.Errorf("can't create Kubernetes's client: %v", err)
 	}
@@ -335,7 +346,7 @@ func TestHttpHeader(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	ingress := &extensions.Ingress{
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "router-header-ing",
 			Namespace: ns.Name,
@@ -343,18 +354,22 @@ func TestHttpHeader(t *testing.T) {
 				parser.GetAnnotationWithPrefix("header"): "hk1:hv1;hk2:hv2;",
 			},
 		},
-		Spec: extensions.IngressSpec{
-			Rules: []extensions.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
 				{
 					Host: "www.http-router.com",
-					IngressRuleValue: extensions.IngressRuleValue{
-						HTTP: &extensions.HTTPIngressRuleValue{
-							Paths: []extensions.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
 								{
 									Path: "/http-router",
-									Backend: extensions.IngressBackend{
-										ServiceName: "router-header-svc",
-										ServicePort: intstr.FromInt(80),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: "router-header-svc",
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -368,12 +383,12 @@ func TestHttpHeader(t *testing.T) {
 }
 
 func Test_ListIngress(t *testing.T) {
-	clientSet, err := controller.NewClientSet("/Users/abe/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
+	clientSet, err := controller.NewClientSet("/Users/gdevs/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
 	if err != nil {
 		t.Errorf("can't create Kubernetes's client: %v", err)
 	}
 
-	ings, err := clientSet.ExtensionsV1beta1().Ingresses("gateway").List(api_meta_v1.ListOptions{})
+	ings, err := clientSet.ExtensionsV1beta1().Ingresses("gateway").List(context.TODO(), api_meta_v1.ListOptions{})
 	if err != nil {
 		t.Fatalf("error listing ingresses: %v", err)
 	}
@@ -383,7 +398,7 @@ func Test_ListIngress(t *testing.T) {
 }
 
 func TestHttpUpstreamHashBy(t *testing.T) {
-	clientSet, err := controller.NewClientSet("/Users/abe/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
+	clientSet, err := controller.NewClientSet("/Users/gdevs/go/src/github.com/gridworkz/kato/test/admin.kubeconfig")
 	if err != nil {
 		t.Errorf("can't create Kubernetes's client: %v", err)
 	}
@@ -456,7 +471,7 @@ func TestHttpUpstreamHashBy(t *testing.T) {
 
 	time.Sleep(3 * time.Second)
 
-	ingress := &extensions.Ingress{
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "upstreamhashby-ing",
 			Namespace: ns.Name,
@@ -464,18 +479,22 @@ func TestHttpUpstreamHashBy(t *testing.T) {
 				parser.GetAnnotationWithPrefix("upstream-hash-by"): "$request_uri",
 			},
 		},
-		Spec: extensions.IngressSpec{
-			Rules: []extensions.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
 				{
 					Host: "www.http-upstreamhashby.com",
-					IngressRuleValue: extensions.IngressRuleValue{
-						HTTP: &extensions.HTTPIngressRuleValue{
-							Paths: []extensions.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
 								{
 									Path: "/",
-									Backend: extensions.IngressBackend{
-										ServiceName: "upstreamhashby-svc",
-										ServicePort: intstr.FromInt(80),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: "upstreamhashby-svc",
+											Port: networkingv1.ServiceBackendPort{
+												Number: 80,
+											},
+										},
 									},
 								},
 							},
@@ -490,13 +509,13 @@ func TestHttpUpstreamHashBy(t *testing.T) {
 
 func ensureNamespace(ns *corev1.Namespace, clientSet kubernetes.Interface, t *testing.T) *corev1.Namespace {
 	t.Helper()
-	n, err := clientSet.CoreV1().Namespaces().Update(ns)
+	n, err := clientSet.CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			t.Logf("Namespace %v not found, creating", ns)
 
-			n, err = clientSet.CoreV1().Namespaces().Create(ns)
+			n, err = clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 			if err != nil {
 				t.Fatalf("error creating namespace %+v: %v", ns, err)
 			}
@@ -515,13 +534,13 @@ func ensureNamespace(ns *corev1.Namespace, clientSet kubernetes.Interface, t *te
 
 func ensureDeploy(deploy *v1beta1.Deployment, clientSet kubernetes.Interface, t *testing.T) *v1beta1.Deployment {
 	t.Helper()
-	dm, err := clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Update(deploy)
+	dm, err := clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			t.Logf("Deployment %v not found, creating", deploy)
 
-			dm, err = clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Create(deploy)
+			dm, err = clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Create(context.TODO(), deploy, metav1.CreateOptions{})
 			if err != nil {
 				t.Fatalf("error creating deployment %+v: %v", deploy, err)
 			}
@@ -540,9 +559,9 @@ func ensureDeploy(deploy *v1beta1.Deployment, clientSet kubernetes.Interface, t 
 
 func ensureService(service *corev1.Service, clientSet kubernetes.Interface, t *testing.T) *corev1.Service {
 	t.Helper()
-	clientSet.CoreV1().Services(service.Namespace).Delete(service.Name, &metav1.DeleteOptions{})
+	clientSet.CoreV1().Services(service.Namespace).Delete(context.TODO(), service.Name, metav1.DeleteOptions{})
 
-	svc, err := clientSet.CoreV1().Services(service.Namespace).Create(service)
+	svc, err := clientSet.CoreV1().Services(service.Namespace).Create(context.TODO(), service, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("error creating service %+v: %v", service, err)
 	}
@@ -552,15 +571,15 @@ func ensureService(service *corev1.Service, clientSet kubernetes.Interface, t *t
 
 }
 
-func ensureIngress(ingress *extensions.Ingress, clientSet kubernetes.Interface, t *testing.T) *extensions.Ingress {
+func ensureIngress(ingress *networkingv1.Ingress, clientSet kubernetes.Interface, t *testing.T) *networkingv1.Ingress {
 	t.Helper()
-	ing, err := clientSet.ExtensionsV1beta1().Ingresses(ingress.Namespace).Update(ingress)
+	ing, err := clientSet.NetworkingV1().Ingresses(ingress.Namespace).Update(context.TODO(), ingress, metav1.UpdateOptions{})
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			t.Logf("Ingress %v not found, creating", ingress)
 
-			ing, err = clientSet.ExtensionsV1beta1().Ingresses(ingress.Namespace).Create(ingress)
+			ing, err = clientSet.NetworkingV1().Ingresses(ingress.Namespace).Create(context.TODO(), ingress, metav1.CreateOptions{})
 			if err != nil {
 				t.Fatalf("error creating ingress %+v: %v", ingress, err)
 			}

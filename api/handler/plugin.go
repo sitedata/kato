@@ -48,6 +48,35 @@ func CreatePluginManager(mqClient client.MQClient) *PluginAction {
 	}
 }
 
+// BatchCreatePlugins -
+func (p *PluginAction) BatchCreatePlugins(tenantID string, plugins []*api_model.Plugin) *util.APIHandleError {
+	var dbPlugins [] * dbmodel.TenantPlugin
+	for _, plugin := range plugins {
+		dbPlugins = append(dbPlugins, plugin.DbModel(tenantID))
+	}
+	if err := db.GetManager().TenantPluginDao().CreateOrUpdatePluginsInBatch(dbPlugins); err != nil {
+		return util.CreateAPIHandleErrorFromDBError("batch create plugins", err)
+	}
+	return nil
+}
+
+//BatchBuildPlugins -
+func (p *PluginAction) BatchBuildPlugins(req *api_model.BatchBuildPlugins, tenantID string) *util.APIHandleError {
+	var pluginIDs [] string
+	for _, buildReq := range req.Plugins {
+		buildReq.TenantID = tenantID
+		pluginIDs = append(pluginIDs, buildReq.PluginID)
+	}
+	plugins, err := db.GetManager().TenantPluginDao().ListByIDs(pluginIDs)
+	if err != nil {
+		return util.CreateAPIHandleErrorFromDBError(fmt.Sprintf("get plugin by %v", pluginIDs), err)
+	}
+	if err := p.batchBuildPlugins(req, plugins); err != nil {
+		return util.CreateAPIHandleError(500, fmt.Errorf("build plugin error"))
+	}
+	return nil
+}
+
 //CreatePluginAct PluginAct
 func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.APIHandleError {
 	tp := &dbmodel.TenantPlugin{
@@ -55,7 +84,7 @@ func (p *PluginAction) CreatePluginAct(cps *api_model.CreatePluginStruct) *util.
 		PluginID:    cps.Body.PluginID,
 		PluginInfo:  cps.Body.PluginInfo,
 		PluginModel: cps.Body.PluginModel,
-		PluginName:  cps.Body.PluginName,
+		PluginName: cps.Body.PluginName,
 		ImageURL:    cps.Body.ImageURL,
 		GitURL:      cps.Body.GitURL,
 		BuildModel:  cps.Body.BuildModel,
@@ -140,10 +169,10 @@ func (p *PluginAction) AddDefaultEnv(est *api_model.ENVStruct) *util.APIHandleEr
 	}()
 	for _, env := range est.Body.EVNInfo {
 		vis := &dbmodel.TenantPluginDefaultENV{
-			PluginID:  est.PluginID,
+			PluginID: est.PluginID,
 			ENVName:   env.ENVName,
-			ENVValue:  env.ENVValue,
-			IsChange:  env.IsChange,
+			ENVValue: env.ENVValue,
+			IsChange: env.IsChange,
 			VersionID: env.VersionID,
 		}
 		err := db.GetManager().TenantPluginDefaultENVDaoTransactions(tx).AddModel(vis)
@@ -164,8 +193,8 @@ func (p *PluginAction) UpdateDefaultEnv(est *api_model.ENVStruct) *util.APIHandl
 	for _, env := range est.Body.EVNInfo {
 		vis := &dbmodel.TenantPluginDefaultENV{
 			ENVName:   env.ENVName,
-			ENVValue:  env.ENVValue,
-			IsChange:  env.IsChange,
+			ENVValue: env.ENVValue,
+			IsChange: env.IsChange,
 			VersionID: env.VersionID,
 		}
 		err := db.GetManager().TenantPluginDefaultENVDao().UpdateModel(vis)
@@ -184,7 +213,7 @@ func (p *PluginAction) DeleteDefaultEnv(pluginID, versionID, name string) *util.
 	return nil
 }
 
-//GetDefaultEnv GetDefaultEnv
+// GetDefaultEnv GetDefaultEnv
 func (p *PluginAction) GetDefaultEnv(pluginID, versionID string) ([]*dbmodel.TenantPluginDefaultENV, *util.APIHandleError) {
 	envs, err := db.GetManager().TenantPluginDefaultENVDao().GetDefaultENVSByPluginID(pluginID, versionID)
 	if err != nil {
@@ -227,42 +256,62 @@ func (p *PluginAction) BuildPluginManual(bps *api_model.BuildPluginStruct) (*dbm
 		pbv, err := p.buildPlugin(bps, plugin)
 		if err != nil {
 			logrus.Error("build plugin from image error ", err.Error())
-			logger.Error("Failed to send the build plugin task from image "+err.Error(), map[string]string{"step": "callback", "status": "failure"})
+			logger.Error("Failed to send the plugin task from mirroring"+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 			return nil, util.CreateAPIHandleError(500, fmt.Errorf("build plugin from image error"))
 		}
-		logger.Info("The build plugin task from the image was sent successfully ", map[string]string{"step": "image-plugin", "status": "starting"})
+		logger.Info("Successfully sent from the image building plug-in task", map[string]string{"step": "image-plugin", "status": "starting"})
 		return pbv, nil
 	case "dockerfile":
 		pbv, err := p.buildPlugin(bps, plugin)
 		if err != nil {
 			logrus.Error("build plugin from image error ", err.Error())
-			logger.Error("Failed to send the build plugin task from dockerfile "+err.Error(), map[string]string{"step": "callback", "status": "failure"})
+			logger.Error("Failed to send plug-in task from dockerfile"+err.Error(), map[string]string{"step": "callback", "status": "failure"})
 			return nil, util.CreateAPIHandleError(500, fmt.Errorf("build plugin from dockerfile error"))
 		}
-		logger.Info("The build plugin task from dockerfile was sent successfully ", map[string]string{"step": "dockerfile-plugin", "status": "starting"})
+		logger.Info("Successfully sent to build plugin task from dockerfile", map[string]string{"step": "dockerfile-plugin", "status": "starting"})
 		return pbv, nil
 	default:
 		return nil, util.CreateAPIHandleError(400, fmt.Errorf("unexpect kind"))
 	}
 }
 
+func (p *PluginAction) checkBuildPluginParam(req interface{}, plugin *dbmodel.TenantPlugin) error {
+	if plugin.ImageURL == "" && plugin.BuildModel == "image" {
+		return fmt.Errorf("need image url")
+	}
+	if plugin.GitURL == "" && plugin.BuildModel == "dockerfile" {
+		return fmt.Errorf("need git repo url")
+	}
+	switch value := req.(type) {
+	case *api_model.BuildPluginStruct:
+		if value.Body.Operator == "" {
+			value.Body.Operator = "define"
+		}
+		if value.Body.BuildVersion == "" {
+			return fmt.Errorf("build version can not be empty")
+		}
+		if value.Body.DeployVersion == "" {
+			value.Body.DeployVersion = core_util.CreateVersionByTime()
+		}
+	case *api_model.BuildPluginReq:
+		if value.Operator == "" {
+			value.Operator = "define"
+		}
+		if value.BuildVersion == "" {
+			return fmt.Errorf("build version can not be empty")
+		}
+		if value.DeployVersion == "" {
+			value.DeployVersion = core_util.CreateVersionByTime()
+		}
+	}
+	return nil
+}
+
 //buildPlugin buildPlugin
 func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmodel.TenantPlugin) (
 	*dbmodel.TenantPluginBuildVersion, error) {
-	if plugin.ImageURL == "" && plugin.BuildModel == "image" {
-		return nil, fmt.Errorf("need image url")
-	}
-	if plugin.GitURL == "" && plugin.BuildModel == "dockerfile" {
-		return nil, fmt.Errorf("need git repo url")
-	}
-	if b.Body.Operator == "" {
-		b.Body.Operator = "define"
-	}
-	if b.Body.BuildVersion == "" {
-		return nil, fmt.Errorf("build version can not be empty")
-	}
-	if b.Body.DeployVersion == "" {
-		b.Body.DeployVersion = core_util.CreateVersionByTime()
+	if err := p.checkBuildPluginParam(b, plugin); err != nil {
+		return nil, err
 	}
 	pbv := &dbmodel.TenantPluginBuildVersion{
 		VersionID:       b.Body.BuildVersion,
@@ -329,6 +378,73 @@ func (p *PluginAction) buildPlugin(b *api_model.BuildPluginStruct, plugin *dbmod
 	}
 	logrus.Debugf("equeue mq build plugin from image success")
 	return pbv, nil
+}
+
+//buildPlugin buildPlugin
+func (p *PluginAction) batchBuildPlugins(req *api_model.BatchBuildPlugins, plugins []*dbmodel.TenantPlugin) error {
+	reqPluginRel := make(map[string]*dbmodel.TenantPlugin)
+	for _, plugin := range plugins {
+		reqPluginRel[plugin.PluginID] = plugin
+	}
+	var errPluginIDs [] string
+	var pluginBuildVersions []*dbmodel.TenantPluginBuildVersion
+	for _, buildReq := range req.Plugins {
+		if _, ok := reqPluginRel[buildReq.PluginID]; !ok {
+			continue
+		}
+		if err := p.checkBuildPluginParam(buildReq, reqPluginRel[buildReq.PluginID]); err != nil {
+			return err
+		}
+		logger := event.GetManager().GetLogger(buildReq.EventID)
+		taskBody := &builder_model.BuildPluginTaskBody{
+			TenantID:      buildReq.TenantID,
+			PluginID:      buildReq.PluginID,
+			Operator:      buildReq.Operator,
+			DeployVersion: buildReq.DeployVersion,
+			ImageURL:      reqPluginRel[buildReq.PluginID].ImageURL,
+			EventID:       buildReq.EventID,
+			Kind:          reqPluginRel[buildReq.PluginID].BuildModel,
+			PluginCMD:     buildReq.PluginCMD,
+			PluginCPU:     buildReq.PluginCPU,
+			PluginMemory:  buildReq.PluginMemory,
+			VersionID:     buildReq.BuildVersion,
+			ImageInfo:     buildReq.ImageInfo,
+			Repo:          buildReq.RepoURL,
+			GitURL:        reqPluginRel[buildReq.PluginID].GitURL,
+			GitUsername:   buildReq.Username,
+			GitPassword:   buildReq.Password,
+		}
+		taskType := "plugin_image_build"
+		loggerInfo := map[string]string{"step": "image-plugin", "status": "starting"}
+		if reqPluginRel[buildReq.PluginID].BuildModel == "dockerfile" {
+			taskType = "plugin_dockerfile_build"
+			loggerInfo = map[string]string{"step": "dockerfile-plugin", "status": "starting"}
+		}
+		err := p.MQClient.SendBuilderTopic(client.TaskStruct{
+			TaskType: taskType,
+			TaskBody: taskBody,
+			Topic:    client.BuilderTopic,
+		})
+		pluginBuildVersion := buildReq.DbModel(reqPluginRel[buildReq.PluginID])
+		if err != nil {
+			pluginBuildVersion.Status = "failure"
+			errPluginIDs = append(errPluginIDs, reqPluginRel[buildReq.PluginID].PluginID)
+			logrus.Errorf("equque mq error, %v", err)
+			logger.Error("Failed to send build plugin task"+err.Error(), map[string]string{"step": "callback", "status": "failure"})
+		} else {
+			logger.Info("Build plug-in task sent successfully", loggerInfo)
+		}
+		pluginBuildVersions = append(pluginBuildVersions, pluginBuildVersion)
+		event.CloseManager()
+	}
+
+	if err := db.GetManager().TenantPluginBuildVersionDao().CreateOrUpdatePluginBuildVersionsInBatch(pluginBuildVersions); err != nil {
+		return err
+	}
+	if len(errPluginIDs) > 0 {
+		logrus.Errorf("send mq build task failed pluginIDs is [%v]", errPluginIDs)
+	}
+	return nil
 }
 
 //GetAllPluginBuildVersions GetAllPluginBuildVersions

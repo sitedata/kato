@@ -18,7 +18,7 @@
 
 package model
 
-//AddVolumeStruct
+//AddVolumeStruct AddVolumeStruct
 //swagger:parameters addVolumes
 type AddVolumeStruct struct {
 	// in: path
@@ -29,42 +29,43 @@ type AddVolumeStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// Types of "application;app_publish"
+		// Type "application;app_publish"
 		// in: body
 		// required: true
 		Category string `json:"category"`
-		// container mount directory
+		// Container mount directory
 		// in: body
 		// required: true
 		VolumePath string `json:"volume_path" validate:"volume_path|required|regex:^/"`
-		// storage type (share,local,tmpfs)
+		//Storage type (share, local, tmpfs)
 		// in: body
 		// required: true
 		VolumeType string `json:"volume_type" validate:"volume_type|required"`
-		// storage name (unique to the same application)
+		// Storage name (unique to the same application)
 		// in: body
 		// required: true
 		VolumeName  string `json:"volume_name" validate:"volume_name|required|max:50"`
 		FileContent string `json:"file_content"`
-		// Storage driver alias (storageClass alias)
+		// Storage driver alias (StorageClass alias)
 		VolumeProviderName string `json:"volume_provider_name"`
 		IsReadOnly         bool   `json:"is_read_only"`
-		// VolumeCapacity - storage size
+		// VolumeCapacity storage size
 		VolumeCapacity int64 `json:"volume_capacity"` // Unit: Mi
-		// AccessMode read and write mode (important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
+		// AccessMode Read and write mode (Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes)
 		AccessMode string `json:"access_mode"`
-		// SharePolicy - sharing mode
+		// SharePolicy sharing mode
 		SharePolicy string `json:"share_policy"`
-		// BackupPolicy - backup strategy
+		// BackupPolicy backup policy
 		BackupPolicy string `json:"backup_policy"`
-		// ReclaimPolicy - recycling strategy
+		// ReclaimPolicy recycling strategy
 		ReclaimPolicy string `json:"reclaim_policy"`
-		// AllowExpansion - whether to support expansion
-		AllowExpansion bool `json:"allow_expansion"`
+		// Whether AllowExpansion supports expansion
+		AllowExpansion bool   `json:"allow_expansion"`
+		Mode           *int32 `json:"mode"`
 	}
 }
 
-//DeleteVolumeStruct
+//DeleteVolumeStruct DeleteVolumeStruct
 //swagger:parameters deleteVolumes
 type DeleteVolumeStruct struct {
 	// in: path
@@ -79,7 +80,7 @@ type DeleteVolumeStruct struct {
 	VolumeName string `json:"volume_name"`
 }
 
-//AddVolumeDependencyStruct
+//AddVolumeDependencyStruct AddVolumeDependencyStruct
 //swagger:parameters addDepVolume
 type AddVolumeDependencyStruct struct {
 	// in: path
@@ -90,15 +91,15 @@ type AddVolumeDependencyStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// dependent service id
+		// Dependent service id
 		// in: body
 		// required: true
 		DependServiceID string `json:"depend_service_id"  validate:"depend_service_id|required"`
-		// container mount directory
+		// Container mount directory
 		// in: body
 		// required: true
 		VolumePath string `json:"volume_path" validate:"volume_path|required|regex:^/"`
-		// dependent storage name
+		// Depend on storage name
 		// in: body
 		// required: true
 		VolumeName string `json:"volume_name" validate:"volume_name|required|max:50"`
@@ -107,7 +108,7 @@ type AddVolumeDependencyStruct struct {
 	}
 }
 
-//DeleteVolumeDependencyStruct
+//DeleteVolumeDependencyStruct DeleteVolumeDependencyStruct
 //swagger:parameters  delDepVolume
 type DeleteVolumeDependencyStruct struct {
 	// in: path
@@ -118,11 +119,11 @@ type DeleteVolumeDependencyStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// dependent service id
+		// Dependent service id
 		// in: body
 		// required: true
 		DependServiceID string `json:"depend_service_id" validate:"depend_service_id|required|max:32"`
-		// dependent storage name
+		// Depend on storage name
 		// in: body
 		// required: true
 		VolumeName string `json:"volume_name" validate:"volume_name|required|max:50"`
@@ -142,31 +143,31 @@ type V2AddVolumeStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// Types of "application;app_publish"
+		// Type "application;app_publish"
 		// in: body
 		// required: true
 		Category string `json:"category"`
-		// container mount directory
+		// Container mount directory
 		// in: body
 		// required: true
 		VolumePath string `json:"volume_path" validate:"volume_path|required|regex:^/"`
-		// host mount directory
+		// Host mount directory
 		// in: body
 		// required: true
 		HostPath string `json:"host_path" validate:"volume_path|required|regex:^/"`
-		// storage driver name
+		//Storage driver name
 		VolumeProviderName string `json:"volume_provider_name"`
 		// storage size
 		VolumeCapacity int64 `json:"volume_capacity" validate:"volume_capacity|required|min:1"` // Unit Mi
-		// AccessMode read and write mode（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）)
+		// AccessMode Read and write mode (Important! A volume can only be mounted using one access mode at a time)
 		AccessMode string `gorm:"column:access_mode" json:"access_mode"`
-		// SharePolicy - sharing mode
+		// SharePolicy sharing mode
 		SharePolicy string `gorm:"column:share_policy" json:"share_policy"`
-		// BackupPolicy - backup strategy
+		// BackupPolicy backup policy
 		BackupPolicy string `gorm:"column:backup_policy" json:"backup_policy"`
-		// ReclaimPolicy - recycling strategy
+		// ReclaimPolicy recycling strategy
 		ReclaimPolicy string `json:"reclaim_policy"`
-		// AllowExpansion - whether to support expansion
+		// Whether AllowExpansion supports expansion
 		AllowExpansion bool `gorm:"column:allow_expansion" json:"allow_expansion"`
 	}
 }
@@ -182,11 +183,11 @@ type V2DelVolumeStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// Types of "application;app_publish"
+		// Type "application;app_publish"
 		// in: body
 		// required: true
 		Category string `json:"category"`
-		// container mount directory
+		// Container mount directory
 		// in: body
 		// required: true
 		VolumePath string `json:"volume_path" validate:"volume_path|required|regex:^/"`
@@ -204,22 +205,22 @@ type V2AddVolumeDependencyStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// dependent service id
+		// Dependent service id
 		// in: body
 		// required: true
 		DependServiceID string `json:"depend_service_id"  validate:"depend_service_id|required"`
-		// mount directory
+		// Mount the directory
 		// in: body
 		// required: true
 		MntDir string `json:"mnt_dir" validate:"mnt_dir|required"`
-		// the name of the directory in the mount container
+		// Mount the directory name in the container
 		// in: body
 		// required: true
 		MntName string `json:"mnt_name" validate:"mnt_name|required"`
 	}
 }
 
-//V2DelVolumeDependencyStruct
+//V2DelVolumeDependencyStruct V2DelVolumeDependencyStruct
 //swagger:parameters deleteVolumeDependency
 type V2DelVolumeDependencyStruct struct {
 	// in: path
@@ -230,7 +231,7 @@ type V2DelVolumeDependencyStruct struct {
 	ServiceAlias string `json:"service_alias"`
 	// in: body
 	Body struct {
-		// dependent service id
+		// Dependent service id
 		// in: body
 		// required: true
 		DependServiceID string `json:"depend_service_id"  validate:"depend_service_id|required"`
@@ -243,43 +244,44 @@ type UpdVolumeReq struct {
 	VolumeType  string `json:"volume_type" validate:"volume_type|required"`
 	FileContent string `json:"file_content"`
 	VolumePath  string `json:"volume_path" validate:"volume_path|required"`
+	Mode        *int32 `json:"mode"`
 }
 
 // VolumeWithStatusResp volume status
 type VolumeWithStatusResp struct {
 	ServiceID string `json:"service_id"`
-	//storage name
+	//Storage name
 	Status map[string]string `json:"status"`
 }
 
 // VolumeWithStatusStruct volume with status struct
 type VolumeWithStatusStruct struct {
 	ServiceID string `json:"service_id"`
-	//service type
+	//Service type
 	Category string `json:"category"`
-	//storage type（share,local,tmpfs）
+	//Storage type (share, local, tmpfs)
 	VolumeType string `json:"volume_type"`
-	//storage name
+	//Storage name
 	VolumeName string `json:"volume_name"`
-	//host address
+	//Host address
 	HostPath string `json:"host_path"`
-	//mount address
+	//Mount address
 	VolumePath string `json:"volume_path"`
-	//read-only
+	//Whether it is read-only
 	IsReadOnly bool `json:"is_read_only"`
-	// VolumeCapacity -storage size
+	// VolumeCapacity storage size
 	VolumeCapacity int64 `json:"volume_capacity"`
-	// AccessMode Read and write mode（Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes）
+	// AccessMode Read and write mode (Important! A volume can only be mounted using one access mode at a time, even if it supports many. For example, a GCEPersistentDisk can be mounted as ReadWriteOnce by a single node or ReadOnlyMany by many nodes, but not at the same time. #https://kubernetes.io/docs/concepts/storage/persistent-volumes/#access-modes)
 	AccessMode string `json:"access_mode"`
-	// SharePolicy - sharing mode
+	// SharePolicy sharing mode
 	SharePolicy string `json:"share_policy"`
-	// BackupPolicy - backup strategy
+	// BackupPolicy backup policy
 	BackupPolicy string `json:"backup_policy"`
-	// ReclaimPolicy - recycling strategy
+	// ReclaimPolicy recycling strategy
 	ReclaimPolicy string `json:"reclaim_policy"`
-	// AllowExpansion - whether to support expansion
+	// Whether AllowExpansion supports expansion
 	AllowExpansion bool `json:"allow_expansion"`
-	// VolumeProviderName - storage driver alias used
+	// The storage driver alias used by VolumeProviderName
 	VolumeProviderName string `json:"volume_provider_name"`
 	Status             string `json:"status"`
 }

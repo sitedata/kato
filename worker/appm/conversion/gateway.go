@@ -23,15 +23,15 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
+	
+	"github.com/gridworkz/kato/util/k8s"
 	"github.com/gridworkz/kato/db"
 	"github.com/gridworkz/kato/db/model"
-	"github.com/gridworkz/kato/event"
 	"github.com/gridworkz/kato/gateway/annotations/parser"
 	v1 "github.com/gridworkz/kato/worker/appm/types/v1"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
-	extensions "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 )
@@ -89,7 +89,6 @@ type AppServiceBuild struct {
 	appService         *v1.AppService
 	replicationType    string
 	dbmanager          db.Manager
-	logger             event.Logger
 }
 
 //AppServiceBuilder returns a AppServiceBuild
@@ -138,12 +137,15 @@ func (a *AppServiceBuild) Build() (*v1.K8sResources, error) {
 			return nil, fmt.Errorf("find upstream plugin mapping port error, %s", err.Error())
 		}
 		ports, pp, err = a.CreateUpstreamPluginMappingPort(ports, pluginPorts)
+		if err != nil {
+			logrus.Errorf("create mapping port failure %s", err.Error())
+		}
 	}
 
 	var services []*corev1.Service
-	var ingresses []*extensions.Ingress
+	var ingresses []*networkingv1.Ingress
 	var secrets []*corev1.Secret
-	if ports != nil && len(ports) > 0 {
+	if len(ports) > 0 {
 		for i := range ports {
 			port := ports[i]
 			if *port.IsInnerService {
@@ -191,8 +193,8 @@ func (a *AppServiceBuild) Build() (*v1.K8sResources, error) {
 
 // ApplyRules applies http rules and tcp rules
 func (a AppServiceBuild) ApplyRules(serviceID string, containerPort, pluginContainerPort int,
-	service *corev1.Service) ([]*extensions.Ingress, []*corev1.Secret, error) {
-	var ingresses []*extensions.Ingress
+	service *corev1.Service) ([]*networkingv1.Ingress, []*corev1.Secret, error) {
+	var ingresses []*networkingv1.Ingress
 	var secrets []*corev1.Secret
 	httpRules, err := a.dbmanager.HTTPRuleDao().GetHTTPRuleByServiceIDAndContainerPort(serviceID, containerPort)
 	if err != nil {
@@ -200,7 +202,7 @@ func (a AppServiceBuild) ApplyRules(serviceID string, containerPort, pluginConta
 	}
 	// create http ingresses
 	logrus.Debugf("find %d count http rule", len(httpRules))
-	if httpRules != nil && len(httpRules) > 0 {
+	if len(httpRules) > 0 {
 		for _, httpRule := range httpRules {
 			ing, sec, err := a.applyHTTPRule(httpRule, containerPort, pluginContainerPort, service)
 			if err != nil {
@@ -219,7 +221,7 @@ func (a AppServiceBuild) ApplyRules(serviceID string, containerPort, pluginConta
 	if err != nil {
 		logrus.Infof("Can't get TCPRule corresponding to ServiceID(%s): %v", serviceID, err)
 	}
-	if tcpRules != nil && len(tcpRules) > 0 {
+	if len(tcpRules) > 0 {
 		for _, tcpRule := range tcpRules {
 			ing, err := a.applyTCPRule(tcpRule, service, a.tenant.UUID)
 			if err != nil {
@@ -236,7 +238,7 @@ func (a AppServiceBuild) ApplyRules(serviceID string, containerPort, pluginConta
 
 // applyTCPRule applies stream rule into ingress
 func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, pluginContainerPort int,
-	service *corev1.Service) (ing *extensions.Ingress, sec *corev1.Secret, err error) {
+	service *corev1.Service) (ing *networkingv1.Ingress, sec *corev1.Secret, err error) {
 	// deal with empty path and domain
 	path := strings.Replace(rule.Path, " ", "", -1)
 	if path == "" {
@@ -248,24 +250,29 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 	}
 
 	// create ingress
-	ing = &extensions.Ingress{
+	ing = &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rule.UUID,
 			Namespace: a.tenant.UUID,
 			Labels:    a.appService.GetCommonLabels(),
 		},
-		Spec: extensions.IngressSpec{
-			Rules: []extensions.IngressRule{
+		Spec: networkingv1.IngressSpec{
+			Rules: []networkingv1.IngressRule{
 				{
 					Host: domain,
-					IngressRuleValue: extensions.IngressRuleValue{
-						HTTP: &extensions.HTTPIngressRuleValue{
-							Paths: []extensions.HTTPIngressPath{
+					IngressRuleValue: networkingv1.IngressRuleValue{
+						HTTP: &networkingv1.HTTPIngressRuleValue{
+							Paths: []networkingv1.HTTPIngressPath{
 								{
-									Path: path,
-									Backend: extensions.IngressBackend{
-										ServiceName: service.Name,
-										ServicePort: intstr.FromInt(pluginContainerPort),
+									Path:     path,
+									PathType: k8s.IngressPathType(networkingv1.PathTypeExact),
+									Backend: networkingv1.IngressBackend{
+										Service: &networkingv1.IngressServiceBackend{
+											Name: service.Name,
+											Port: networkingv1.ServiceBackendPort{
+												Number: int32(pluginContainerPort),
+											},
+										},
 									},
 								},
 							},
@@ -294,10 +301,10 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 	if rule.CertificateID != "" {
 		cert, err := a.dbmanager.CertificateDao().GetCertificateByID(rule.CertificateID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("Cant not get certificate by id(%s): %v", rule.CertificateID, err)
+			return nil, nil, fmt.Errorf("cant not get certificate by id(%s): %v", rule.CertificateID, err)
 		}
 		if cert == nil || strings.TrimSpace(cert.Certificate) == "" || strings.TrimSpace(cert.PrivateKey) == "" {
-			return nil, nil, fmt.Errorf("Rule id: %s; certificate not found", rule.UUID)
+			return nil, nil, fmt.Errorf("rule id: %s; certificate not found", rule.UUID)
 		}
 		// create secret
 		sec = &corev1.Secret{
@@ -312,7 +319,7 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 			},
 			Type: corev1.SecretTypeOpaque,
 		}
-		ing.Spec.TLS = []extensions.IngressTLS{
+		ing.Spec.TLS = []networkingv1.IngressTLS{
 			{
 				Hosts:      []string{domain},
 				SecretName: sec.Name,
@@ -353,7 +360,7 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 	if err != nil {
 		return nil, nil, err
 	}
-	if configs != nil && len(configs) > 0 {
+	if len(configs) > 0 {
 		for _, cfg := range configs {
 			annos[parser.GetAnnotationWithPrefix(cfg.Key)] = cfg.Value
 		}
@@ -364,18 +371,22 @@ func (a *AppServiceBuild) applyHTTPRule(rule *model.HTTPRule, containerPort, plu
 }
 
 // applyTCPRule applies stream rule into ingress
-func (a *AppServiceBuild) applyTCPRule(rule *model.TCPRule, service *corev1.Service, namespace string) (ing *extensions.Ingress, err error) {
+func (a *AppServiceBuild) applyTCPRule(rule *model.TCPRule, service *corev1.Service, namespace string) (ing *networkingv1.Ingress, err error) {
 	// create ingress
-	ing = &extensions.Ingress{
+	ing = &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      rule.UUID,
 			Namespace: namespace,
 			Labels:    a.appService.GetCommonLabels(),
 		},
-		Spec: extensions.IngressSpec{
-			Backend: &extensions.IngressBackend{
-				ServiceName: service.Name,
-				ServicePort: intstr.FromInt(int(service.Spec.Ports[0].Port)),
+		Spec: networkingv1.IngressSpec{
+			DefaultBackend: &networkingv1.IngressBackend{
+				Service: &networkingv1.IngressServiceBackend{
+					Name: service.Name,
+					Port: networkingv1.ServiceBackendPort{
+						Number: int32(service.Spec.Ports[0].Port),
+					},
+				},
 			},
 		},
 	}
@@ -388,7 +399,7 @@ func (a *AppServiceBuild) applyTCPRule(rule *model.TCPRule, service *corev1.Serv
 	return ing, nil
 }
 
-//CreateUpstreamPluginMappingPort - check if there is an upstream plugin to take over the entrance network
+//CreateUpstreamPluginMappingPort Check if there is an upstream plug-in and take over the entrance network
 func (a *AppServiceBuild) CreateUpstreamPluginMappingPort(
 	ports []*model.TenantServicesPort,
 	pluginPorts []*model.TenantServicesStreamPluginPort,
@@ -411,7 +422,7 @@ func (a *AppServiceBuild) CreateUpstreamPluginMappingPort(
 	return ports, pp, nil
 }
 
-//CreateUpstreamPluginMappingService - add service plugin map port tag
+//CreateUpstreamPluginMappingService Add service plugin mapport tag
 func (a *AppServiceBuild) CreateUpstreamPluginMappingService(services []*corev1.Service,
 	pp map[int32]int) ([]*corev1.Service, error) {
 	for _, service := range services {
@@ -424,7 +435,7 @@ func (a *AppServiceBuild) CreateUpstreamPluginMappingService(services []*corev1.
 	return services, nil
 }
 
-//BuildOnPort - specify the port to create a Service
+//BuildOnPort Specify the port to create a Service
 func (a *AppServiceBuild) BuildOnPort(p int, isOut bool) (*corev1.Service, error) {
 	port, err := a.dbmanager.TenantServicesPortDao().GetPort(a.serviceID, p)
 	if err != nil {
@@ -441,11 +452,11 @@ func (a *AppServiceBuild) BuildOnPort(p int, isOut bool) (*corev1.Service, error
 	return nil, fmt.Errorf("tenant service port %d is not exist", p)
 }
 
-//createServiceAnnotations
+//createServiceAnnotations create service annotation
 func (a *AppServiceBuild) createServiceAnnotations() map[string]string {
 	var annotations = make(map[string]string)
 	if a.service.Replicas <= 1 {
-		annotations["infinitapps.cloud/tolerate-unready-endpoints"] = "true"
+		annotations["kato.com/tolerate-unready-endpoints"] = "true"
 	}
 	return annotations
 }
@@ -474,7 +485,7 @@ func (a *AppServiceBuild) createInnerService(port *model.TenantServicesPort) *co
 		"version":       a.service.DeployVersion,
 	})
 	if a.service.Replicas <= 1 {
-		service.Labels["infinitapps.cloud/tolerate-unready-endpoints"] = "true"
+		service.Labels["kato.com/tolerate-unready-endpoints"] = "true"
 	}
 	service.Annotations = a.createServiceAnnotations()
 	var servicePort corev1.ServicePort
@@ -515,7 +526,7 @@ func (a *AppServiceBuild) createOuterService(port *model.TenantServicesPort) *co
 		"version":       a.service.DeployVersion,
 	})
 	if a.service.Replicas <= 1 {
-		service.Labels["infinitapps.cloud/tolerate-unready-endpoints"] = "true"
+		service.Labels["kato.com/tolerate-unready-endpoints"] = "true"
 	}
 	var servicePort corev1.ServicePort
 	servicePort.Protocol = conversionPortProtocol(port.Protocol)
@@ -523,8 +534,7 @@ func (a *AppServiceBuild) createOuterService(port *model.TenantServicesPort) *co
 	servicePort.Name = fmt.Sprintf("%s-%d",
 		strings.ToLower(string(servicePort.Protocol)), port.ContainerPort)
 	servicePort.Port = int32(port.ContainerPort)
-	var portType corev1.ServiceType
-	portType = corev1.ServiceTypeClusterIP
+	portType := corev1.ServiceTypeClusterIP
 	spec := corev1.ServiceSpec{
 		Ports: []corev1.ServicePort{servicePort},
 		Type:  portType,

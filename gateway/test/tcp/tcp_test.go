@@ -19,18 +19,19 @@
 package tcp
 
 import (
+	"context"
+	"testing"
+	"time"
+
 	"github.com/gridworkz/kato/gateway/annotations/parser"
 	"github.com/gridworkz/kato/gateway/controller"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/api/extensions/v1beta1"
-	extensions "k8s.io/api/extensions/v1beta1"
+	networkingv1 "k8s.io/api/networking/v1"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	api_meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/client-go/kubernetes"
-	"testing"
-	"time"
 )
 
 func TestTcp(t *testing.T) {
@@ -106,7 +107,7 @@ func TestTcp(t *testing.T) {
 	_ = ensureService(service, clientSet, t)
 	time.Sleep(3 * time.Second)
 
-	ingress := &extensions.Ingress{
+	ingress := &networkingv1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      "tcp-ing",
 			Namespace: ns.Name,
@@ -116,11 +117,13 @@ func TestTcp(t *testing.T) {
 				parser.GetAnnotationWithPrefix("l4-port"):   "32145",
 			},
 		},
-		Spec: v1beta1.IngressSpec{
-			Backend: &v1beta1.IngressBackend{
-				ServiceName: "default-svc",
-				ServicePort: intstr.IntOrString{
-					IntVal: 30000,
+		Spec: networkingv1.IngressSpec{
+			DefaultBackend: &networkingv1.IngressBackend{
+				Service: &networkingv1.IngressServiceBackend{
+					Name: "default-svc",
+					Port: networkingv1.ServiceBackendPort{
+						Number: 30000,
+					},
 				},
 			},
 		},
@@ -130,13 +133,13 @@ func TestTcp(t *testing.T) {
 
 func ensureNamespace(ns *corev1.Namespace, clientSet kubernetes.Interface, t *testing.T) *corev1.Namespace {
 	t.Helper()
-	n, err := clientSet.CoreV1().Namespaces().Update(ns)
+	n, err := clientSet.CoreV1().Namespaces().Update(context.TODO(), ns, metav1.UpdateOptions{})
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			t.Logf("Namespace %v not found, creating", ns)
 
-			n, err = clientSet.CoreV1().Namespaces().Create(ns)
+			n, err = clientSet.CoreV1().Namespaces().Create(context.TODO(), ns, metav1.CreateOptions{})
 			if err != nil {
 				t.Fatalf("error creating namespace %+v: %v", ns, err)
 			}
@@ -155,13 +158,13 @@ func ensureNamespace(ns *corev1.Namespace, clientSet kubernetes.Interface, t *te
 
 func ensureDeploy(deploy *v1beta1.Deployment, clientSet kubernetes.Interface, t *testing.T) *v1beta1.Deployment {
 	t.Helper()
-	dm, err := clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Update(deploy)
+	dm, err := clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Update(context.TODO(), deploy, metav1.UpdateOptions{})
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			t.Logf("Deployment %v not found, creating", deploy)
 
-			dm, err = clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Create(deploy)
+			dm, err = clientSet.ExtensionsV1beta1().Deployments(deploy.Namespace).Create(context.TODO(), deploy, metav1.CreateOptions{})
 			if err != nil {
 				t.Fatalf("error creating deployment %+v: %v", deploy, err)
 			}
@@ -180,9 +183,9 @@ func ensureDeploy(deploy *v1beta1.Deployment, clientSet kubernetes.Interface, t 
 
 func ensureService(service *corev1.Service, clientSet kubernetes.Interface, t *testing.T) *corev1.Service {
 	t.Helper()
-	clientSet.CoreV1().Services(service.Namespace).Delete(service.Name, &metav1.DeleteOptions{})
+	clientSet.CoreV1().Services(service.Namespace).Delete(context.TODO(), service.Name, metav1.DeleteOptions{})
 
-	svc, err := clientSet.CoreV1().Services(service.Namespace).Create(service)
+	svc, err := clientSet.CoreV1().Services(service.Namespace).Create(context.TODO(), service, metav1.CreateOptions{})
 	if err != nil {
 		t.Fatalf("error creating service %+v: %v", service, err)
 	}
@@ -191,15 +194,15 @@ func ensureService(service *corev1.Service, clientSet kubernetes.Interface, t *t
 	return svc
 }
 
-func ensureIngress(ingress *extensions.Ingress, clientSet kubernetes.Interface, t *testing.T) *extensions.Ingress {
+func ensureIngress(ingress *networkingv1.Ingress, clientSet kubernetes.Interface, t *testing.T) *networkingv1.Ingress {
 	t.Helper()
-	ing, err := clientSet.ExtensionsV1beta1().Ingresses(ingress.Namespace).Update(ingress)
+	ing, err := clientSet.NetworkingV1().Ingresses(ingress.Namespace).Update(context.TODO(), ingress, metav1.UpdateOptions{})
 
 	if err != nil {
 		if k8sErrors.IsNotFound(err) {
 			t.Logf("Ingress %v not found, creating", ingress)
 
-			ing, err = clientSet.ExtensionsV1beta1().Ingresses(ingress.Namespace).Create(ingress)
+			ing, err = clientSet.NetworkingV1().Ingresses(ingress.Namespace).Create(context.TODO(), ingress, metav1.CreateOptions{})
 			if err != nil {
 				t.Fatalf("error creating ingress %+v: %v", ingress, err)
 			}

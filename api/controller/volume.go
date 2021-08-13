@@ -19,14 +19,14 @@
 package controller
 
 import (
-	"encoding/json"
 	"net/http"
 	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/gridworkz/kato/api/handler"
-	"github.com/gridworkz/kato/api/middleware"
 	api_model "github.com/gridworkz/kato/api/model"
+	"github.com/gridworkz/kato/api/util/bcode"
+	ctxutil "github.com/gridworkz/kato/api/util/ctx"
 	dbmodel "github.com/gridworkz/kato/db/model"
 	httputil "github.com/gridworkz/kato/util/http"
 	"github.com/sirupsen/logrus"
@@ -46,7 +46,7 @@ func (t *TenantStruct) VolumeDependency(w http.ResponseWriter, r *http.Request) 
 func (t *TenantStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/volume-dependency v2 addVolumeDependency
 	//
-	// 增加应用持久化依赖
+	// Increase application persistence dependency
 	//
 	// add volume dependency
 	//
@@ -63,11 +63,11 @@ func (t *TenantStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Reques
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
 	logrus.Debugf("trans add volumn dependency service ")
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	var tsr api_model.V2AddVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
@@ -90,7 +90,7 @@ func (t *TenantStruct) AddVolumeDependency(w http.ResponseWriter, r *http.Reques
 func (t *TenantStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/volume-dependency v2 deleteVolumeDependency
 	//
-	// 删除应用持久化依赖
+	// Delete application persistence dependencies
 	//
 	// delete volume dependency
 	//
@@ -107,10 +107,10 @@ func (t *TenantStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Req
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	var tsr api_model.V2DelVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
@@ -127,11 +127,11 @@ func (t *TenantStruct) DeleteVolumeDependency(w http.ResponseWriter, r *http.Req
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//AddVolume AddVolume
+// AddVolume AddVolume
 func (t *TenantStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/volume v2 addVolume
 	//
-	// 增加应用持久化信息
+	// Add application persistent information
 	//
 	// add volume
 	//
@@ -148,10 +148,10 @@ func (t *TenantStruct) AddVolume(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	avs := &api_model.V2AddVolumeStruct{}
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &avs.Body, nil); !ok {
 		return
@@ -187,7 +187,12 @@ func (t *TenantStruct) UpdVolume(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sid := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	if req.Mode != nil && (*req.Mode > 777 || *req.Mode < 0) {
+		httputil.ReturnBcodeError(r, w, bcode.NewBadRequest("mode be a number between 0 and 777 (octal)"))
+		return
+	}
+
+	sid := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	if err := handler.GetServiceManager().UpdVolume(sid, &req); err != nil {
 		httputil.ReturnError(r, w, 500, err.Error())
 	}
@@ -198,7 +203,7 @@ func (t *TenantStruct) UpdVolume(w http.ResponseWriter, r *http.Request) {
 func (t *TenantStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/volume v2 deleteVolume
 	//
-	// 删除应用持久化信息
+	// Delete application persistent information
 	//
 	// delete volume
 	//
@@ -215,10 +220,10 @@ func (t *TenantStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	avs := &api_model.V2DelVolumeStruct{}
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &avs.Body, nil); !ok {
 		return
@@ -235,13 +240,13 @@ func (t *TenantStruct) DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//以下为V2.1版本持久化API,支持多种持久化模式
+//The following is the V2.1 version persistence API, which supports multiple persistence modes
 
 //AddVolumeDependency add volume dependency
 func AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/depvolumes v2 addDepVolume
 	//
-	// 增加应用持久化依赖(V2.1支持多种类型存储)
+	// Increase application persistence dependency (V2.1 supports multiple types of storage)
 	//
 	// add volume dependency
 	//
@@ -258,11 +263,11 @@ func AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
 	logrus.Debugf("trans add volumn dependency service ")
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	var tsr api_model.AddVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
@@ -287,7 +292,7 @@ func AddVolumeDependency(w http.ResponseWriter, r *http.Request) {
 func DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation DELETE /v2/tenants/{tenant_name}/services/{service_alias}/depvolumes v2 delDepVolume
 	//
-	// 删除应用持久化依赖(V2.1支持多种类型存储)
+	// Delete application persistence dependencies (V2.1 supports multiple types of storage)
 	//
 	// delete volume dependency
 	//
@@ -304,10 +309,10 @@ func DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	var tsr api_model.DeleteVolumeDependencyStruct
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &tsr.Body, nil); !ok {
 		return
@@ -325,11 +330,11 @@ func DeleteVolumeDependency(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//AddVolume AddVolume
+// AddVolume AddVolume
 func AddVolume(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation POST /v2/tenants/{tenant_name}/services/{service_alias}/volumes v2 addVolumes
 	//
-	// 增加应用持久化信息(V2.1支持多种类型存储)
+	// Add application persistent information (V2.1 supports multiple types of storage)
 	//
 	// add volume
 	//
@@ -346,16 +351,19 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	avs := &api_model.AddVolumeStruct{}
 	if ok := httputil.ValidatorRequestStructAndErrorResponse(r, w, &avs.Body, nil); !ok {
 		return
 	}
-	bytes, _ := json.Marshal(avs)
-	logrus.Debugf("request uri: %s; request body: %v", r.RequestURI, string(bytes))
+
+	if avs.Body.Mode != nil && (*avs.Body.Mode > 777 || *avs.Body.Mode < 0) {
+		httputil.ReturnBcodeError(r, w, bcode.NewBadRequest("mode be a number between 0 and 777 (octal)"))
+		return
+	}
 
 	tsv := &dbmodel.TenantServiceVolume{
 		ServiceID:          serviceID,
@@ -371,9 +379,10 @@ func AddVolume(w http.ResponseWriter, r *http.Request) {
 		BackupPolicy:       avs.Body.BackupPolicy,
 		ReclaimPolicy:      avs.Body.ReclaimPolicy,
 		AllowExpansion:     avs.Body.AllowExpansion,
+		Mode:               avs.Body.Mode,
 	}
 
-	// TODO validate VolumeCapacity  AccessMode SharePolicy BackupPolicy ReclaimPolicy AllowExpansion
+	// TODO gdevs validate VolumeCapacity  AccessMode SharePolicy BackupPolicy ReclaimPolicy AllowExpansion
 
 	if !strings.HasPrefix(avs.Body.VolumePath, "/") {
 		httputil.ReturnError(r, w, 400, "volume path is invalid,must begin with /")
@@ -407,10 +416,10 @@ func DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
+	// description: unified return format
 
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
-	tenantID := r.Context().Value(middleware.ContextKey("tenant_id")).(string)
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
+	tenantID := r.Context().Value(ctxutil.ContextKey("tenant_id")).(string)
 	tsv := &dbmodel.TenantServiceVolume{}
 	tsv.ServiceID = serviceID
 	tsv.VolumeName = chi.URLParam(r, "volume_name")
@@ -421,7 +430,7 @@ func DeleteVolume(w http.ResponseWriter, r *http.Request) {
 	httputil.ReturnSuccess(r, w, nil)
 }
 
-//GetVolume Get all storage of the application, including dependent storage
+//GetVolume Get all the storage of the application, including dependent storage
 func GetVolume(w http.ResponseWriter, r *http.Request) {
 	// swagger:operation GET /v2/tenants/{tenant_name}/services/{service_alias}/volumes v2 getVolumes
 	//
@@ -442,8 +451,8 @@ func GetVolume(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	// description: unified return format
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	volumes, err := handler.GetServiceManager().GetVolumes(serviceID)
 	if err != nil {
 		err.Handle(r, w)
@@ -473,8 +482,8 @@ func GetDepVolume(w http.ResponseWriter, r *http.Request) {
 	//   default:
 	//     schema:
 	//       "$ref": "#/responses/commandResponse"
-	//     description: Unified return format
-	serviceID := r.Context().Value(middleware.ContextKey("service_id")).(string)
+	// description: unified return format
+	serviceID := r.Context().Value(ctxutil.ContextKey("service_id")).(string)
 	volumes, err := handler.GetServiceManager().GetDepVolumes(serviceID)
 	if err != nil {
 		err.Handle(r, w)
